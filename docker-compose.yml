@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: boxing-postgres
+    environment:
+      POSTGRES_USER: boxing
+      POSTGRES_PASSWORD: boxing123
+      POSTGRES_DB: boxing
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boxing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - boxing-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: boxing-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - boxing-network
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boxing-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: boxing
+      DB_PASSWORD: boxing123
+      DB_NAME: boxing
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD:
+      JWT_SECRET: dev-secret-key-change-in-production
+    networks:
+      - boxing-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  boxing-network:
+    driver: bridge

@@ -1,0 +1,10 @@
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=boxing
+DB_PASSWORD=boxing123
+DB_NAME=boxing
+
+REDIS_ADDR=localhost:6379
+REDIS_PASSWORD=
+
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
