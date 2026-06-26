@@ -1,0 +1,44 @@
+# .github/workflows/ci.yml
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+
+    - name: Install dependencies
+      run: |
+        go mod download
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+    - name: Run linters
+      run: |
+        go vet ./...
+        golangci-lint run ./...
+
+    - name: Build application
+      run: |
+        go build -o boxing-server ./cmd/server
+
+    - name: Run tests
+      run: |
+        go test ./... -v
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: boxing-server
+        path: boxing-server

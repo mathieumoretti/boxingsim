@@ -1,43 +1,69 @@
-.PHONY: build run dev test clean docker-up docker-down
+.PHONY: build test ci clean
 
-APP_NAME=boxing
-BINARY_NAME=$(APP_NAME)-server
-BUILD_DIR=bin
-
-help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
-
-build: ## Build the application
-	@mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=0 GOOS=linux go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server
-
-run: ## Build and run the application
-	go run ./cmd/server
-
-dev: ## Run with hot reload (requires air)
-	air
+# Build targets
+build: ## Build the application incrementally
+	@echo "Building all packages incrementally..."
+	./mini-build.sh build
 
 test: ## Run tests
-	go test -v ./...
+	@echo "Running all tests..."
+	./mini-build.sh test
+
+ci: ## Run CI pipeline (lint, build, test)
+	@echo "Running CI pipeline..."
+	./mini-build.sh ci
 
 clean: ## Clean build artifacts
-	rm -rf $(BUILD_DIR)
-	go clean
+	@echo "Cleaning build artifacts..."
+	./mini-build.sh clean
+	@rm -f ./boxing-server
+
+# Individual package builds
+build-model:
+	go build -o build/model ./internal/model
+
+build-service: build-model
+	go build -o build/service ./internal/service
+
+build-db: build-model
+	go build -o build/db ./internal/db
+
+build-platform: build-model
+	go build -o build/platform ./internal/platform
 
 docker-up: ## Start all services with Docker Compose
 	docker-compose up -d postgres redis
 	@echo "Waiting for database to be ready..."
 	@sleep 5
 	docker-compose up -d server
+build-auth: build-model build-platform
+	go build -o build/auth ./internal/auth
 
 docker-down: ## Stop all Docker services
 	docker-compose down
+build-handler: build-service build-model
+	go build -o build/handler ./internal/handler
 
 docker-logs: ## View logs from all services
 	docker-compose logs -f
+build-server: build-auth build-db build-handler build-platform
+	go build -o boxing-server ./cmd/server
+
+# Individual package tests
+test-model:
+	go test ./internal/model
+
+test-service:
+	go test ./internal/service
+
+test-db:
+	go test ./internal/db
+
+test-handler:
+	go test ./internal/handler
+
+test-auth:
+	go test ./internal/auth
 
 lint: ## Run go vet and linter
 	go vet ./...
@@ -45,4 +71,6 @@ lint: ## Run go vet and linter
 
 deps: ## Download dependencies
 	go mod download
-	go mod tidy
+	go mod tidy# Run with hot reload (if air is installed)
+dev: ## Run with hot reload (requires air)
+	air

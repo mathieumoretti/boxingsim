@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"boxing/internal/model"
+	"github.com/mormm/boxing/internal/model"
 )
 
 var (
@@ -16,17 +16,16 @@ var (
 // GetUserByID retrieves a user by ID
 func GetUserByID(db *sql.DB, id int) (*model.User, error) {
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, hashed_password, created_at, updated_at
 		FROM users
-		WHERE id = ?
+		WHERE id = $1
 	`
 	user := &model.User{}
 	err := db.QueryRow(query, id).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.PasswordHash,
-		&user.Role,
+		&user.HashedPassword,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -44,17 +43,16 @@ func GetUserByID(db *sql.DB, id int) (*model.User, error) {
 // GetUserByUsername retrieves a user by username
 func GetUserByUsername(db *sql.DB, username string) (*model.User, error) {
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, hashed_password, created_at, updated_at
 		FROM users
-		WHERE username = ?
+		WHERE username = $1
 	`
 	user := &model.User{}
 	err := db.QueryRow(query, username).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.PasswordHash,
-		&user.Role,
+		&user.HashedPassword,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -73,17 +71,17 @@ func GetUserByUsername(db *sql.DB, username string) (*model.User, error) {
 func UpdateUser(db *sql.DB, user *model.User) error {
 	query := `
 		UPDATE users
-		SET username = ?, email = ?, password_hash = ?, role = ?, updated_at = ?
-		WHERE id = ?
+		SET username = $1, email = $2, hashed_password = $3, updated_at = $4
+		WHERE id = $5
 	`
-	_, err := db.Exec(query, user.Username, user.Email, user.PasswordHash, user.Role, time.Now(), user.ID)
+	_, err := db.Exec(query, user.Username, user.Email, user.HashedPassword, time.Now(), user.ID)
 	return err
 }
 
 // ListUsers retrieves all users
 func ListUsers(db *sql.DB) ([]*model.User, error) {
 	query := `
-		SELECT id, username, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, hashed_password, created_at, updated_at
 		FROM users
 		ORDER BY created_at DESC
 	`
@@ -100,8 +98,7 @@ func ListUsers(db *sql.DB) ([]*model.User, error) {
 			&user.ID,
 			&user.Username,
 			&user.Email,
-			&user.PasswordHash,
-			&user.Role,
+			&user.HashedPassword,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)

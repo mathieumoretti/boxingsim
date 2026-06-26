@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"boxing/internal/model"
+	"github.com/mormm/boxing/internal/model"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {

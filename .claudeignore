@@ -1,0 +1,88 @@
+# .claudeignore for boxing simulation project
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# Build artifacts and binaries
+*.exe
+*.bin
+*.out
+*.so
+*.dylib
+*.dll
+build/
+dist/
+target/
+*.tar.gz
+*.zip
+
+# Dependency files
+go.sum
+go.mod
+vendor/
+node_modules/
+*.lock
+package-lock.json
+yarn.lock
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.example
+.env.backup
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+logs/
+
+# Docker and container files
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.dockerignore
+
+# Test artifacts
+*_test.go
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+jest-coverage/
+
+# Documentation
+README.md
+LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+doc/
+
+# Configuration and settings
+*.local.json
+settings.json
+config.json
+.env.local
+
+# Generated files
+*.gen.go
+*.generated.go
+*.proto
+*.pb.go
+
+# OS specific files
+*~
+#*

@@ -3,34 +3,35 @@ package db
 import (
 	"database/sql"
 	"errors"
-	"time"
 
-	"boxing/internal/model"
+	"github.com/mormm/boxing/internal/model"
 )
 
 var (
 	ErrBoxerNotFound = errors.New("boxer not found")
+	ErrFightNotFound = errors.New("fight not found")
 )
 
 // GetFightByID retrieves a fight by ID
 func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 	query := `
-		SELECT id, attacker_id, defender_id, attacker_hp, defender_hp,
-		       status, turns, started_at, end_time, created_at, updated_at
+		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+		       winner_id, round, data, created_at, updated_at
 		FROM fights
-		WHERE id = ?
+		WHERE id = $1
 	`
 	fight := &model.Fight{}
 	err := db.QueryRow(query, id).Scan(
 		&fight.ID,
-		&fight.AttackerID,
-		&fight.DefenderID,
-		&fight.AttackerHP,
-		&fight.DefenderHP,
+		&fight.Boxer1ID,
+		&fight.Boxer2ID,
 		&fight.Status,
-		&fight.Turns,
-		&fight.StartedAt,
+		&fight.ScheduledTime,
+		&fight.StartTime,
 		&fight.EndTime,
+		&fight.WinnerID,
+		&fight.Round,
+		&fight.Data,
 		&fight.CreatedAt,
 		&fight.UpdatedAt,
 	)
@@ -48,20 +49,14 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 // CreateFight creates a new fight
 func CreateFight(db *sql.DB, fight *model.FightCreate) error {
 	query := `
-		INSERT INTO fights (attacker_id, defender_id, attacker_hp, defender_hp, status, turns)
-		VALUES (?, ?, ?, ?, 'pending', 0)
+		INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round)
+		VALUES ($1, $2, $3, $4)
 	`
-	result, err := db.Exec(query, fight.AttackerID, fight.DefenderID, fight.AttackerHP, fight.DefenderHP)
+	_, err := db.Exec(query, fight.Boxer1ID, fight.Boxer2ID, fight.ScheduledTime, fight.Round)
 	if err != nil {
 		return err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	fight.ID = int(id)
 	return nil
 }
 
@@ -70,11 +65,11 @@ func BoxerInFight(db *sql.DB, boxerID int) (bool, error) {
 	query := `
 		SELECT COUNT(*) > 0
 		FROM fights
-		WHERE (attacker_id = ? OR defender_id = ?)
-		  AND status IN ('pending', 'in_progress')
+		WHERE (boxer1_id = $1 OR boxer2_id = $1)
+		  AND status IN ('scheduled', 'in_progress')
 	`
 	var inFight bool
-	err := db.QueryRow(query, boxerID, boxerID).Scan(&inFight)
+	err := db.QueryRow(query, boxerID).Scan(&inFight)
 	return inFight, err
 }
 
@@ -85,9 +80,9 @@ func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
 		       health, energy, strength, defense, agility, experience, level,
 		       created_at, updated_at
 		FROM boxers
-		WHERE id != ? AND user_id != (SELECT user_id FROM boxers WHERE id = ?)
+		WHERE id != $1 AND user_id != (SELECT user_id FROM boxers WHERE id = $1)
 	`
-	rows, err := db.Query(query, boxerID, boxerID)
+	rows, err := db.Query(query, boxerID)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +120,14 @@ func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
 // GetFightHistory retrieves fight history for a boxer
 func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 	query := `
-		SELECT id, attacker_id, defender_id, attacker_hp, defender_hp,
-		       status, turns, started_at, end_time, created_at, updated_at
+		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+		       winner_id, round, data, created_at, updated_at
 		FROM fights
-		WHERE attacker_id = ? OR defender_id = ?
+		WHERE boxer1_id = $1 OR boxer2_id = $1
 		ORDER BY created_at DESC
 		LIMIT 50
 	`
-	rows, err := db.Query(query, boxerID, boxerID)
+	rows, err := db.Query(query, boxerID)
 	if err != nil {
 		return nil, err
 	}
@@ -143,14 +138,15 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 		fight := &model.Fight{}
 		err := rows.Scan(
 			&fight.ID,
-			&fight.AttackerID,
-			&fight.DefenderID,
-			&fight.AttackerHP,
-			&fight.DefenderHP,
+			&fight.Boxer1ID,
+			&fight.Boxer2ID,
 			&fight.Status,
-			&fight.Turns,
-			&fight.StartedAt,
+			&fight.ScheduledTime,
+			&fight.StartTime,
 			&fight.EndTime,
+			&fight.WinnerID,
+			&fight.Round,
+			&fight.Data,
 			&fight.CreatedAt,
 			&fight.UpdatedAt,
 		)

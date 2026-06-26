@@ -6,7 +6,9 @@
       "Bash(go version *)",
       "Bash(go env *)",
       "Bash(go clean *)",
-      "Bash(where go *)"
+      "Bash(where go *)",
+      "Bash(go run *)",
+      "Bash(go build *)"
     ]
   }
 }

@@ -34,8 +34,8 @@ type BoxerCreate struct {
 
 // BoxerUpdate represents a request to update a boxer
 type BoxerUpdate struct {
-	Name         *string `json:"name" binding:"omitempty,min=1,max=100"`
-	Nickname     *string `json:"nickname"`
+	Name         *string  `json:"name" binding:"omitempty,min=1,max=100"`
+	Nickname     *string  `json:"nickname"`
 	PositionX    *float64 `json:"position_x" binding:"omitempty,min=0"`
 	PositionY    *float64 `json:"position_y" binding:"omitempty,min=0"`
 	Strength     *float64 `json:"strength" binding:"omitempty,min=0"`
@@ -70,8 +70,8 @@ type StatsAdd struct {
 	Experience  *float64 `json:"experience"`
 }
 
-// UserCreate represents a request to create a user and boxer
-type UserCreate struct {
+// CreateUserBoxerRequest represents a request to create a user and boxer
+type CreateUserBoxerRequest struct {
 	ID           int    `json:"id"`
 	Username     string `json:"username" binding:"required,min=1,max=100"`
 	Email        string `json:"email" binding:"required,email"`
