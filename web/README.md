@@ -1,63 +1,30 @@
-# Boxing Simulator Web UI
+# Web UI for Boxing Simulator
 
-This directory contains the web user interface for the Boxing Simulator application.
+This directory contains the frontend files for the Boxing Simulator web application.
 
-## Features
+## Structure
 
-- User authentication (login/register)
-- Boxer management and creation
-- Fight arena with boxer selection
-- Responsive design that works on desktop and mobile
+- `index.html` - Main HTML structure with layout and components
+- `styles.css` - Styling using modern CSS with responsive design  
+- `app.js` - JavaScript functionality handling API calls and UI interactions
+- `server.go` - Simple static file server for serving the web UI (deprecated - now integrated into main server)
 
-## Getting Started
+## How it works
 
-### Prerequisites
-- Go 1.19 or higher installed
-- Backend server running on `http://localhost:8080`
-
-### Running the UI Server
-
-You can run the web UI server in two ways:
-
-1. Using the Makefile (recommended):
-   ```bash
-   make web-dev
-   ```
-
-2. Directly with Go:
-   ```bash
-   cd web
-   go run server.go
-   ```
-
-The UI will be available at `http://localhost:8081`
-
-## Architecture
-
-### Files Structure
-- `index.html` - Main HTML structure
-- `styles.css` - Styling and responsive design
-- `app.js` - JavaScript functionality and API integration
-- `server.go` - Simple static file server to serve the UI
-
-### API Integration
-The UI communicates with the backend API at `http://localhost:8080` using standard HTTP requests for:
-- Authentication (login/register)
-- Boxer management (create, get, update, delete)
-- User management
-- Fight system
+The web UI is served directly by the main application server at port 8080. All routes that don't match API endpoints will serve static files from this directory.
 
 ## Development
 
-To add new features:
-1. Modify `index.html` for new UI components
-2. Update `styles.css` for styling changes
-3. Extend `app.js` with new JavaScript functionality
-4. Ensure API endpoints match the backend
+To run the complete application with the web UI:
 
-## Customization
+1. Start the database services:
+   ```bash
+   make docker-up
+   ```
 
-The UI is designed to be easily customizable:
-- Change colors in `styles.css`
-- Add new sections in `index.html`
-- Extend functionality in `app.js`
+2. Run the main server (which includes UI serving):
+   ```bash
+   make dev
+   ```
+
+3. Open your browser and navigate to `http://localhost:8080`

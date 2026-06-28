@@ -71,6 +71,15 @@ lint: ## Run go vet and linter
 
 deps: ## Download dependencies
 	go mod download
-	go mod tidy# Run with hot reload (if air is installed)
-dev: ## Run with hot reload (requires air)
-	air
+	go mod tidy
+
+# Run development server
+dev: ## Run development server (no hot reload)
+	@echo "Building and running development server..."
+	@make build-server
+	@echo "Starting server on port 8080..."
+	@./boxing-server
+
+web-dev: ## Run the web UI server separately
+	@echo "Starting web UI server on port 8081..."
+	@go run web-server.go
