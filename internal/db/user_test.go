@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -15,9 +16,19 @@ func setupTestDB(t *testing.T) *sql.DB {
 	}
 
 	// Run migrations
-	CreateTables()
+	InitializeSchema(db)
 
 	return db
+}
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
+}
+
+// Helper function to create int pointer
+func intPtr(i int) *int {
+	return &i
 }
 
 func TestGetUserByID(t *testing.T) {
@@ -25,11 +36,10 @@ func TestGetUserByID(t *testing.T) {
 	defer db.Close()
 
 	// Create a test user
-	user := &model.User{
-		Username:    "testuser",
-		Email:       "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:        "user",
+	user := &model.UserCreate{
+		Username:       "testuser",
+		Email:          "test@example.com",
+		HashedPassword: "hashedpassword",
 	}
 
 	if err := CreateUser(db, user); err != nil {
@@ -37,17 +47,17 @@ func TestGetUserByID(t *testing.T) {
 	}
 
 	// Test successful retrieval
-	found, err := GetUserByID(db, user.ID)
+	found, err := GetUserByID(db, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if found.ID != user.ID {
-		t.Errorf("Expected ID %d, got %d", user.ID, found.ID)
+	if found.ID != 1 {
+		t.Errorf("Expected ID %d, got %d", 1, found.ID)
 	}
 
-	if found.Username != user.Username {
-		t.Errorf("Expected username %s, got %s", user.Username, found.Username)
+	if found.Username != "testuser" {
+		t.Errorf("Expected username testuser, got %s", found.Username)
 	}
 
 	// Test not found
@@ -62,11 +72,10 @@ func TestGetUserByUsername(t *testing.T) {
 	defer db.Close()
 
 	// Create a test user
-	user := &model.User{
-		Username:    "testuser",
-		Email:       "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:        "user",
+	user := &model.UserCreate{
+		Username:       "testuser",
+		Email:          "test@example.com",
+		HashedPassword: "hashedpassword",
 	}
 
 	if err := CreateUser(db, user); err != nil {
@@ -95,11 +104,10 @@ func TestUpdateUser(t *testing.T) {
 	defer db.Close()
 
 	// Create a test user
-	user := &model.User{
-		Username:    "testuser",
-		Email:       "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:        "user",
+	user := &model.UserCreate{
+		Username:       "testuser",
+		Email:          "test@example.com",
+		HashedPassword: "hashedpassword",
 	}
 
 	if err := CreateUser(db, user); err != nil {
@@ -108,11 +116,10 @@ func TestUpdateUser(t *testing.T) {
 
 	// Update user
 	updatedUser := &model.User{
-		ID:           user.ID,
-		Username:    "updateduser",
-		Email:       "updated@example.com",
-		PasswordHash: "newhashedpassword",
-		Role:        "admin",
+		ID:             1,
+		Username:       "updateduser",
+		Email:          "updated@example.com",
+		HashedPassword: "newhashedpassword",
 	}
 
 	if err := UpdateUser(db, updatedUser); err != nil {
@@ -120,7 +127,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	// Verify update
-	found, err := GetUserByID(db, user.ID)
+	found, err := GetUserByID(db, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,10 +139,6 @@ func TestUpdateUser(t *testing.T) {
 	if found.Email != "updated@example.com" {
 		t.Errorf("Expected email updated@example.com, got %s", found.Email)
 	}
-
-	if found.Role != "admin" {
-		t.Errorf("Expected role admin, got %s", found.Role)
-	}
 }
 
 func TestListUsers(t *testing.T) {
@@ -143,10 +146,10 @@ func TestListUsers(t *testing.T) {
 	defer db.Close()
 
 	// Create multiple test users
-	users := []*model.User{
-		{Username: "user1", Email: "user1@example.com", PasswordHash: "pass1", Role: "user"},
-		{Username: "user2", Email: "user2@example.com", PasswordHash: "pass2", Role: "user"},
-		{Username: "user3", Email: "user3@example.com", PasswordHash: "pass3", Role: "admin"},
+	users := []*model.UserCreate{
+		{Username: "user1", Email: "user1@example.com", HashedPassword: "pass1"},
+		{Username: "user2", Email: "user2@example.com", HashedPassword: "pass2"},
+		{Username: "user3", Email: "user3@example.com", HashedPassword: "pass3"},
 	}
 
 	for _, user := range users {

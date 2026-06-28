@@ -165,6 +165,8 @@ func CreateBoxer(db *sql.DB, boxer *model.BoxerCreate) error {
 		                    strength, defense, agility)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
+	// For now, we'll use user_id = 1 as a placeholder. In real implementation,
+	// this would be passed in or retrieved from the authenticated context.
 	_, err := db.Exec(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Strength, boxer.Defense, boxer.Agility)
 	if err != nil {
