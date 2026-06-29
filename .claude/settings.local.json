@@ -8,7 +8,8 @@
       "Bash(go clean *)",
       "Bash(where go *)",
       "Bash(go run *)",
-      "Bash(go build *)"
+      "Bash(go build *)",
+      "Bash(make test *)"
     ]
   }
 }

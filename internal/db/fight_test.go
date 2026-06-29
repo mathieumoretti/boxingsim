@@ -7,45 +7,7 @@ import (
 	"github.com/mormm/boxing/internal/model"
 )
 
-func TestCreateBoxer(t *testing.T) {
-	db := setupTestDB(t)
-	defer db.Close()
-
-	// Create a test user first
-	user := &model.UserCreate{
-		Username:       "testuser",
-		Email:          "test@example.com",
-		HashedPassword: "hashedpassword",
-	}
-	if err := CreateUser(db, user); err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a boxer
-	boxer := &model.BoxerCreate{
-		Name:         "Test Boxer",
-		Nickname:     stringPtr("Testy"),
-		PositionX:    10.0,
-		PositionY:    10.0,
-		Strength:     50.0,
-		Defense:      40.0,
-		Agility:      60.0,
-	}
-
-	if err := CreateBoxer(db, boxer); err != nil {
-		t.Fatal(err)
-	}
-
-	// Get the boxer to verify it was created
-	foundBoxer, err := GetBoxerByID(db, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if foundBoxer.Name != "Test Boxer" {
-		t.Errorf("Expected name Test Boxer, got %s", foundBoxer.Name)
-	}
-}
+// This test was moved to boxer_test.go to avoid duplication
 
 func TestCreateFight(t *testing.T) {
 	db := setupTestDB(t)
