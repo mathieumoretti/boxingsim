@@ -102,27 +102,6 @@ CREATE INDEX IF NOT EXISTS idx_training_sessions_boxer_id ON training_sessions(b
 	return nil
 }
 
-// GetBoxerByID retrieves a boxer by ID
-func GetBoxerByID(db *sql.DB, id int) (*model.Boxer, error) {
-	var boxer model.Boxer
-	err := db.QueryRow(`
-		SELECT id, user_id, name, nickname, position_x, position_y,
-		       health, energy, strength, defense, agility,
-		       experience, level, created_at, updated_at
-		FROM boxers
-		WHERE id = ?
-	`, id).Scan(
-		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname,
-		&boxer.PositionX, &boxer.PositionY, &boxer.Health, &boxer.Energy,
-		&boxer.Strength, &boxer.Defense, &boxer.Agility,
-		&boxer.Experience, &boxer.Level, &boxer.CreatedAt, &boxer.UpdatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &boxer, nil
-}
-
 // CreateUser creates a new user
 func CreateUser(db *sql.DB, user *model.UserCreate) error {
 	query := `
@@ -135,27 +114,6 @@ func CreateUser(db *sql.DB, user *model.UserCreate) error {
 	}
 
 	return nil
-}
-
-// GetBoxerByUserID retrieves a boxer by user ID
-func GetBoxerByUserID(db *sql.DB, userID int) (*model.Boxer, error) {
-	var boxer model.Boxer
-	err := db.QueryRow(`
-		SELECT id, user_id, name, nickname, position_x, position_y,
-		       health, energy, strength, defense, agility,
-		       experience, level, created_at, updated_at
-		FROM boxers
-		WHERE user_id = ?
-	`, userID).Scan(
-		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname,
-		&boxer.PositionX, &boxer.PositionY, &boxer.Health, &boxer.Energy,
-		&boxer.Strength, &boxer.Defense, &boxer.Agility,
-		&boxer.Experience, &boxer.Level, &boxer.CreatedAt, &boxer.UpdatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &boxer, nil
 }
 
 // CreateBoxer creates a new boxer for a user

@@ -27,6 +27,7 @@ jobs:
     - name: Run linters
       run: |
         go vet ./...
+        golangci-lint version
         golangci-lint run ./...
 
     - name: Build application

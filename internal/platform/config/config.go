@@ -12,7 +12,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 
-	RedisAddr    string
+	RedisAddr     string
 	RedisPassword string
 
 	JWTSecret string
@@ -26,7 +26,7 @@ func Load() *Config {
 		DBPassword: getEnv("DB_PASSWORD", "boxing123"),
 		DBName:     getEnv("DB_NAME", "boxing"),
 
-		RedisAddr:    getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 
 		JWTSecret: getEnv("JWT_SECRET", "dev-secret-key-change-in-production"),

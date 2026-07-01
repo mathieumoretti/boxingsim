@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/mormm/boxing/internal/model"
+
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/model"
 )
 
 // BoxerService handles boxer-related business logic
@@ -17,7 +18,11 @@ func NewBoxerService(boxerService *boxer.BoxerService) *BoxerService {
 }
 
 // CreateBoxer creates a new boxer for a user
-func (s *BoxerService) CreateBoxer(ctx context.Context, userID int, createReq *model.BoxerCreate) (*model.Boxer, error) {
+func (s *BoxerService) CreateBoxer(
+	ctx context.Context,
+	userID int,
+	createReq *model.BoxerCreate,
+) (*model.Boxer, error) {
 	return s.boxerService.CreateBoxer(ctx, userID, createReq)
 }
 
@@ -29,4 +34,9 @@ func (s *BoxerService) GetBoxer(ctx context.Context, id int) (*model.Boxer, erro
 // UpdateBoxer updates a boxer's information
 func (s *BoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model.BoxerUpdate) (*model.Boxer, error) {
 	return s.boxerService.UpdateBoxer(ctx, id, updateReq)
+}
+
+// UpdateStats updates a boxer's stats (experience and level)
+func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.BoxerStats) error {
+	return s.boxerService.UpdateStats(ctx, id, stats)
 }

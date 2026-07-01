@@ -28,7 +28,11 @@ func NewBoxerService(repo BoxerRepository) *BoxerService {
 }
 
 // CreateBoxer creates a new boxer for a user
-func (s *BoxerService) CreateBoxer(ctx context.Context, userID int, createReq *model.BoxerCreate) (*model.Boxer, error) {
+func (s *BoxerService) CreateBoxer(
+	ctx context.Context,
+	userID int,
+	createReq *model.BoxerCreate,
+) (*model.Boxer, error) {
 	boxer := &model.Boxer{
 		UserID:     userID,
 		Name:       createReq.Name,
@@ -101,4 +105,24 @@ func (s *BoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model
 	}
 
 	return boxer, nil
+}
+
+// UpdateStats updates a boxer's stats (experience and level)
+func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.BoxerStats) error {
+	boxer, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	boxer.Experience += stats.Experience
+	boxer.Level = int(boxer.Experience/100.0) + 1
+
+	boxer.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, boxer)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

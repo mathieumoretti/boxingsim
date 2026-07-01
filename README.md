@@ -56,6 +56,7 @@ migrations/       # Database schema migrations
 
 - `make test` - Run all tests
 - `make lint` - Run linters (go vet, golangci-lint)
+- `make fmt` - Format code with gofmt
 
 ## Database Operations
 

@@ -5,15 +5,16 @@ import (
 	"os"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/mormm/boxing/internal/platform/config"
 )
 
 type User struct {
-	ID           int
-	Username     string
-	Email        string
+	ID             int
+	Username       string
+	Email          string
 	HashedPassword string
 }
 

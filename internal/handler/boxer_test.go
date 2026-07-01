@@ -8,9 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mormm/boxing/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/model"
 )
 
 // MockBoxerService implements the BoxerService interface for testing
@@ -18,7 +19,11 @@ type MockBoxerService struct {
 	mock.Mock
 }
 
-func (m *MockBoxerService) CreateBoxer(ctx context.Context, userID int, createReq *model.BoxerCreate) (*model.Boxer, error) {
+func (m *MockBoxerService) CreateBoxer(
+	ctx context.Context,
+	userID int,
+	createReq *model.BoxerCreate,
+) (*model.Boxer, error) {
 	args := m.Called(ctx, userID, createReq)
 	return args.Get(0).(*model.Boxer), args.Error(1)
 }
@@ -28,7 +33,11 @@ func (m *MockBoxerService) GetBoxer(ctx context.Context, id int) (*model.Boxer, 
 	return args.Get(0).(*model.Boxer), args.Error(1)
 }
 
-func (m *MockBoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model.BoxerUpdate) (*model.Boxer, error) {
+func (m *MockBoxerService) UpdateBoxer(
+	ctx context.Context,
+	id int,
+	updateReq *model.BoxerUpdate,
+) (*model.Boxer, error) {
 	args := m.Called(ctx, id, updateReq)
 	return args.Get(0).(*model.Boxer), args.Error(1)
 }
@@ -40,20 +49,20 @@ func TestBoxerHandlerCreateBoxer(t *testing.T) {
 
 		// Set up the service mock
 		createReq := &model.BoxerCreate{
-			Name:       "Test Boxer",
-			Nickname:   "TB",
-			PositionX:  0,
-			PositionY:  0,
-			Strength:   10,
-			Defense:    10,
-			Agility:    10,
+			Name:      "Test Boxer",
+			Nickname:  stringPtr("TB"),
+			PositionX: 0,
+			PositionY: 0,
+			Strength:  10,
+			Defense:   10,
+			Agility:   10,
 		}
 
 		expectedBoxer := &model.Boxer{
 			ID:         1,
 			UserID:     1,
 			Name:       "Test Boxer",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -91,13 +100,13 @@ func TestBoxerHandlerCreateBoxer(t *testing.T) {
 		handler := NewBoxerHandler()
 
 		createReq := &model.BoxerCreate{
-			Name:       "Test Boxer",
-			Nickname:   "TB",
-			PositionX:  0,
-			PositionY:  0,
-			Strength:   10,
-			Defense:    10,
-			Agility:    10,
+			Name:      "Test Boxer",
+			Nickname:  stringPtr("TB"),
+			PositionX: 0,
+			PositionY: 0,
+			Strength:  10,
+			Defense:   10,
+			Agility:   10,
 		}
 
 		expectedError := &model.Error{Message: "Service error"}
@@ -147,7 +156,7 @@ func TestBoxerHandlerGetBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "Test Boxer",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -212,7 +221,7 @@ func TestBoxerHandlerUpdateBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "Updated Name",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -275,8 +284,4 @@ func TestBoxerHandlerUpdateBoxer(t *testing.T) {
 // Helper functions to create pointers for tests
 func stringPtr(s string) *string {
 	return &s
-}
-
-func intPtr(i int) *int {
-	return &i
 }

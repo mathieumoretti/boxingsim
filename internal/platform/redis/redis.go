@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 type Redis struct {

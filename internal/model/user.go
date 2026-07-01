@@ -29,9 +29,28 @@ type UserUpdate struct {
 
 // UserResponse represents a user for API responses
 type UserResponse struct {
-	ID             int       `json:"id"`
-	Username       string    `json:"username"`
-	Email          string    `json:"email"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Error represents an error response
+type Error struct {
+	Message string `json:"message"`
+}
+
+// UserRegister represents a request to register a new user
+type UserRegister struct {
+	Username        string `json:"username" binding:"required,min=3,max=50"`
+	Email           string `json:"email" binding:"required,email"`
+	Password        string `json:"password" binding:"required,min=6"`
+	ConfirmPassword string `json:"confirm_password" binding:"required,eqfield=Password"`
+}
+
+// UserLogin represents a request to login
+type UserLogin struct {
+	Username string `json:"username" binding:"required,min=3,max=50"`
+	Password string `json:"password" binding:"required,min=6"`
 }

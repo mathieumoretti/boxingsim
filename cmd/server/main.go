@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/database"
@@ -30,7 +31,11 @@ func main() {
 		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", err)
 		// Continue without database connection for web UI serving
 	} else {
-		defer dbConn.Close()
+		defer func() {
+			if dbConn != nil {
+				_ = dbConn.Close()
+			}
+		}()
 	}
 
 	// Initialize Redis
@@ -39,7 +44,9 @@ func main() {
 		logger.Error("Failed to connect to Redis", "error", err)
 		os.Exit(1)
 	}
-	defer redisClient.Close()
+	defer func() {
+		_ = redisClient.Close()
+	}()
 
 	// Setup repositories only if DB is connected
 	if dbConn != nil {
@@ -105,5 +112,5 @@ func main() {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status": "OK"}`))
+	_, _ = w.Write([]byte(`{"status": "OK"}`))
 }

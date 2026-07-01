@@ -9,13 +9,13 @@ import (
 
 // TrainingQueue represents a queued training action
 type TrainingQueue struct {
-	ID           int       `json:"id"`
-	BoxerID      int       `json:"boxer_id"`
-	Type         string    `json:"type"` // e.g., "strength", "defense", "agility"
-	Duration     int       `json:"duration"` // in minutes
-	Completed    bool      `json:"completed"`
-	CreatedAt    time.Time `json:"created_at"`
-	CompletedAt  *time.Time `json:"completed_at"`
+	ID          int        `json:"id"`
+	BoxerID     int        `json:"boxer_id"`
+	Type        string     `json:"type"`     // e.g., "strength", "defense", "agility"
+	Duration    int        `json:"duration"` // in minutes
+	Completed   bool       `json:"completed"`
+	CreatedAt   time.Time  `json:"created_at"`
+	CompletedAt *time.Time `json:"completed_at"`
 }
 
 // TrainingService handles training operations
@@ -27,18 +27,23 @@ func NewTrainingService() *TrainingService {
 }
 
 // QueueTraining adds a training session to the queue
-func (s *TrainingService) QueueTraining(ctx context.Context, boxerID int, trainingType string, duration int) (*TrainingQueue, error) {
+func (s *TrainingService) QueueTraining(
+	ctx context.Context,
+	boxerID int,
+	trainingType string,
+	duration int,
+) (*TrainingQueue, error) {
 	// In a real implementation, this would:
 	// 1. Validate the training request
 	// 2. Add to the training queue
 	// 3. Return the queued item
 
 	queueItem := &TrainingQueue{
-		BoxerID:     boxerID,
-		Type:        trainingType,
-		Duration:    duration,
-		Completed:   false,
-		CreatedAt:   time.Now(),
+		BoxerID:   boxerID,
+		Type:      trainingType,
+		Duration:  duration,
+		Completed: false,
+		CreatedAt: time.Now(),
 	}
 
 	return queueItem, nil
@@ -56,7 +61,11 @@ func (s *TrainingService) ProcessTrainingQueue(ctx context.Context) error {
 }
 
 // CalculateTrainingEffectiveness calculates stat improvements based on training
-func (s *TrainingService) CalculateTrainingEffectiveness(trainingType string, duration int, boxerStats *model.Boxer) float64 {
+func (s *TrainingService) CalculateTrainingEffectiveness(
+	trainingType string,
+	duration int,
+	boxerStats *model.Boxer,
+) float64 {
 	// Basic training effectiveness calculation
 	// This would be more sophisticated in a real implementation
 

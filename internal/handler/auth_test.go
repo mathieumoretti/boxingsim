@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mormm/boxing/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/model"
 )
 
 // MockAuthService implements the AuthService interface for testing
@@ -34,9 +35,9 @@ func TestAuthHandlerRegisterUser(t *testing.T) {
 
 		// Set up the service mock
 		registerReq := &model.UserRegister{
-			Username:       "testuser",
-			Email:          "test@example.com",
-			Password:       "password123",
+			Username:        "testuser",
+			Email:           "test@example.com",
+			Password:        "password123",
 			ConfirmPassword: "password123",
 		}
 
@@ -71,14 +72,15 @@ func TestAuthHandlerRegisterUser(t *testing.T) {
 		handler := NewAuthHandler()
 
 		registerReq := &model.UserRegister{
-			Username:       "testuser",
-			Email:          "test@example.com",
-			Password:       "password123",
+			Username:        "testuser",
+			Email:           "test@example.com",
+			Password:        "password123",
 			ConfirmPassword: "password123",
 		}
 
 		expectedError := &model.Error{Message: "User already exists"}
-		mockService.On("RegisterUser", "testuser", "test@example.com", "password123").Return((*model.User)(nil), expectedError)
+		mockService.On("RegisterUser", "testuser", "test@example.com", "password123").
+			Return((*model.User)(nil), expectedError)
 
 		// Create request body
 		body, _ := json.Marshal(registerReq)

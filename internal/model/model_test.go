@@ -66,21 +66,21 @@ func TestUser(t *testing.T) {
 func TestBoxer(t *testing.T) {
 	t.Run("Boxer struct creation", func(t *testing.T) {
 		boxer := &Boxer{
-			ID:           1,
-			UserID:       1,
-			Name:         "Test Boxer",
-			Nickname:     stringPtr("TB"),
-			PositionX:    0.0,
-			PositionY:    0.0,
-			Health:       100.0,
-			Energy:       100.0,
-			Strength:     10.0,
-			Defense:      10.0,
-			Agility:      10.0,
-			Experience:   0.0,
-			Level:        1,
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
+			ID:         1,
+			UserID:     1,
+			Name:       "Test Boxer",
+			Nickname:   stringPtr("TB"),
+			PositionX:  0.0,
+			PositionY:  0.0,
+			Health:     100.0,
+			Energy:     100.0,
+			Strength:   10.0,
+			Defense:    10.0,
+			Agility:    10.0,
+			Experience: 0.0,
+			Level:      1,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
 		assert.NotNil(t, boxer)
@@ -91,21 +91,21 @@ func TestBoxer(t *testing.T) {
 
 	t.Run("Boxer JSON marshaling", func(t *testing.T) {
 		boxer := &Boxer{
-			ID:           1,
-			UserID:       1,
-			Name:         "Test Boxer",
-			Nickname:     stringPtr("TB"),
-			PositionX:    0.0,
-			PositionY:    0.0,
-			Health:       100.0,
-			Energy:       100.0,
-			Strength:     10.0,
-			Defense:      10.0,
-			Agility:      10.0,
-			Experience:   0.0,
-			Level:        1,
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
+			ID:         1,
+			UserID:     1,
+			Name:       "Test Boxer",
+			Nickname:   stringPtr("TB"),
+			PositionX:  0.0,
+			PositionY:  0.0,
+			Health:     100.0,
+			Energy:     100.0,
+			Strength:   10.0,
+			Defense:    10.0,
+			Agility:    10.0,
+			Experience: 0.0,
+			Level:      1,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
 		data, err := json.Marshal(boxer)
@@ -151,7 +151,7 @@ func TestFight(t *testing.T) {
 		assert.Equal(t, FightStatusScheduled, FightStatus("scheduled"))
 		assert.Equal(t, FightStatusInProgress, FightStatus("in_progress"))
 		assert.Equal(t, FightStatusCompleted, FightStatus("completed"))
-		assert.Equal(t, FightStatusCancelled, FightStatus("cancelled"))
+		assert.Equal(t, FightStatusCancelled, FightStatus("canceled"))
 	})
 
 	t.Run("Fight struct creation", func(t *testing.T) {
@@ -263,15 +263,15 @@ func TestTrainingSession(t *testing.T) {
 	t.Run("TrainingSession struct creation", func(t *testing.T) {
 		now := time.Now()
 		session := &TrainingSession{
-			ID:                 1,
-			BoxerID:            1,
-			SessionType:        SessionTypeStrength,
-			DurationMinutes:    60,
-			StrengthGain:       5.0,
-			DefenseGain:        2.0,
-			AgilityGain:        3.0,
-			ExperienceGain:     10,
-			CreatedAt:          now,
+			ID:              1,
+			BoxerID:         1,
+			SessionType:     SessionTypeStrength,
+			DurationMinutes: 60,
+			StrengthGain:    5.0,
+			DefenseGain:     2.0,
+			AgilityGain:     3.0,
+			ExperienceGain:  10,
+			CreatedAt:       now,
 		}
 
 		assert.NotNil(t, session)
@@ -283,15 +283,15 @@ func TestTrainingSession(t *testing.T) {
 	t.Run("TrainingSession JSON marshaling", func(t *testing.T) {
 		now := time.Now()
 		session := &TrainingSession{
-			ID:                 1,
-			BoxerID:            1,
-			SessionType:        SessionTypeStrength,
-			DurationMinutes:    60,
-			StrengthGain:       5.0,
-			DefenseGain:        2.0,
-			AgilityGain:        3.0,
-			ExperienceGain:     10,
-			CreatedAt:          now,
+			ID:              1,
+			BoxerID:         1,
+			SessionType:     SessionTypeStrength,
+			DurationMinutes: 60,
+			StrengthGain:    5.0,
+			DefenseGain:     2.0,
+			AgilityGain:     3.0,
+			ExperienceGain:  10,
+			CreatedAt:       now,
 		}
 
 		data, err := json.Marshal(session)

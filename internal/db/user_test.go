@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
+
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -16,7 +17,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	}
 
 	// Run migrations
-	InitializeSchema(db)
+	_ = InitializeSchema(db)
 
 	return db
 }
@@ -26,14 +27,11 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// Helper function to create int pointer
-func intPtr(i int) *int {
-	return &i
-}
-
 func TestGetUserByID(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create a test user
 	user := &model.UserCreate{
@@ -69,7 +67,9 @@ func TestGetUserByID(t *testing.T) {
 
 func TestGetUserByUsername(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create a test user
 	user := &model.UserCreate{
@@ -101,7 +101,9 @@ func TestGetUserByUsername(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create a test user
 	user := &model.UserCreate{
@@ -143,7 +145,9 @@ func TestUpdateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create multiple test users
 	users := []*model.UserCreate{

@@ -22,7 +22,12 @@ type ScheduledEvent struct {
 	Data      map[string]interface{}
 }
 
-func NewScheduledEvent(boxerID int, eventType EventType, eventTime time.Time, data map[string]interface{}) *ScheduledEvent {
+func NewScheduledEvent(
+	boxerID int,
+	eventType EventType,
+	eventTime time.Time,
+	data map[string]interface{},
+) *ScheduledEvent {
 	return &ScheduledEvent{
 		BoxerID:   boxerID,
 		EventType: eventType,

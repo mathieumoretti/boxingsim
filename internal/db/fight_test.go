@@ -11,7 +11,9 @@ import (
 
 func TestCreateFight(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create test user
 	user := &model.UserCreate{
@@ -25,26 +27,26 @@ func TestCreateFight(t *testing.T) {
 
 	// Create boxers for the fight
 	boxer1 := &model.BoxerCreate{
-		Name:         "Boxer 1",
-		Nickname:     stringPtr("B1"),
-		PositionX:    10.0,
-		PositionY:    10.0,
-		Strength:     50.0,
-		Defense:      40.0,
-		Agility:      60.0,
+		Name:      "Boxer 1",
+		Nickname:  stringPtr("B1"),
+		PositionX: 10.0,
+		PositionY: 10.0,
+		Strength:  50.0,
+		Defense:   40.0,
+		Agility:   60.0,
 	}
 	if err := CreateBoxer(db, boxer1); err != nil {
 		t.Fatal(err)
 	}
 
 	boxer2 := &model.BoxerCreate{
-		Name:         "Boxer 2",
-		Nickname:     stringPtr("B2"),
-		PositionX:    15.0,
-		PositionY:    15.0,
-		Strength:     45.0,
-		Defense:      45.0,
-		Agility:      55.0,
+		Name:      "Boxer 2",
+		Nickname:  stringPtr("B2"),
+		PositionX: 15.0,
+		PositionY: 15.0,
+		Strength:  45.0,
+		Defense:   45.0,
+		Agility:   55.0,
 	}
 	if err := CreateBoxer(db, boxer2); err != nil {
 		t.Fatal(err)
@@ -76,7 +78,9 @@ func TestCreateFight(t *testing.T) {
 
 func TestGetFightByID(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create test user
 	user := &model.UserCreate{
@@ -90,26 +94,26 @@ func TestGetFightByID(t *testing.T) {
 
 	// Create boxers for the fight
 	boxer1 := &model.BoxerCreate{
-		Name:         "Boxer 1",
-		Nickname:     stringPtr("B1"),
-		PositionX:    10.0,
-		PositionY:    10.0,
-		Strength:     50.0,
-		Defense:      40.0,
-		Agility:      60.0,
+		Name:      "Boxer 1",
+		Nickname:  stringPtr("B1"),
+		PositionX: 10.0,
+		PositionY: 10.0,
+		Strength:  50.0,
+		Defense:   40.0,
+		Agility:   60.0,
 	}
 	if err := CreateBoxer(db, boxer1); err != nil {
 		t.Fatal(err)
 	}
 
 	boxer2 := &model.BoxerCreate{
-		Name:         "Boxer 2",
-		Nickname:     stringPtr("B2"),
-		PositionX:    15.0,
-		PositionY:    15.0,
-		Strength:     45.0,
-		Defense:      45.0,
-		Agility:      55.0,
+		Name:      "Boxer 2",
+		Nickname:  stringPtr("B2"),
+		PositionX: 15.0,
+		PositionY: 15.0,
+		Strength:  45.0,
+		Defense:   45.0,
+		Agility:   55.0,
 	}
 	if err := CreateBoxer(db, boxer2); err != nil {
 		t.Fatal(err)
@@ -143,7 +147,9 @@ func TestGetFightByID(t *testing.T) {
 
 func TestUpdateFight(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create test user
 	user := &model.UserCreate{
@@ -157,26 +163,26 @@ func TestUpdateFight(t *testing.T) {
 
 	// Create boxers for the fight
 	boxer1 := &model.BoxerCreate{
-		Name:         "Boxer 1",
-		Nickname:     stringPtr("B1"),
-		PositionX:    10.0,
-		PositionY:    10.0,
-		Strength:     50.0,
-		Defense:      40.0,
-		Agility:      60.0,
+		Name:      "Boxer 1",
+		Nickname:  stringPtr("B1"),
+		PositionX: 10.0,
+		PositionY: 10.0,
+		Strength:  50.0,
+		Defense:   40.0,
+		Agility:   60.0,
 	}
 	if err := CreateBoxer(db, boxer1); err != nil {
 		t.Fatal(err)
 	}
 
 	boxer2 := &model.BoxerCreate{
-		Name:         "Boxer 2",
-		Nickname:     stringPtr("B2"),
-		PositionX:    15.0,
-		PositionY:    15.0,
-		Strength:     45.0,
-		Defense:      45.0,
-		Agility:      55.0,
+		Name:      "Boxer 2",
+		Nickname:  stringPtr("B2"),
+		PositionX: 15.0,
+		PositionY: 15.0,
+		Strength:  45.0,
+		Defense:   45.0,
+		Agility:   55.0,
 	}
 	if err := CreateBoxer(db, boxer2); err != nil {
 		t.Fatal(err)
@@ -208,7 +214,9 @@ func TestUpdateFight(t *testing.T) {
 
 func TestListFights(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	// Create test user
 	user := &model.UserCreate{
@@ -222,26 +230,26 @@ func TestListFights(t *testing.T) {
 
 	// Create boxers for the fights
 	boxer1 := &model.BoxerCreate{
-		Name:         "Boxer 1",
-		Nickname:     stringPtr("B1"),
-		PositionX:    10.0,
-		PositionY:    10.0,
-		Strength:     50.0,
-		Defense:      40.0,
-		Agility:      60.0,
+		Name:      "Boxer 1",
+		Nickname:  stringPtr("B1"),
+		PositionX: 10.0,
+		PositionY: 10.0,
+		Strength:  50.0,
+		Defense:   40.0,
+		Agility:   60.0,
 	}
 	if err := CreateBoxer(db, boxer1); err != nil {
 		t.Fatal(err)
 	}
 
 	boxer2 := &model.BoxerCreate{
-		Name:         "Boxer 2",
-		Nickname:     stringPtr("B2"),
-		PositionX:    15.0,
-		PositionY:    15.0,
-		Strength:     45.0,
-		Defense:      45.0,
-		Agility:      55.0,
+		Name:      "Boxer 2",
+		Nickname:  stringPtr("B2"),
+		PositionX: 15.0,
+		PositionY: 15.0,
+		Strength:  45.0,
+		Defense:   45.0,
+		Agility:   55.0,
 	}
 	if err := CreateBoxer(db, boxer2); err != nil {
 		t.Fatal(err)

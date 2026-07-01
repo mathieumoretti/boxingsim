@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mormm/boxing/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/model"
 )
 
 // MockBoxerRepository implements the BoxerRepository interface for testing
@@ -57,20 +58,20 @@ func TestBoxerServiceCreateBoxer(t *testing.T) {
 		service := NewBoxerService(mockRepo)
 
 		createReq := &model.BoxerCreate{
-			Name:       "Test Boxer",
-			Nickname:   "TB",
-			PositionX:  0,
-			PositionY:  0,
-			Strength:   10,
-			Defense:    10,
-			Agility:    10,
+			Name:      "Test Boxer",
+			Nickname:  stringPtr("TB"),
+			PositionX: 0,
+			PositionY: 0,
+			Strength:  10,
+			Defense:   10,
+			Agility:   10,
 		}
 
 		expectedBoxer := &model.Boxer{
-			ID:         1,
+			ID:         0, // ID is set by the repository after creation
 			UserID:     1,
 			Name:       "Test Boxer",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -101,13 +102,13 @@ func TestBoxerServiceCreateBoxer(t *testing.T) {
 		service := NewBoxerService(mockRepo)
 
 		createReq := &model.BoxerCreate{
-			Name:       "Test Boxer",
-			Nickname:   "TB",
-			PositionX:  0,
-			PositionY:  0,
-			Strength:   10,
-			Defense:    10,
-			Agility:    10,
+			Name:      "Test Boxer",
+			Nickname:  stringPtr("TB"),
+			PositionX: 0,
+			PositionY: 0,
+			Strength:  10,
+			Defense:   10,
+			Agility:   10,
 		}
 
 		expectedError := errors.New("database error")
@@ -132,7 +133,7 @@ func TestBoxerServiceGetBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "Test Boxer",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -184,7 +185,7 @@ func TestBoxerServiceGetBoxersByUser(t *testing.T) {
 				ID:         1,
 				UserID:     1,
 				Name:       "Test Boxer 1",
-				Nickname:   "TB1",
+				Nickname:   stringPtr("TB1"),
 				PositionX:  0,
 				PositionY:  0,
 				Health:     100.0,
@@ -201,7 +202,7 @@ func TestBoxerServiceGetBoxersByUser(t *testing.T) {
 				ID:         2,
 				UserID:     1,
 				Name:       "Test Boxer 2",
-				Nickname:   "TB2",
+				Nickname:   stringPtr("TB2"),
 				PositionX:  0,
 				PositionY:  0,
 				Health:     100.0,
@@ -255,7 +256,7 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "Old Name",
-			Nickname:   "ON",
+			Nickname:   stringPtr("ON"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -270,13 +271,13 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 		}
 
 		updateReq := &model.BoxerUpdate{
-			Name:       stringPtr("New Name"),
-			Nickname:   stringPtr("NN"),
-			PositionX:  intPtr(5),
-			PositionY:  intPtr(5),
-			Strength:   intPtr(15),
-			Defense:    intPtr(15),
-			Agility:    intPtr(15),
+			Name:      stringPtr("New Name"),
+			Nickname:  stringPtr("NN"),
+			PositionX: float64Ptr(5),
+			PositionY: float64Ptr(5),
+			Strength:  float64Ptr(15),
+			Defense:   float64Ptr(15),
+			Agility:   float64Ptr(15),
 		}
 
 		// The updated boxer after the update
@@ -284,7 +285,7 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "New Name",
-			Nickname:   "NN",
+			Nickname:   stringPtr("NN"),
 			PositionX:  5,
 			PositionY:  5,
 			Health:     100.0,
@@ -340,7 +341,7 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 			ID:         1,
 			UserID:     1,
 			Name:       "Test Boxer",
-			Nickname:   "TB",
+			Nickname:   stringPtr("TB"),
 			PositionX:  0,
 			PositionY:  0,
 			Health:     100.0,
@@ -375,6 +376,6 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func intPtr(i int) *int {
-	return &i
+func float64Ptr(f float64) *float64 {
+	return &f
 }

@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 // MockRedisClient is a mock of the Redis client for testing
@@ -33,7 +34,7 @@ func (m *MockRedisClient) Get(ctx context.Context, key string) (string, error) {
 func TestNewRedisClient(t *testing.T) {
 	t.Run("Creates Redis client with valid configuration", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "localhost:6379",
+			RedisAddr:     "localhost:6379",
 			RedisPassword: "",
 		}
 
@@ -46,7 +47,7 @@ func TestNewRedisClient(t *testing.T) {
 
 	t.Run("Creates Redis client with custom configuration", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "redis.example.com:6380",
+			RedisAddr:     "redis.example.com:6380",
 			RedisPassword: "custompassword",
 		}
 
@@ -59,7 +60,7 @@ func TestNewRedisClient(t *testing.T) {
 func TestRedisConnection(t *testing.T) {
 	t.Run("Redis connection structure validation", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "localhost:6379",
+			RedisAddr:     "localhost:6379",
 			RedisPassword: "",
 		}
 
@@ -69,7 +70,7 @@ func TestRedisConnection(t *testing.T) {
 
 	t.Run("Handles Redis connection string correctly", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "redis.example.com:6380",
+			RedisAddr:     "redis.example.com:6380",
 			RedisPassword: "password123",
 		}
 
@@ -88,7 +89,6 @@ func TestRedisConfiguration(t *testing.T) {
 	})
 
 	t.Run("Configuration with custom Redis address", func(t *testing.T) {
-		originalAddr := "REDIS_ADDR"
 		// Set environment variable
 		// Note: In actual implementation, this would be set by the environment
 		// For test purposes, we're just validating the structure
@@ -111,7 +111,7 @@ func TestRedisIntegration(t *testing.T) {
 
 	t.Run("Redis client initialization structure", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "localhost:6379",
+			RedisAddr:     "localhost:6379",
 			RedisPassword: "",
 		}
 
@@ -130,7 +130,7 @@ func TestRedisErrorHandling(t *testing.T) {
 
 	t.Run("Configuration validation", func(t *testing.T) {
 		cfg := &config.Config{
-			RedisAddr:    "localhost:6379",
+			RedisAddr:     "localhost:6379",
 			RedisPassword: "",
 		}
 

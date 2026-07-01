@@ -24,23 +24,23 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("Loads configuration with custom environment variables", func(t *testing.T) {
 		// Set up environment variables
-		os.Setenv("DB_HOST", "custom-db-host")
-		os.Setenv("DB_PORT", "5433")
-		os.Setenv("DB_USER", "customuser")
-		os.Setenv("DB_PASSWORD", "custompass")
-		os.Setenv("DB_NAME", "customdb")
-		os.Setenv("REDIS_ADDR", "custom-redis:6380")
-		os.Setenv("JWT_SECRET", "custom-jwt-secret")
+		_ = os.Setenv("DB_HOST", "custom-db-host")
+		_ = os.Setenv("DB_PORT", "5433")
+		_ = os.Setenv("DB_USER", "customuser")
+		_ = os.Setenv("DB_PASSWORD", "custompass")
+		_ = os.Setenv("DB_NAME", "customdb")
+		_ = os.Setenv("REDIS_ADDR", "custom-redis:6380")
+		_ = os.Setenv("JWT_SECRET", "custom-jwt-secret")
 
 		defer func() {
 			// Clean up environment variables
-			os.Unsetenv("DB_HOST")
-			os.Unsetenv("DB_PORT")
-			os.Unsetenv("DB_USER")
-			os.Unsetenv("DB_PASSWORD")
-			os.Unsetenv("DB_NAME")
-			os.Unsetenv("REDIS_ADDR")
-			os.Unsetenv("JWT_SECRET")
+			_ = os.Unsetenv("DB_HOST")
+			_ = os.Unsetenv("DB_PORT")
+			_ = os.Unsetenv("DB_USER")
+			_ = os.Unsetenv("DB_PASSWORD")
+			_ = os.Unsetenv("DB_NAME")
+			_ = os.Unsetenv("REDIS_ADDR")
+			_ = os.Unsetenv("JWT_SECRET")
 		}()
 
 		cfg := Load()
@@ -65,16 +65,16 @@ func TestLoadConfig(t *testing.T) {
 		originalValues := make(map[string]string)
 		for _, envVar := range envVars {
 			originalValues[envVar] = os.Getenv(envVar)
-			os.Unsetenv(envVar)
+			_ = os.Unsetenv(envVar)
 		}
 
 		defer func() {
 			// Restore original values
 			for envVar, value := range originalValues {
 				if value != "" {
-					os.Setenv(envVar, value)
+					_ = os.Setenv(envVar, value)
 				} else {
-					os.Unsetenv(envVar)
+					_ = os.Unsetenv(envVar)
 				}
 			}
 		}()
@@ -100,16 +100,20 @@ func TestGetEnv(t *testing.T) {
 	})
 
 	t.Run("Returns environment variable value when set", func(t *testing.T) {
-		os.Setenv("TEST_VAR", "test_value")
-		defer os.Unsetenv("TEST_VAR")
+		_ = os.Setenv("TEST_VAR", "test_value")
+		defer func() {
+			_ = os.Unsetenv("TEST_VAR")
+		}()
 
 		value := getEnv("TEST_VAR", "default_value")
 		assert.Equal(t, "test_value", value)
 	})
 
 	t.Run("Returns environment variable value when set with empty default", func(t *testing.T) {
-		os.Setenv("EMPTY_TEST_VAR", "test_value")
-		defer os.Unsetenv("EMPTY_TEST_VAR")
+		_ = os.Setenv("EMPTY_TEST_VAR", "test_value")
+		defer func() {
+			_ = os.Unsetenv("EMPTY_TEST_VAR")
+		}()
 
 		value := getEnv("EMPTY_TEST_VAR", "")
 		assert.Equal(t, "test_value", value)
@@ -123,24 +127,30 @@ func TestParseIntEnv(t *testing.T) {
 	})
 
 	t.Run("Returns parsed integer value when valid", func(t *testing.T) {
-		os.Setenv("INT_TEST_VAR", "123")
-		defer os.Unsetenv("INT_TEST_VAR")
+		_ = os.Setenv("INT_TEST_VAR", "123")
+		defer func() {
+			_ = os.Unsetenv("INT_TEST_VAR")
+		}()
 
 		value := parseIntEnv("INT_TEST_VAR", 42)
 		assert.Equal(t, 123, value)
 	})
 
 	t.Run("Returns default when parsing fails", func(t *testing.T) {
-		os.Setenv("INVALID_INT_VAR", "not_a_number")
-		defer os.Unsetenv("INVALID_INT_VAR")
+		_ = os.Setenv("INVALID_INT_VAR", "not_a_number")
+		defer func() {
+			_ = os.Unsetenv("INVALID_INT_VAR")
+		}()
 
 		value := parseIntEnv("INVALID_INT_VAR", 42)
 		assert.Equal(t, 42, value)
 	})
 
 	t.Run("Returns default when environment variable is empty", func(t *testing.T) {
-		os.Setenv("EMPTY_INT_VAR", "")
-		defer os.Unsetenv("EMPTY_INT_VAR")
+		_ = os.Setenv("EMPTY_INT_VAR", "")
+		defer func() {
+			_ = os.Unsetenv("EMPTY_INT_VAR")
+		}()
 
 		value := parseIntEnv("EMPTY_INT_VAR", 42)
 		assert.Equal(t, 42, value)

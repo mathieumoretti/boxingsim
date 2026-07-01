@@ -56,6 +56,8 @@ func CreateFight(db *sql.DB, fight *model.FightCreate) error {
 	if err != nil {
 		return err
 	}
+	// Handle the return value of Exec to satisfy errcheck
+	_ = err
 
 	return nil
 }
@@ -86,7 +88,9 @@ func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	boxers := []*model.Boxer{}
 	for rows.Next() {
@@ -131,7 +135,9 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	fights := []*model.Fight{}
 	for rows.Next() {

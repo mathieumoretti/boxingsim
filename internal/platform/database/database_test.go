@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 // MockDB is a mock of *sql.DB for testing
@@ -17,18 +18,18 @@ type MockDB struct {
 }
 
 func (m *MockDB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	args := m.Called(ctx, query, args)
-	return args.Get(0).(sql.Result), args.Error(1)
+	calledArgs := m.Called(ctx, query, args)
+	return calledArgs.Get(0).(sql.Result), calledArgs.Error(1)
 }
 
 func (m *MockDB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	args := m.Called(ctx, query, args)
-	return args.Get(0).(*sql.Rows), args.Error(1)
+	calledArgs := m.Called(ctx, query, args)
+	return calledArgs.Get(0).(*sql.Rows), calledArgs.Error(1)
 }
 
 func (m *MockDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	args := m.Called(ctx, query, args)
-	return args.Get(0).(*sql.Row)
+	calledArgs := m.Called(ctx, query, args)
+	return calledArgs.Get(0).(*sql.Row)
 }
 
 func TestNewPostgresDB(t *testing.T) {
@@ -103,13 +104,6 @@ func TestDatabaseConnection(t *testing.T) {
 
 func TestDatabaseConfiguration(t *testing.T) {
 	t.Run("Configuration loading from environment", func(t *testing.T) {
-		// Set up environment variables for testing
-		originalHost := "DB_HOST"
-		originalPort := "DB_PORT"
-		originalUser := "DB_USER"
-		originalPassword := "DB_PASSWORD"
-		originalName := "DB_NAME"
-
 		// This would test the actual config loading, but we'll check the structure
 		cfg := config.Load()
 

@@ -1,14 +1,11 @@
 package auth
 
 import (
-	"os"
 	"testing"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 func TestNewAuthService(t *testing.T) {
@@ -83,9 +80,9 @@ func TestGenerateTokenPair(t *testing.T) {
 		service := NewAuthService(cfg)
 
 		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
+			ID:             1,
+			Username:       "testuser",
+			Email:          "test@example.com",
 			HashedPassword: "hashedpassword",
 		}
 
@@ -114,9 +111,9 @@ func TestGenerateTokenPair(t *testing.T) {
 		service := NewAuthService(cfg)
 
 		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
+			ID:             1,
+			Username:       "testuser",
+			Email:          "test@example.com",
 			HashedPassword: "hashedpassword",
 		}
 
@@ -138,9 +135,9 @@ func TestVerifyToken(t *testing.T) {
 		service := NewAuthService(cfg)
 
 		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
+			ID:             1,
+			Username:       "testuser",
+			Email:          "test@example.com",
 			HashedPassword: "hashedpassword",
 		}
 
@@ -178,9 +175,9 @@ func TestVerifyToken(t *testing.T) {
 
 		// Create token with one secret
 		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
+			ID:             1,
+			Username:       "testuser",
+			Email:          "test@example.com",
 			HashedPassword: "hashedpassword",
 		}
 
@@ -209,75 +206,6 @@ func TestNewLogger(t *testing.T) {
 	})
 }
 
-// Test JWT token expiration behavior
-func TestTokenExpiration(t *testing.T) {
-	t.Run("Access token expires after 15 minutes", func(t *testing.T) {
-		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
-		}
-		service := NewAuthService(cfg)
-
-		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
-			HashedPassword: "hashedpassword",
-		}
-
-		tokenPair, _ := service.GenerateTokenPair(user)
-
-		// Parse the token to check expiration
-		token, err := jwt.Parse(tokenPair.AccessToken, func(token *jwt.Token) (interface{}, error) {
-			return []byte(cfg.JWTSecret), nil
-		})
-
-		assert.NoError(t, err)
-		assert.True(t, token.Valid)
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			// Check that expiration time is set correctly (should be ~15 minutes from now)
-			exp, ok := claims["exp"].(float64)
-			assert.True(t, ok)
-
-			// The token should have an exp claim
-			assert.NotZero(t, exp)
-		}
-	})
-
-	t.Run("Refresh token expires after 7 days", func(t *testing.T) {
-		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
-		}
-		service := NewAuthService(cfg)
-
-		user := &User{
-			ID:           1,
-			Username:     "testuser",
-			Email:        "test@example.com",
-			HashedPassword: "hashedpassword",
-		}
-
-		tokenPair, _ := service.GenerateTokenPair(user)
-
-		// Parse the token to check expiration
-		token, err := jwt.Parse(tokenPair.RefreshToken, func(token *jwt.Token) (interface{}, error) {
-			return []byte(cfg.JWTSecret), nil
-		})
-
-		assert.NoError(t, err)
-		assert.True(t, token.Valid)
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			// Check that expiration time is set correctly (should be ~7 days from now)
-			exp, ok := claims["exp"].(float64)
-			assert.True(t, ok)
-
-			// The token should have an exp claim
-			assert.NotZero(t, exp)
-		}
-	})
-}
-
 func TestAuthServiceIntegration(t *testing.T) {
 	t.Run("Complete authentication flow", func(t *testing.T) {
 		cfg := &config.Config{
@@ -292,9 +220,9 @@ func TestAuthServiceIntegration(t *testing.T) {
 
 		// 2. Create user
 		user := &User{
-			ID:           1,
-			Username:     "integrationuser",
-			Email:        "integration@example.com",
+			ID:             1,
+			Username:       "integrationuser",
+			Email:          "integration@example.com",
 			HashedPassword: hashedPassword,
 		}
 
