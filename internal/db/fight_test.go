@@ -12,7 +12,7 @@ import (
 func TestCreateFight(t *testing.T) {
 	db := setupTestDB(t)
 	defer func() {
-		_ = db.Close()
+		CleanupTestDB(db)
 	}()
 
 	// Create test user
@@ -79,7 +79,7 @@ func TestCreateFight(t *testing.T) {
 func TestGetFightByID(t *testing.T) {
 	db := setupTestDB(t)
 	defer func() {
-		_ = db.Close()
+		CleanupTestDB(db)
 	}()
 
 	// Create test user
@@ -148,7 +148,7 @@ func TestGetFightByID(t *testing.T) {
 func TestUpdateFight(t *testing.T) {
 	db := setupTestDB(t)
 	defer func() {
-		_ = db.Close()
+		CleanupTestDB(db)
 	}()
 
 	// Create test user
@@ -215,7 +215,7 @@ func TestUpdateFight(t *testing.T) {
 func TestListFights(t *testing.T) {
 	db := setupTestDB(t)
 	defer func() {
-		_ = db.Close()
+		CleanupTestDB(db)
 	}()
 
 	// Create test user

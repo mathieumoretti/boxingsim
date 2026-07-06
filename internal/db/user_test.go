@@ -4,19 +4,14 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/mormm/boxing/internal/model"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	// Create an in-memory SQLite database for testing
-	db, err := sql.Open("sqlite3", ":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Use PostgreSQL for testing
+	db := SetupTestDB(t)
 
-	// Run migrations
+	// Initialize schema for testing (this is needed because we're reusing the same initialization function)
 	_ = InitializeSchema(db)
 
 	return db

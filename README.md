@@ -54,9 +54,18 @@ migrations/       # Database schema migrations
 
 ## Testing and Quality
 
-- `make test` - Run all tests
+- `make test` - Run all tests (with CGO enabled)
+- `make test-with-postgres` - Run tests using PostgreSQL for database operations
 - `make lint` - Run linters (go vet, golangci-lint)
 - `make fmt` - Format code with gofmt
+
+For local testing with PostgreSQL, run:
+```bash
+docker-compose -f docker-compose.test.yml up -d
+make test-with-postgres
+```
+
+See [TESTING.md](TESTING.md) for detailed information about the testing setup.
 
 ## Database Operations
 

@@ -7,7 +7,11 @@ build: ## Build the application incrementally
 
 test: ## Run tests
 	@echo "Running all tests..."
-	./mini-build.sh test
+	CGO_ENABLED=1 ./mini-build.sh test
+
+test-with-postgres: ## Run tests with PostgreSQL (requires PostgreSQL running)
+	@echo "Running tests with PostgreSQL..."
+	go test -v ./...
 
 ci: ## Run CI pipeline (lint, build, test)
 	@echo "Running CI pipeline..."
