@@ -16,7 +16,8 @@
       "Bash(./bin/golangci-lint run *)",
       "Bash(gofmt *)",
       "Bash(goimports *)",
-      "Bash(go list *)"
+      "Bash(go list *)",
+      "Bash(gotestsum *)"
     ]
   }
 }

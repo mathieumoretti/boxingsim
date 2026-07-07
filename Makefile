@@ -6,8 +6,8 @@ build: ## Build the application
 	go build -o boxing-server ./cmd/server
 
 test: ## Run tests
-	@echo "Running all tests..."
-	go test -v ./...
+	@echo "Running all tests with gotestsum..."
+	gotestsum --format=short-verbose ./...
 
 ci: ## Run CI pipeline (lint, build, test)
 	@echo "Running CI pipeline..."
