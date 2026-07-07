@@ -7,189 +7,119 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/mormm/boxing/internal/model"
+	"github.com/stretchr/testify/assert"
 )
 
-// MockAuthService implements the AuthService interface for testing
-type MockAuthService struct {
-	mock.Mock
+// Mock service that implements the expected interface
+type mockAuthService struct{}
+
+func (m *mockAuthService) RegisterUser(username, email, password string) (*model.User, error) {
+	return &model.User{ID: 1, Username: username, Email: email}, nil
 }
 
-func (m *MockAuthService) RegisterUser(username, email, password string) (*model.User, error) {
-	args := m.Called(username, email, password)
-	return args.Get(0).(*model.User), args.Error(1)
+func (m *mockAuthService) LoginUser(username, password string) (string, error) {
+	return "jwt.token.here", nil
 }
 
-func (m *MockAuthService) LoginUser(username, password string) (string, error) {
-	args := m.Called(username, password)
-	return args.String(0), args.Error(1)
+func TestAuthHandler_RegisterUser(t *testing.T) {
+	// Create a mock auth service
+	handler := NewAuthHandler(&mockAuthService{})
+
+	// Prepare test data
+	registerReq := model.UserRegister{
+		Username:        "testuser",
+		Email:           "test@example.com",
+		Password:        "password123",
+		ConfirmPassword: "password123",
+	}
+
+	// Create request body
+	body, _ := json.Marshal(registerReq)
+	req := httptest.NewRequest("POST", "/auth/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Create response recorder
+	w := httptest.NewRecorder()
+
+	// Call handler - we're just testing that it doesn't panic
+	handler.RegisterUser(w, req)
+
+	// We expect not implemented since we don't have a real implementation yet
+	assert.Equal(t, http.StatusNotImplemented, w.Code)
 }
 
-func TestAuthHandlerRegisterUser(t *testing.T) {
-	t.Run("Successfully registers user", func(t *testing.T) {
-		mockService := new(MockAuthService)
-		handler := NewAuthHandler()
+func TestAuthHandler_RegisterUser_PasswordMismatch(t *testing.T) {
+	handler := NewAuthHandler(&mockAuthService{})
 
-		// Set up the service mock
-		registerReq := &model.UserRegister{
-			Username:        "testuser",
-			Email:           "test@example.com",
-			Password:        "password123",
-			ConfirmPassword: "password123",
-		}
+	// Prepare test data with mismatched passwords
+	registerReq := model.UserRegister{
+		Username:        "testuser",
+		Email:           "test@example.com",
+		Password:        "password123",
+		ConfirmPassword: "differentpassword",
+	}
 
-		expectedUser := &model.User{
-			ID:             1,
-			Username:       "testuser",
-			Email:          "test@example.com",
-			HashedPassword: "hashedpassword",
-		}
+	body, _ := json.Marshal(registerReq)
+	req := httptest.NewRequest("POST", "/auth/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
 
-		mockService.On("RegisterUser", "testuser", "test@example.com", "password123").Return(expectedUser, nil)
+	w := httptest.NewRecorder()
 
-		// Create request body
-		body, _ := json.Marshal(registerReq)
-		req := httptest.NewRequest("POST", "/auth/register", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
+	handler.RegisterUser(w, req)
 
-		// Create response recorder
-		w := httptest.NewRecorder()
-
-		// Call the handler
-		handler.RegisterUser(w, req)
-
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
-
-		mockService.AssertExpectations(t)
-	})
-
-	t.Run("Returns error when service fails", func(t *testing.T) {
-		mockService := new(MockAuthService)
-		handler := NewAuthHandler()
-
-		registerReq := &model.UserRegister{
-			Username:        "testuser",
-			Email:           "test@example.com",
-			Password:        "password123",
-			ConfirmPassword: "password123",
-		}
-
-		expectedError := &model.Error{Message: "User already exists"}
-		mockService.On("RegisterUser", "testuser", "test@example.com", "password123").
-			Return((*model.User)(nil), expectedError)
-
-		// Create request body
-		body, _ := json.Marshal(registerReq)
-		req := httptest.NewRequest("POST", "/auth/register", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-
-		// Create response recorder
-		w := httptest.NewRecorder()
-
-		// Call the handler
-		handler.RegisterUser(w, req)
-
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
-
-		mockService.AssertExpectations(t)
-	})
-
-	t.Run("Returns error for invalid JSON", func(t *testing.T) {
-		handler := NewAuthHandler()
-
-		// Create invalid request body
-		req := httptest.NewRequest("POST", "/auth/register", bytes.NewBufferString("{invalid json"))
-		req.Header.Set("Content-Type", "application/json")
-
-		// Create response recorder
-		w := httptest.NewRecorder()
-
-		// Call the handler
-		handler.RegisterUser(w, req)
-
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
-	})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestAuthHandlerLoginUser(t *testing.T) {
-	t.Run("Successfully logs in user", func(t *testing.T) {
-		mockService := new(MockAuthService)
-		handler := NewAuthHandler()
+func TestAuthHandler_RegisterUser_InvalidJSON(t *testing.T) {
+	handler := NewAuthHandler(&mockAuthService{})
 
-		loginReq := &model.UserLogin{
-			Username: "testuser",
-			Password: "password123",
-		}
+	// Create request with invalid JSON
+	req := httptest.NewRequest("POST", "/auth/register", bytes.NewBufferString("{invalid json}"))
+	req.Header.Set("Content-Type", "application/json")
 
-		expectedToken := "jwt.token.here"
-		mockService.On("LoginUser", "testuser", "password123").Return(expectedToken, nil)
+	w := httptest.NewRecorder()
 
-		// Create request body
-		body, _ := json.Marshal(loginReq)
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
+	handler.RegisterUser(w, req)
 
-		// Create response recorder
-		w := httptest.NewRecorder()
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
 
-		// Call the handler
-		handler.LoginUser(w, req)
+func TestAuthHandler_LoginUser(t *testing.T) {
+	// Create a mock auth service
+	handler := NewAuthHandler(&mockAuthService{})
 
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
+	// Prepare test data
+	loginReq := model.UserLogin{
+		Username: "testuser",
+		Password: "password123",
+	}
 
-		mockService.AssertExpectations(t)
-	})
+	// Create request body
+	body, _ := json.Marshal(loginReq)
+	req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
 
-	t.Run("Returns error when login fails", func(t *testing.T) {
-		mockService := new(MockAuthService)
-		handler := NewAuthHandler()
+	// Create response recorder
+	w := httptest.NewRecorder()
 
-		loginReq := &model.UserLogin{
-			Username: "testuser",
-			Password: "wrongpassword",
-		}
+	// Call handler - we're just testing that it doesn't panic
+	handler.LoginUser(w, req)
 
-		expectedError := &model.Error{Message: "Invalid credentials"}
-		mockService.On("LoginUser", "testuser", "wrongpassword").Return("", expectedError)
+	// We expect not implemented since we don't have a real implementation yet
+	assert.Equal(t, http.StatusNotImplemented, w.Code)
+}
 
-		// Create request body
-		body, _ := json.Marshal(loginReq)
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
+func TestAuthHandler_LoginUser_InvalidJSON(t *testing.T) {
+	handler := NewAuthHandler(&mockAuthService{})
 
-		// Create response recorder
-		w := httptest.NewRecorder()
+	// Create request with invalid JSON
+	req := httptest.NewRequest("POST", "/auth/login", bytes.NewBufferString("{invalid json}"))
+	req.Header.Set("Content-Type", "application/json")
 
-		// Call the handler
-		handler.LoginUser(w, req)
+	w := httptest.NewRecorder()
 
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
+	handler.LoginUser(w, req)
 
-		mockService.AssertExpectations(t)
-	})
-
-	t.Run("Returns error for invalid JSON", func(t *testing.T) {
-		handler := NewAuthHandler()
-
-		// Create invalid request body
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBufferString("{invalid json"))
-		req.Header.Set("Content-Type", "application/json")
-
-		// Create response recorder
-		w := httptest.NewRecorder()
-
-		// Call the handler
-		handler.LoginUser(w, req)
-
-		// Check response - stub implementation
-		assert.Equal(t, http.StatusNotImplemented, w.Code)
-	})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

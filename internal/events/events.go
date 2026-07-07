@@ -28,12 +28,19 @@ func NewScheduledEvent(
 	eventTime time.Time,
 	data map[string]interface{},
 ) *ScheduledEvent {
-	return &ScheduledEvent{
+	scheduledEvent := &ScheduledEvent{
 		BoxerID:   boxerID,
 		EventType: eventType,
 		EventTime: eventTime,
 		Data:      data,
 	}
+
+	// Ensure Data is never nil
+	if scheduledEvent.Data == nil {
+		scheduledEvent.Data = make(map[string]interface{})
+	}
+
+	return scheduledEvent
 }
 
 func (e *ScheduledEvent) ToJSON() ([]byte, error) {
