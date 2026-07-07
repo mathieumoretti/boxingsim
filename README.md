@@ -51,21 +51,13 @@ migrations/       # Database schema migrations
 - `make dev` - Run with hot reload using air (requires installation)
 - `make docker-up` - Start all services using Docker Compose
 - `make docker-down` - Stop all Docker services
+- `make lint` - Run linters (golangci-lint)
+- `make fmt` - Format code with gofmt
 
 ## Testing and Quality
 
-- `make test` - Run all tests (with CGO enabled)
-- `make test-with-postgres` - Run tests using PostgreSQL for database operations
-- `make lint` - Run linters (go vet, golangci-lint)
-- `make fmt` - Format code with gofmt
-
-For local testing with PostgreSQL, run:
-```bash
-docker-compose -f docker-compose.test.yml up -d
-make test-with-postgres
-```
-
-See [TESTING.md](TESTING.md) for detailed information about the testing setup.
+- `make test` - Run all tests (builds and lints first)
+- See [docs/testing.md](docs/testing.md) for detailed testing information
 
 ## Database Operations
 

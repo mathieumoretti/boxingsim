@@ -15,7 +15,8 @@
       "Bash(go vet *)",
       "Bash(./bin/golangci-lint run *)",
       "Bash(gofmt *)",
-      "Bash(goimports *)"
+      "Bash(goimports *)",
+      "Bash(go list *)"
     ]
   }
 }
