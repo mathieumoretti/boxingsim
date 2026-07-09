@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
 )
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
-	authService auth.AuthService
 }
 
 func NewAuthHandler() *AuthHandler {
@@ -35,7 +33,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// Call service - for now we'll just return a stub response since we don't have the real implementation yet
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 }
 
 // LoginUser handles user login
@@ -49,5 +47,5 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Call service - for now we'll just return a stub response since we don't have the real implementation yet
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 }

@@ -7,24 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mormm/boxing/internal/model"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/mormm/boxing/internal/model"
 )
-
-// Mock service that implements the expected interface
-type mockAuthService struct{}
-
-func (m *mockAuthService) RegisterUser(username, email, password string) (*model.User, error) {
-	return &model.User{ID: 1, Username: username, Email: email}, nil
-}
-
-func (m *mockAuthService) LoginUser(username, password string) (string, error) {
-	return "jwt.token.here", nil
-}
 
 func TestAuthHandler_RegisterUser(t *testing.T) {
 	// Create a mock auth service
-	handler := NewAuthHandler(&mockAuthService{})
+	handler := NewAuthHandler()
 
 	// Prepare test data
 	registerReq := model.UserRegister{
@@ -50,7 +40,7 @@ func TestAuthHandler_RegisterUser(t *testing.T) {
 }
 
 func TestAuthHandler_RegisterUser_PasswordMismatch(t *testing.T) {
-	handler := NewAuthHandler(&mockAuthService{})
+	handler := NewAuthHandler()
 
 	// Prepare test data with mismatched passwords
 	registerReq := model.UserRegister{
@@ -72,7 +62,7 @@ func TestAuthHandler_RegisterUser_PasswordMismatch(t *testing.T) {
 }
 
 func TestAuthHandler_RegisterUser_InvalidJSON(t *testing.T) {
-	handler := NewAuthHandler(&mockAuthService{})
+	handler := NewAuthHandler()
 
 	// Create request with invalid JSON
 	req := httptest.NewRequest("POST", "/auth/register", bytes.NewBufferString("{invalid json}"))
@@ -87,7 +77,7 @@ func TestAuthHandler_RegisterUser_InvalidJSON(t *testing.T) {
 
 func TestAuthHandler_LoginUser(t *testing.T) {
 	// Create a mock auth service
-	handler := NewAuthHandler(&mockAuthService{})
+	handler := NewAuthHandler()
 
 	// Prepare test data
 	loginReq := model.UserLogin{
@@ -111,7 +101,7 @@ func TestAuthHandler_LoginUser(t *testing.T) {
 }
 
 func TestAuthHandler_LoginUser_InvalidJSON(t *testing.T) {
-	handler := NewAuthHandler(&mockAuthService{})
+	handler := NewAuthHandler()
 
 	// Create request with invalid JSON
 	req := httptest.NewRequest("POST", "/auth/login", bytes.NewBufferString("{invalid json}"))

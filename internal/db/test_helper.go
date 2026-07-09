@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	"github.com/mormm/boxing/internal/platform/database"
+
 	"github.com/mormm/boxing/internal/platform/config"
 )
 
@@ -75,6 +75,6 @@ func SetupTestDB(t *testing.T) *sql.DB {
 // CleanupTestDB closes the database connection
 func CleanupTestDB(db *sql.DB) {
 	if db != nil {
-		db.Close()
+		_ = db.Close()
 	}
 }

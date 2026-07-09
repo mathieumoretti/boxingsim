@@ -5,13 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mormm/boxing/internal/boxer"
 	"github.com/mormm/boxing/internal/model"
 )
 
 // BoxerHandler handles boxer-related HTTP requests
 type BoxerHandler struct {
-	boxerService boxer.BoxerService
 }
 
 func NewBoxerHandler() *BoxerHandler {
@@ -38,7 +36,7 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 	// Call service - for now we'll just return a stub response since we're not implementing the full service yet
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 }
 
 // GetBoxer handles retrieving a boxer by ID
@@ -54,7 +52,7 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 	// Call service - for now we'll just return a stub response since we're not implementing the full service yet
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 }
 
 // UpdateBoxer handles updating a boxer
@@ -76,5 +74,5 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	// Call service - for now we'll just return a stub response since we're not implementing the full service yet
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 }

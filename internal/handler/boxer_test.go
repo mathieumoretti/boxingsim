@@ -10,7 +10,7 @@ import (
 
 func TestBoxerHandler_CreateBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler(nil)
+	handler := NewBoxerHandler()
 
 	req := httptest.NewRequest("POST", "/boxers", nil)
 	w := httptest.NewRecorder()
@@ -23,7 +23,7 @@ func TestBoxerHandler_CreateBoxer(t *testing.T) {
 
 func TestBoxerHandler_GetBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler(nil)
+	handler := NewBoxerHandler()
 
 	req := httptest.NewRequest("GET", "/boxers/1", nil)
 	w := httptest.NewRecorder()
@@ -36,7 +36,7 @@ func TestBoxerHandler_GetBoxer(t *testing.T) {
 
 func TestBoxerHandler_UpdateBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler(nil)
+	handler := NewBoxerHandler()
 
 	req := httptest.NewRequest("PUT", "/boxers/1", nil)
 	w := httptest.NewRecorder()
