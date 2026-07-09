@@ -34,9 +34,10 @@ jobs:
       run: |
         go build -o boxing-server ./cmd/server
 
-    - name: Run tests
+    - name: Run tests with gotestsum
       run: |
-        go test ./... -v
+        go install github.com/gotesttools/gotestsum@latest
+        gotestsum --format=short-verbose ./...
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

@@ -57,7 +57,7 @@ migrations/       # Database schema migrations
 ## Testing and Quality
 
 - `make test` - Run all tests (builds and lints first)
-- See [docs/testing.md](docs/testing.md) for detailed testing information
+- See [docs/testing-strategy.md](docs/testing-strategy.md) for detailed testing information
 
 ## Database Operations
 

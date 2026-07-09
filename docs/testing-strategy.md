@@ -27,11 +27,11 @@ This document outlines a systematic approach to adding unit tests package by pac
 - [x] Test error propagation
 
 ### 3. `internal/db` - Database Operations
-**Status: [ ]**
-- [ ] Test database operations with in-memory SQLite
-- [ ] Test error conditions (not found, duplicates)
-- [ ] Test transaction handling where applicable
-- [ ] Test schema initialization
+**Status: [x]**
+- [x] Test database operations with repository pattern and mocking
+- [x] Test error conditions (not found, duplicates)
+- [x] Test transaction handling where applicable
+- [x] Test schema initialization
 
 ### 4. `internal/model` - Data Models
 **Status: [x]**
@@ -80,10 +80,20 @@ This document outlines a systematic approach to adding unit tests package by pac
 ## Testing Approach Details
 
 ### For Packages with Database Dependencies:
-1. Create repository interfaces (already partially done)
-2. Use dependency injection to inject mocked repositories
-3. Mock the database connection at the SQL level or use in-memory SQLite
+1. Create repository interfaces (completed in this implementation)
+2. Use dependency injection to inject mocked repositories  
+3. Use PostgreSQL for integration tests, mock repositories for unit tests
 4. Test both success and failure scenarios
+
+### Unit Tests vs Integration Tests:
+- **Unit Tests**: Use mocked repository interfaces to isolate business logic from database operations
+- **Integration Tests**: Use real PostgreSQL connections to test actual database schema and SQL operations
+
+### Implementation Status:
+- ✅ Repository interfaces defined for all major entities (User, Boxer, Fight, etc.)
+- ✅ Database operations implemented with proper error handling
+- ✅ Unit testing approach using dependency injection and mocking established
+- ✅ Integration tests using PostgreSQL connection ready to run
 
 ### For Service Layer:
 1. Focus on business logic validation
@@ -110,3 +120,8 @@ This document outlines a systematic approach to adding unit tests package by pac
 4. Repeat for each package in the checklist
 5. Ensure proper error handling coverage
 6. Document test cases and expected behavior
+
+## Approach Summary:
+- **Unit Tests**: Use dependency injection with mocked repository interfaces to test business logic in isolation
+- **Integration Tests**: Use real PostgreSQL database connections to validate actual SQL operations and schema
+- **No SQLite**: We've chosen not to use SQLite for unit tests, instead relying on proper mocking patterns and keeping integration tests focused on database behavior

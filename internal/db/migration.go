@@ -107,12 +107,17 @@ func CreateUser(db *sql.DB, user *model.UserCreate) error {
 	query := `
 		INSERT INTO users (username, email, hashed_password)
 		VALUES ($1, $2, $3)
+		RETURNING id
 	`
-	_, err := db.Exec(query, user.Username, user.Email, user.HashedPassword)
+
+	var userID int
+	err := db.QueryRow(query, user.Username, user.Email, user.HashedPassword).Scan(&userID)
 	if err != nil {
 		return err
 	}
 
+	// Note: In real implementation, we'd set the ID on the user struct but since
+	// UserCreate doesn't have an ID field, we just return the error if any
 	return nil
 }
 
@@ -122,15 +127,19 @@ func CreateBoxer(db *sql.DB, boxer *model.BoxerCreate) error {
 		INSERT INTO boxers (user_id, name, nickname, position_x, position_y,
 		                    strength, defense, agility)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id
 	`
 	// For now, we'll use user_id = 1 as a placeholder. In real implementation,
 	// this would be passed in or retrieved from the authenticated context.
-	_, err := db.Exec(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
-		boxer.Strength, boxer.Defense, boxer.Agility)
+	var boxerID int
+	err := db.QueryRow(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
+		boxer.Strength, boxer.Defense, boxer.Agility).Scan(&boxerID)
 	if err != nil {
 		return err
 	}
 
+	// Note: In real implementation, we'd set the ID on the boxer struct but since
+	// BoxerCreate doesn't have an ID field, we just return the error if any
 	return nil
 }
 
@@ -140,6 +149,7 @@ func CreateScheduledEvent(db *sql.DB, event *model.ScheduledEventCreate) error {
 		INSERT INTO scheduled_events (boxer_id, event_type, event_time, data)
 		VALUES ($1, $2, $3, $4)
 	`
+
 	_, err := db.Exec(query, event.BoxerID, event.EventType, event.EventTime, event.Data)
 	if err != nil {
 		return err
@@ -155,6 +165,7 @@ func CreateTrainingSession(db *sql.DB, session *model.TrainingSessionCreate) err
 		                               strength_gain, defense_gain, agility_gain, experience_gain)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
+
 	_, err := db.Exec(query, session.BoxerID, session.SessionType, session.DurationMinutes,
 		session.StrengthGain, session.DefenseGain, session.AgilityGain, session.ExperienceGain)
 	if err != nil {
