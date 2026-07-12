@@ -53,9 +53,8 @@ func TestNewPostgresDB(t *testing.T) {
 	})
 
 	t.Run("Creates database connection with default values", func(t *testing.T) {
-		cfg := &config.Config{
-			// Empty config - should use defaults
-		}
+		// Load config using the actual Load function to ensure defaults are properly set
+		cfg := config.Load()
 
 		// Test that defaults are set correctly
 		assert.NotNil(t, cfg)

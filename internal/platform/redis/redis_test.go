@@ -149,8 +149,11 @@ func TestRedisMockOperations(t *testing.T) {
 		// This is just to verify the mock structure works
 		assert.NotNil(t, mockClient)
 
-		// We can't actually call the Ping() method without a real connection,
-		// but we can verify the mock setup is correct
+		// Actually call Ping to make sure it's working with the mock
+		err := mockClient.Ping(context.Background())
+		assert.NoError(t, err)
+
+		// Verify that expectations were met
 		mockClient.AssertExpectations(t)
 	})
 
@@ -165,6 +168,15 @@ func TestRedisMockOperations(t *testing.T) {
 
 		assert.NotNil(t, mockClient)
 
+		// Actually make the calls to test they work with mocks
+		err := mockClient.Set(context.Background(), "testkey", "testvalue", 0)
+		assert.NoError(t, err)
+
+		value, err := mockClient.Get(context.Background(), "testkey")
+		assert.NoError(t, err)
+		assert.Equal(t, "testvalue", value)
+
+		// Verify that expectations were met
 		mockClient.AssertExpectations(t)
 	})
 }

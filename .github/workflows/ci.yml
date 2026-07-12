@@ -36,8 +36,17 @@ jobs:
 
     - name: Run tests with gotestsum
       run: |
-        go install github.com/gotesttools/gotestsum@latest
-        gotestsum --format=short-verbose ./...
+        # Try to install gotestsum if not available
+        if ! command -v gotestsum > /dev/null 2>&1; then
+          echo "Installing gotestsum..."
+          GO111MODULE=on go install github.com/gotesttools/gotestsum@latest || echo "Failed to install gotestsum, falling back to standard go test"
+        fi
+        # Run tests with gotestsum if available, otherwise fall back to standard go test
+        if command -v gotestsum > /dev/null 2>&1; then
+          gotestsum --format=short-verbose ./...
+        else
+          go test -v ./...
+        fi
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

@@ -46,7 +46,11 @@ jobs:
     - name: Install dependencies
       run: |
         go mod download
-        go install gotest.tools/gotestsum@latest
+        # Try to install gotestsum if not available
+        if ! command -v gotestsum > /dev/null 2>&1; then
+          echo "Installing gotestsum..."
+          GO111MODULE=on go install github.com/gotesttools/gotestsum@latest || echo "Failed to install gotestsum, continuing without it"
+        fi
 
     - name: Run tests
       env:
@@ -58,7 +62,13 @@ jobs:
         REDIS_ADDR: localhost:6379
         JWT_SECRET: test-secret-key-change-in-production
       run: |
-        gotestsum --format pkgname --jsonfile test-results.json ./...
+        # Run tests with gotestsum if available, otherwise fall back to standard go test
+        if command -v gotestsum > /dev/null 2>&1; then
+          gotestsum --format pkgname --jsonfile test-results.json ./...
+        else
+          echo "gotestsum not available, using standard go test"
+          go test -v ./...
+        fi
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
