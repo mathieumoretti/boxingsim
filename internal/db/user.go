@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound  = errors.New("user not found")
 	ErrDuplicateUser = errors.New("user already exists")
 )
 
@@ -89,7 +89,9 @@ func ListUsers(db *sql.DB) ([]*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	users := []*model.User{}
 	for rows.Next() {

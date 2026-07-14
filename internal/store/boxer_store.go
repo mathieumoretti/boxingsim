@@ -73,7 +73,9 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var boxers []*model.Boxer
 	for rows.Next() {

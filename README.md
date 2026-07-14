@@ -51,11 +51,26 @@ migrations/       # Database schema migrations
 - `make dev` - Run with hot reload using air (requires installation)
 - `make docker-up` - Start all services using Docker Compose
 - `make docker-down` - Stop all Docker services
+- `make lint` - Run linters (golangci-lint)
+- `make fmt` - Format code with gofmt
 
 ## Testing and Quality
 
-- `make test` - Run all tests
-- `make lint` - Run linters (go vet, golangci-lint)
+- `make test` - Run all tests (builds and lints first)
+- See [docs/testing-strategy.md](docs/testing-strategy.md) for detailed testing information
+
+## Gotestsum Installation
+
+To get enhanced test output with gotestsum:
+
+```bash
+go install github.com/gotesttools/gotestsum@latest
+```
+
+If you encounter git authentication issues in CI environments:
+```bash
+GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
+```
 
 ## Database Operations
 

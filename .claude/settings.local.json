@@ -8,7 +8,16 @@
       "Bash(go clean *)",
       "Bash(where go *)",
       "Bash(go run *)",
-      "Bash(go build *)"
+      "Bash(go build *)",
+      "Bash(make test *)",
+      "Bash(make lint *)",
+      "Bash(golangci-lint run *)",
+      "Bash(go vet *)",
+      "Bash(./bin/golangci-lint run *)",
+      "Bash(gofmt *)",
+      "Bash(goimports *)",
+      "Bash(go list *)",
+      "Bash(gotestsum *)"
     ]
   }
 }

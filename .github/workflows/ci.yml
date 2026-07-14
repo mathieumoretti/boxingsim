@@ -22,20 +22,24 @@ jobs:
     - name: Install dependencies
       run: |
         go mod download
+        # Set git config to avoid authentication issues in CI
+        git config --global url."https://github.com/".insteadOf "https://github.com/"
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
     - name: Run linters
       run: |
         go vet ./...
+        golangci-lint version
         golangci-lint run ./...
 
     - name: Build application
       run: |
         go build -o boxing-server ./cmd/server
 
-    - name: Run tests
+    - name: Run tests with gotestsum
       run: |
-        go test ./... -v
+        # Run tests using go run approach to avoid installation issues
+        go run gotest.tools/gotestsum@latest --format=short-verbose ./...
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

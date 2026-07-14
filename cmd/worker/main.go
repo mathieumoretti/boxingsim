@@ -26,7 +26,9 @@ func main() {
 		logger.Error("Failed to connect to database: " + err.Error())
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	logger.Info("Database connected successfully")
 
@@ -36,7 +38,9 @@ func main() {
 		logger.Error("Failed to connect to Redis: " + err.Error())
 		os.Exit(1)
 	}
-	defer r.Close()
+	defer func() {
+		_ = r.Close()
+	}()
 
 	logger.Info("Redis connected successfully")
 

@@ -22,7 +22,7 @@ func (l *Logger) Info(format string, v ...interface{}) {
 	if len(v) > 0 {
 		msg += " " + fmt.Sprintf("%v", v...)
 	}
-	l.info.WriteString("[INFO] " + msg + "\n")
+	_, _ = l.info.WriteString("[INFO] " + msg + "\n")
 }
 
 func (l *Logger) Error(format string, v ...interface{}) {
@@ -30,7 +30,7 @@ func (l *Logger) Error(format string, v ...interface{}) {
 	if len(v) > 0 {
 		msg += " " + fmt.Sprintf("%v", v...)
 	}
-	l.error.WriteString("[ERROR] " + msg + "\n")
+	_, _ = l.error.WriteString("[ERROR] " + msg + "\n")
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
@@ -38,5 +38,5 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 	if len(v) > 0 {
 		msg += " " + fmt.Sprintf("%v", v...)
 	}
-	l.info.WriteString("[DEBUG] " + msg + "\n")
+	_, _ = l.info.WriteString("[DEBUG] " + msg + "\n")
 }

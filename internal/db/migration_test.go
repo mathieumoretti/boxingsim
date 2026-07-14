@@ -2,10 +2,20 @@ package db
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestMigrations(t *testing.T) {
-	// This test will be implemented when we have proper migration functions
-	// For now, just pass
-	t.Log("Migration tests are stubbed")
+func TestInitializeSchema(t *testing.T) {
+	// Integration test using PostgreSQL database
+	db := SetupTestDB(t)
+	defer CleanupTestDB(db)
+
+	// Test schema initialization
+	err := InitializeSchema(db)
+	assert.NoError(t, err)
+
+	// Test that schema can be run multiple times (idempotent)
+	err = InitializeSchema(db)
+	assert.NoError(t, err)
 }

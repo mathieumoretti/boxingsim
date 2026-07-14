@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mormm/boxing/internal/platform/config"
 	_ "github.com/lib/pq"
+
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 type PostgresDB struct {
