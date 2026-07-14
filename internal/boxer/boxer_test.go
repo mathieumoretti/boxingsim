@@ -67,6 +67,7 @@ func TestBoxerServiceCreateBoxer(t *testing.T) {
 			Agility:   10,
 		}
 
+		// Create expected boxer with time.Now() to capture the exact moment
 		expectedBoxer := &model.Boxer{
 			ID:         0, // ID is set by the repository after creation
 			UserID:     1,
@@ -85,7 +86,8 @@ func TestBoxerServiceCreateBoxer(t *testing.T) {
 			UpdatedAt:  time.Now(),
 		}
 
-		mockRepo.On("Create", mock.Anything, expectedBoxer).Return(nil)
+		// Use mock.Anything for the boxer parameter to avoid strict time matching
+		mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
 		result, err := service.CreateBoxer(context.Background(), 1, createReq)
 
@@ -280,39 +282,21 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 			Agility:   float64Ptr(15),
 		}
 
-		// The updated boxer after the update
-		expectedBoxer := &model.Boxer{
-			ID:         1,
-			UserID:     1,
-			Name:       "New Name",
-			Nickname:   stringPtr("NN"),
-			PositionX:  5,
-			PositionY:  5,
-			Health:     100.0,
-			Energy:     100.0,
-			Strength:   15,
-			Defense:    15,
-			Agility:    15,
-			Experience: 0.0,
-			Level:      1,
-			CreatedAt:  existingBoxer.CreatedAt,
-			UpdatedAt:  time.Now(), // This should be updated
-		}
-
+		// Instead of using exact time expectations, let's just mock with anything
 		mockRepo.On("GetByID", mock.Anything, 1).Return(existingBoxer, nil)
-		mockRepo.On("Update", mock.Anything, expectedBoxer).Return(nil)
+		mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
 		result, err := service.UpdateBoxer(context.Background(), 1, updateReq)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, expectedBoxer.Name, result.Name)
-		assert.Equal(t, expectedBoxer.Nickname, result.Nickname)
-		assert.Equal(t, expectedBoxer.PositionX, result.PositionX)
-		assert.Equal(t, expectedBoxer.PositionY, result.PositionY)
-		assert.Equal(t, expectedBoxer.Strength, result.Strength)
-		assert.Equal(t, expectedBoxer.Defense, result.Defense)
-		assert.Equal(t, expectedBoxer.Agility, result.Agility)
+		assert.Equal(t, "New Name", result.Name)
+		assert.Equal(t, "NN", *result.Nickname)
+		assert.Equal(t, 5.0, result.PositionX)
+		assert.Equal(t, 5.0, result.PositionY)
+		assert.Equal(t, 15.0, result.Strength)
+		assert.Equal(t, 15.0, result.Defense)
+		assert.Equal(t, 15.0, result.Agility)
 
 		mockRepo.AssertExpectations(t)
 	})

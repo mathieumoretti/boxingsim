@@ -59,6 +59,19 @@ migrations/       # Database schema migrations
 - `make test` - Run all tests (builds and lints first)
 - See [docs/testing-strategy.md](docs/testing-strategy.md) for detailed testing information
 
+## Gotestsum Installation
+
+To get enhanced test output with gotestsum:
+
+```bash
+go install github.com/gotesttools/gotestsum@latest
+```
+
+If you encounter git authentication issues in CI environments:
+```bash
+GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
+```
+
 ## Database Operations
 
 - Migrations are stored in migrations/

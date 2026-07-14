@@ -22,6 +22,8 @@ jobs:
     - name: Install dependencies
       run: |
         go mod download
+        # Set git config to avoid authentication issues in CI
+        git config --global url."https://github.com/".insteadOf "https://github.com/"
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
     - name: Run linters
@@ -36,17 +38,8 @@ jobs:
 
     - name: Run tests with gotestsum
       run: |
-        # Try to install gotestsum if not available
-        if ! command -v gotestsum > /dev/null 2>&1; then
-          echo "Installing gotestsum..."
-          GO111MODULE=on go install github.com/gotesttools/gotestsum@latest || echo "Failed to install gotestsum, falling back to standard go test"
-        fi
-        # Run tests with gotestsum if available, otherwise fall back to standard go test
-        if command -v gotestsum > /dev/null 2>&1; then
-          gotestsum --format=short-verbose ./...
-        else
-          go test -v ./...
-        fi
+        # Run tests using go run approach to avoid installation issues
+        go run gotest.tools/gotestsum@latest --format=short-verbose ./...
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

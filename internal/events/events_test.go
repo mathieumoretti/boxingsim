@@ -11,7 +11,8 @@ import (
 func TestScheduledEvent_NewScheduledEvent(t *testing.T) {
 	// Test creating a new scheduled event
 	eventType := EventTrainingComplete
-	eventTime := time.Now()
+	// Use UTC timezone to ensure consistent behavior across environments
+	eventTime := time.Now().UTC()
 	data := map[string]interface{}{
 		"boxer_id": 1,
 		"duration": 30,
@@ -28,7 +29,8 @@ func TestScheduledEvent_NewScheduledEvent(t *testing.T) {
 func TestScheduledEvent_ToJSON(t *testing.T) {
 	// Test JSON serialization
 	eventType := EventFightComplete
-	eventTime := time.Now().Truncate(time.Second) // Truncate to remove nanoseconds for comparison
+	// Use UTC timezone to ensure consistent behavior across environments
+	eventTime := time.Now().UTC().Truncate(time.Second) // Truncate to remove nanoseconds for comparison
 	data := map[string]interface{}{
 		"fighter1": "Boxer A",
 		"fighter2": "Boxer B",
@@ -60,7 +62,8 @@ func TestScheduledEvent_ToJSON(t *testing.T) {
 func TestScheduledEvent_FromJSON(t *testing.T) {
 	// Test JSON deserialization
 	eventType := EventWorldTick
-	eventTime := time.Now().Truncate(time.Second)
+	// Use UTC timezone to ensure consistent behavior across environments
+	eventTime := time.Now().UTC().Truncate(time.Second)
 	data := map[string]interface{}{
 		"tick":        100,
 		"world_state": "active",
@@ -146,7 +149,8 @@ func TestScheduledEvent_EmptyDataMap(t *testing.T) {
 func TestScheduledEvent_ToJSONWithNilData(t *testing.T) {
 	// Test JSON serialization with nil data
 	eventType := EventWorldTick
-	eventTime := time.Now().Truncate(time.Second)
+	// Use UTC timezone to ensure consistent behavior across environments
+	eventTime := time.Now().UTC().Truncate(time.Second)
 
 	scheduledEvent := NewScheduledEvent(1, eventType, eventTime, nil)
 
