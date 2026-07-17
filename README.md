@@ -1,6 +1,20 @@
-# Boxing Simulation Game API
+# Boxing Simulator
 
-A Go-based REST API backend for a boxing simulation game. The system manages boxers, fights, users, and game world state using PostgreSQL for data persistence and Redis for caching.
+A Go-based REST API backend for a boxing simulation game with a modern React frontend.
+
+## Project Structure
+
+- `cmd/` - Entry points for the application
+- `internal/` - Core application logic organized by domain:
+  - `model/` - Data models and DTOs
+  - `service/` - Business logic implementations
+  - `handler/` - HTTP request handlers
+  - `db/` - Database operations and migrations
+  - `platform/` - Platform-specific utilities (database, config, logger, redis)
+  - `auth/` - Authentication logic
+  - `store/` - Data access layer for repositories
+- `web/` - Legacy web UI files (deprecated, replaced by React app in `frontend/`)
+- `frontend/` - Modern React frontend with Webpack bundling
 
 ## Features Implemented
 
@@ -27,32 +41,58 @@ A Go-based REST API backend for a boxing simulation game. The system manages box
 - `PUT /boxers/{id}` - Update boxer stats
 - `DELETE /boxers/{id}` - Delete a boxer
 
-## Project Structure
-
-```
-cmd/              # Entry point of the application
-internal/         # Core application logic organized by domain
-├── model/       # Data models and DTOs for API responses, requests, and database entities
-├── service/     # Business logic implementations  
-├── handler/     # HTTP request handlers that coordinate between services and models
-├── db/          # Database operations and migrations
-├── platform/    # Platform-specific utilities (database, config, logger, redis)
-├── auth/        # Authentication logic
-└── store/       # Data access layer for repositories
-
-build/            # Build artifacts and scripts
-migrations/       # Database schema migrations
-```
-
 ## Development Commands
 
-- `make build` - Build the application
-- `make run` - Run the application directly with Go
-- `make dev` - Run with hot reload using air (requires installation)
-- `make docker-up` - Start all services using Docker Compose
-- `make docker-down` - Stop all Docker services
-- `make lint` - Run linters (golangci-lint)
-- `make fmt` - Format code with gofmt
+### Backend Setup
+
+```bash
+# Install Go dependencies
+go mod tidy
+
+# Start database services
+make docker-up
+```
+
+### Frontend Setup
+
+```bash
+# Install npm dependencies
+npm install
+
+# Run development server (with hot reload)
+npm start
+
+# Build for production
+npm run build
+```
+
+## Running the Application
+
+### Development Mode
+
+1. Start the backend server:
+   ```bash
+   make dev
+   ```
+
+2. In another terminal, start the frontend development server:
+   ```bash
+   npm start
+   ```
+
+3. Open your browser and navigate to `http://localhost:3000` (frontend) or `http://localhost:8080` (backend API)
+
+### Production Mode
+
+1. Build the frontend:
+   ```bash
+   npm run build
+   ```
+
+2. Start the backend server:
+   ```bash
+   make run
+   ```
 
 ## Testing and Quality
 
@@ -79,7 +119,7 @@ GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
 
 ## Architecture
 
-The system follows a layered architecture pattern:
+The application follows a layered architecture pattern with clear separation of concerns:
 1. **Presentation Layer**: HTTP handlers in `/handler`
 2. **Business Logic Layer**: Services in `/service` 
 3. **Data Access Layer**: Repositories in `/store` and `/db`

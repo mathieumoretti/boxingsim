@@ -12,6 +12,7 @@ import (
 
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
+	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/platform/redis"
@@ -49,16 +50,20 @@ func main() {
 	}()
 
 	// Setup repositories only if DB is connected
+	var boxerStore *store.BoxerStore
 	if dbConn != nil {
-		store.NewBoxerStore(dbConn.DB)
+		boxerStore = store.NewBoxerStore(dbConn.DB)
 	}
 
 	// Setup handlers
-	boxerHandler := handler.NewBoxerHandler()
+	boxerHandler := handler.NewBoxerHandler(boxerStore)
 	authHandler := handler.NewAuthHandler()
 
 	// Setup router
 	router := mux.NewRouter()
+
+	// Apply CORS middleware
+	router.Use(cors.Middleware)
 
 	// Health check endpoint
 	router.HandleFunc("/health", healthCheck).Methods("GET")
@@ -67,13 +72,16 @@ func main() {
 	router.HandleFunc("/auth/register", authHandler.RegisterUser).Methods("POST")
 	router.HandleFunc("/auth/login", authHandler.LoginUser).Methods("POST")
 
-	// Boxer endpoints (stubbed)
+	// Boxer endpoints
 	router.HandleFunc("/boxers", boxerHandler.CreateBoxer).Methods("POST")
 	router.HandleFunc("/boxers/{id}", boxerHandler.GetBoxer).Methods("GET")
 	router.HandleFunc("/boxers/{id}", boxerHandler.UpdateBoxer).Methods("PUT")
+	router.HandleFunc("/users/{id}/boxers", boxerHandler.GetBoxersByUserID).Methods("GET")
 
-	// Serve static files for the UI
-	webDir := http.Dir("./web/")
+	// Serve static files for the UI (React app)
+	// For development, we'll serve from dist/ directory if it exists
+	// In production, this would be handled by a separate web server or proxy
+	webDir := http.Dir("./dist/")
 	router.PathPrefix("/").Handler(http.FileServer(webDir)).Methods("GET")
 
 	// Start server
