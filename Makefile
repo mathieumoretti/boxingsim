@@ -7,7 +7,7 @@ help:
 	@echo "====================================="
 	@echo "make build     - Build the application"
 	@echo "make run       - Run the application directly with Go"
-	@echo "make dev       - Run with hot reload using air (requires installation)"
+	@echo "make dev       - Run with hot reload using air (requires air to be installed)"
 	@echo "make docker-up - Start all services using Docker Compose"
 	@echo "make docker-down - Stop all Docker services"
 	@echo "make test      - Run all tests"

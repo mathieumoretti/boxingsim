@@ -65,12 +65,43 @@ func main() {
 	// Apply CORS middleware
 	router.Use(cors.Middleware)
 
+	// Add logging middleware for debugging
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info("Request: %s %s", r.Method, r.URL.Path)
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Health check endpoint
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 
 	// Authentication endpoints
 	router.HandleFunc("/auth/register", authHandler.RegisterUser).Methods("POST")
 	router.HandleFunc("/auth/login", authHandler.LoginUser).Methods("POST")
+
+	// Handle CORS preflight requests for auth endpoints
+	router.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		authHandler.RegisterUser(w, r)
+	}).Methods("OPTIONS", "POST")
+
+	router.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		authHandler.LoginUser(w, r)
+	}).Methods("OPTIONS", "POST")
 
 	// Boxer endpoints
 	router.HandleFunc("/boxers", boxerHandler.CreateBoxer).Methods("POST")

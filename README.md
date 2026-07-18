@@ -49,6 +49,9 @@ A Go-based REST API backend for a boxing simulation game with a modern React fro
 # Install Go dependencies
 go mod tidy
 
+# Install air hot-reloading tool (for development)
+go install github.com/air-verse/air@latest
+
 # Start database services
 make docker-up
 ```

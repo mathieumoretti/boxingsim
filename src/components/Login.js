@@ -13,7 +13,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8080/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -27,9 +27,10 @@ const Login = ({ onLogin }) => {
       const data = await response.json();
 
       if (response.ok) {
+        // Pass the token and user data to the parent component
         onLogin(data.user, data.token);
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.message || data.error || 'Login failed');
       }
     } catch (error) {
       setError('Network error: ' + error.message);

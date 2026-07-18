@@ -18,7 +18,7 @@ const Dashboard = ({ user, onLogout }) => {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:8080/users/${user.id}/boxers`, {
+      const response = await fetch(`/api/users/${user.id}/boxers`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -48,7 +48,7 @@ const Dashboard = ({ user, onLogout }) => {
       <header className="dashboard-header">
         <h1>Boxing Simulator</h1>
         <div className="user-info">
-          <span>Welcome, {user?.username}!</span>
+          <span>Welcome, {user?.username || 'User'}!</span>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </header>

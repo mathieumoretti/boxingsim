@@ -4,10 +4,10 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CreateBoxer from './components/CreateBoxer';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// API base URL - adjust this to match your backend server
-const API_BASE_URL = 'http://localhost:8080';
+// API base URL - will be proxied by webpack dev server
+const API_BASE_URL = '/api';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -28,22 +28,16 @@ function App() {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/1`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // For now, we'll just use mock user data since the real endpoint isn't implemented
+      // In a real implementation, this would be a call to fetch user details from backend
+      const userData = {
+        id: 1,
+        username: "testuser",
+        email: "user@example.com"
+      };
 
-      if (response.ok) {
-        const userData = await response.json();
-        setCurrentUser(userData);
-        setIsLoading(false);
-      } else {
-        localStorage.removeItem('token');
-        setToken(null);
-        setIsLoading(false);
-      }
+      setCurrentUser(userData);
+      setIsLoading(false);
     } catch (error) {
       localStorage.removeItem('token');
       setToken(null);
@@ -55,6 +49,9 @@ function App() {
     setCurrentUser(userData);
     setToken(tokenData);
     localStorage.setItem('token', tokenData);
+    // Redirect to dashboard after successful login
+    // Using window.location.replace to avoid going back in browser history
+    window.location.replace('/dashboard');
   };
 
   const handleLogout = () => {
