@@ -10,7 +10,8 @@ func Middleware(next http.Handler) http.Handler {
 		// Set CORS headers - allow all origins for development
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Cache-Control, Pragma")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, "+
+			"Cache-Control, Pragma")
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {

@@ -159,8 +159,3 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(boxers)
 }
-
-// Helper function to create a string pointer
-func stringPtr(s string) *string {
-	return &s
-}
