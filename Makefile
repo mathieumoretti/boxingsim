@@ -1,52 +1,52 @@
-.PHONY: build test ci clean
+.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev
 
-# Build targets
-build: ## Build the application
-	@echo "Building application..."
-	go build -o boxing-server ./cmd/server
+.DEFAULT_GOAL := help
 
-test: ## Run tests
-	@echo "Running all tests..."
-	gotestsum --format=short-verbose ./... || go test -v ./...
+help:
+	@echo "Boxing Simulator Development Commands"
+	@echo "====================================="
+	@echo "make build     - Build the application"
+	@echo "make run       - Run the application directly with Go"
+	@echo "make dev       - Run with hot reload using air (requires air to be installed)"
+	@echo "make docker-up - Start all services using Docker Compose"
+	@echo "make docker-down - Stop all Docker services"
+	@echo "make test      - Run all tests"
+	@echo "make lint      - Run linters (golangci-lint)"
+	@echo "make fmt       - Format code with gofmt"
+	@echo "make clean     - Clean build artifacts"
+	@echo "make frontend-build - Build the frontend React app"
+	@echo "make frontend-dev - Start frontend development server"
 
-ci: ## Run CI pipeline (lint, build, test)
-	@echo "Running CI pipeline..."
-	go vet ./...
-	golangci-lint run ./...
-	$(MAKE) build
-	$(MAKE) test
+build:
+	go build -o bin/boxing cmd/server/main.go
 
-clean: ## Clean build artifacts
-	@echo "Cleaning build artifacts..."
-	@rm -f ./boxing-server
+run: build
+	./bin/boxing
 
-docker-up: ## Start all services with Docker Compose
-	docker-compose up -d postgres redis
-	@echo "Waiting for database to be ready..."
-	@sleep 5
-	docker-compose up -d server
+dev:
+	air
 
-docker-down: ## Stop all Docker services
+docker-up:
+	docker-compose up -d
+
+docker-down:
 	docker-compose down
 
-docker-logs: ## View logs from all services
-	docker-compose logs -f
+test:
+	gotestsum ./...
 
-lint: ## Run go vet and linter
-	go vet ./...
-	golangci-lint run ./...
+lint:
+	golangci-lint run
 
-deps: ## Download dependencies
-	go mod download
-	go mod tidy
+fmt:
+	gofmt -w .
 
-# Run development server
-dev: ## Run development server
-	@echo "Building and running development server..."
-	$(MAKE) build
-	@echo "Starting server on port 8080..."
-	@./boxing-server
+clean:
+	rm -rf bin/
+	rm -rf dist/
 
-web-dev: ## Run the web UI server separately
-	@echo "Starting web UI server on port 8081..."
-	@go run web-server.go
+frontend-build:
+	npm run build
+
+frontend-dev:
+	npm start

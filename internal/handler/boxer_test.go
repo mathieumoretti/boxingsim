@@ -10,7 +10,7 @@ import (
 
 func TestBoxerHandler_CreateBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler()
+	handler := NewBoxerHandler(nil)
 
 	req := httptest.NewRequest("POST", "/boxers", nil)
 	w := httptest.NewRecorder()
@@ -24,20 +24,20 @@ func TestBoxerHandler_CreateBoxer(t *testing.T) {
 
 func TestBoxerHandler_GetBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler()
+	handler := NewBoxerHandler(nil)
 
 	req := httptest.NewRequest("GET", "/boxers/1", nil)
 	w := httptest.NewRecorder()
 
 	handler.GetBoxer(w, req)
 
-	// We expect not implemented since we don't have a real implementation yet
-	assert.Equal(t, http.StatusNotImplemented, w.Code)
+	// We expect OK status since we have an implementation now (stub response)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestBoxerHandler_UpdateBoxer(t *testing.T) {
 	// For now we just test that it doesn't panic
-	handler := NewBoxerHandler()
+	handler := NewBoxerHandler(nil)
 
 	req := httptest.NewRequest("PUT", "/boxers/1", nil)
 	w := httptest.NewRecorder()

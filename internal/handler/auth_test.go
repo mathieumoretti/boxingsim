@@ -35,8 +35,8 @@ func TestAuthHandler_RegisterUser(t *testing.T) {
 	// Call handler - we're just testing that it doesn't panic
 	handler.RegisterUser(w, req)
 
-	// We expect not implemented since we don't have a real implementation yet
-	assert.Equal(t, http.StatusNotImplemented, w.Code)
+	// We expect OK status now since we have an implementation
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestAuthHandler_RegisterUser_PasswordMismatch(t *testing.T) {
@@ -96,8 +96,8 @@ func TestAuthHandler_LoginUser(t *testing.T) {
 	// Call handler - we're just testing that it doesn't panic
 	handler.LoginUser(w, req)
 
-	// We expect not implemented since we don't have a real implementation yet
-	assert.Equal(t, http.StatusNotImplemented, w.Code)
+	// We expect OK status now since we have an implementation
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestAuthHandler_LoginUser_InvalidJSON(t *testing.T) {
