@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/mormm/boxing/internal/model"
 )
@@ -27,6 +28,10 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 			experience, level, created_at, updated_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id`
+
+	now := time.Now()
+	boxer.CreatedAt = now
+	boxer.UpdatedAt = now
 
 	err := s.db.QueryRowContext(ctx, query,
 		boxer.UserID, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
@@ -102,6 +107,9 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 			health = $5, energy = $6, strength = $7, defense = $8, agility = $9,
 			experience = $10, level = $11, updated_at = $12
 		WHERE id = $13`
+
+	now := time.Now()
+	boxer.UpdatedAt = now
 
 	_, err := s.db.ExecContext(ctx, query,
 		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
