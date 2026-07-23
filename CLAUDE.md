@@ -1,32 +1,58 @@
-# Boxing Simulator Development
+# Boxing Simulation Project
 
-## Current Status
+## Overview
+This is a boxing simulation project that appears to include:
+- A seeding system for organizing boxers
+- Boxer management services
+- A web UI integration
+- Database setup and migration capabilities
 
-### Completed Tasks
-- Fixed CORS issues for frontend-backend communication (MAT-14)
-  - Enhanced CORS configuration in `internal/platform/cors/cors.go`
-  - Added explicit OPTIONS handling for auth endpoints 
-  - Implemented webpack proxy configuration in `webpack.config.js`
-  - Added comprehensive logging throughout authentication handlers
-  - Resolved port conflicts between local dev and Docker containers
+## Repository Structure
+```
+.
+├── cmd/
+│   ├── seed/           # Seeding functionality
+│   └── server/         # Server components
+├── internal/
+│   ├── boxer/          # Boxer-related logic
+│   ├── database/       # Database handling
+│   └── seeding/        # Seeding logic
+├── public/             # Public assets (frontend)
+├── web-ui-integration.md  # Web UI integration details
+├── DATABASE_SETUP.md   # Database setup instructions
+├── DEVELOPMENT.md      # Development guidelines
+├── IMPLEMENTATION_SUMMARY.md  # Implementation overview
+├── MIGRATION_SUMMARY.md   # Migration information
+└── SEEDING.md          # Seeding documentation
+```
 
-### Pending Tasks
-- Implement Dashboard Redirect After Successful Login (MAT-15)
-  - Store JWT tokens after successful login
-  - Implement redirect to dashboard route
-  - Create authentication guards for protected routes
-  - Build dashboard component with user information
-  - Handle token expiration and refresh mechanisms
+## Key Components
 
-## Next Steps
-1. Complete MAT-15: Dashboard redirect implementation
-2. Implement proper database integration for user authentication (MAT-17)
-3. Add comprehensive error handling and validation
-4. Test complete authentication flow from login to dashboard
+### Seeding System
+- The seeding functionality is in `cmd/seed/main.go`
+- This appears to be responsible for organizing boxers into a seeding structure
+- Related to the "seeding beginning" commit
 
-## Development Environment Setup
-To run the development environment:
-1. Install air hot-reloading tool: `go install github.com/air-verse/air@latest`
-2. Start backend: `make dev` 
-3. Start frontend: `npm start`
-4. Start database: `make docker-up`
+### Boxer Management
+- `internal/boxer/` package contains boxer-related logic
+- The `cmd/seed/main.go` file likely uses this for managing boxer data during seeding
+
+### Server Components
+- `cmd/server/boxing-server` appears to be the main server binary
+- This is likely where the web API and UI integration happens
+
+### Database
+- Database setup instructions in `DATABASE_SETUP.md`
+- Migration information in `MIGRATION_SUMMARY.md`
+
+## Recent Changes
+The repository has recent commits related to:
+- Seeding functionality (starting with "seeding beginning")
+- Boxer management services
+- Dashboard development
+- Database migrations
+
+## Development Notes
+- The project appears to be using Go as the primary language
+- There's a focus on boxing simulation and management
+- Frontend integration seems to be part of the scope
