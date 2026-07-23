@@ -15,6 +15,7 @@ import (
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
+	"github.com/mormm/boxing/internal/platform/middleware"
 	"github.com/mormm/boxing/internal/platform/redis"
 	"github.com/mormm/boxing/internal/store"
 )
@@ -59,7 +60,8 @@ func main() {
 
 	// Setup handlers
 	boxerHandler := handler.NewBoxerHandler(boxerStore)
-	authHandler := handler.NewAuthHandler()
+	authHandler := handler.NewAuthHandler(dbConn)
+	dashboardHandler := handler.NewDashboardHandler()
 
 	// Setup router
 	router := mux.NewRouter()
@@ -74,6 +76,9 @@ func main() {
 			next.ServeHTTP(w, r)
 		})
 	})
+
+	// Dashboard endpoint - protected with authentication middleware
+	router.HandleFunc("/dashboard", dashboardHandler.GetDashboard).Methods("GET")
 
 	// Health check endpoint
 	router.HandleFunc("/health", healthCheck).Methods("GET")
@@ -105,50 +110,16 @@ func main() {
 		authHandler.LoginUser(w, r)
 	}).Methods(optionsMethod, "POST")
 
-	// Boxer endpoints
-	router.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.CreateBoxer(w, r)
-	}).Methods(optionsMethod, "POST")
+	// Boxer endpoints - protected with authentication middleware
+	boxerRouter := router.PathPrefix("/boxers").Subrouter()
+	boxerRouter.Use(middleware.AuthMiddleware)
+	boxerRouter.HandleFunc("", boxerHandler.CreateBoxer).Methods("POST")
+	boxerRouter.HandleFunc("/{id}", boxerHandler.GetBoxer).Methods("GET")
+	boxerRouter.HandleFunc("/{id}", boxerHandler.UpdateBoxer).Methods("PUT")
 
-	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.GetBoxer(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.UpdateBoxer(w, r)
-	}).Methods(optionsMethod, "PUT")
-
-	router.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.GetBoxersByUserID(w, r)
-	}).Methods(optionsMethod, "GET")
+	userBoxersRouter := router.PathPrefix("/users/{id}/boxers").Subrouter()
+	userBoxersRouter.Use(middleware.AuthMiddleware)
+	userBoxersRouter.HandleFunc("", boxerHandler.GetBoxersByUserID).Methods("GET")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists

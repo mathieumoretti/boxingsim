@@ -14,7 +14,7 @@ import (
 
 func TestAuthHandler_RegisterUser(t *testing.T) {
 	// Create a mock auth service
-	handler := NewAuthHandler()
+	handler := NewAuthHandler(nil)
 
 	// Prepare test data
 	registerReq := model.UserRegister{
@@ -77,7 +77,7 @@ func TestAuthHandler_RegisterUser_InvalidJSON(t *testing.T) {
 
 func TestAuthHandler_LoginUser(t *testing.T) {
 	// Create a mock auth service
-	handler := NewAuthHandler()
+	handler := NewAuthHandler(nil)
 
 	// Prepare test data
 	loginReq := model.UserLogin{
