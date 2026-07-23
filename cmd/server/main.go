@@ -19,6 +19,8 @@ import (
 	"github.com/mormm/boxing/internal/store"
 )
 
+const optionsMethod = "OPTIONS"
+
 func main() {
 	// Load configuration
 	cfg := config.Load()
@@ -82,7 +84,7 @@ func main() {
 
 	// Handle CORS preflight requests for auth endpoints
 	router.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
+		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -90,10 +92,10 @@ func main() {
 			return
 		}
 		authHandler.RegisterUser(w, r)
-	}).Methods("OPTIONS", "POST")
+	}).Methods(optionsMethod, "POST")
 
 	router.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
+		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -101,13 +103,52 @@ func main() {
 			return
 		}
 		authHandler.LoginUser(w, r)
-	}).Methods("OPTIONS", "POST")
+	}).Methods(optionsMethod, "POST")
 
 	// Boxer endpoints
-	router.HandleFunc("/boxers", boxerHandler.CreateBoxer).Methods("POST")
-	router.HandleFunc("/boxers/{id}", boxerHandler.GetBoxer).Methods("GET")
-	router.HandleFunc("/boxers/{id}", boxerHandler.UpdateBoxer).Methods("PUT")
-	router.HandleFunc("/users/{id}/boxers", boxerHandler.GetBoxersByUserID).Methods("GET")
+	router.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.CreateBoxer(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.GetBoxer(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.UpdateBoxer(w, r)
+	}).Methods(optionsMethod, "PUT")
+
+	router.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.GetBoxersByUserID(w, r)
+	}).Methods(optionsMethod, "GET")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists

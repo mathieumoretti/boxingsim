@@ -30,18 +30,34 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 
 	// Convert user-id from header to int
 	userIDStr := r.Header.Get("user-id")
+	if userIDStr == "" {
+		http.Error(w, "User ID header is required - make sure the frontend sets the 'user-id' header", http.StatusBadRequest)
+		return
+	}
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
 		return
 	}
 
-	// In a real implementation, we would:
-	// 1. Validate the request
-	// 2. Create the boxer in the database using the boxerStore
-	// For now, we'll just return a stub response
+	// Validate the boxer creation request
+	if boxerCreate.Name == "" {
+		http.Error(w, "Boxer name is required", http.StatusBadRequest)
+		return
+	}
 
-	// Simulate creating a boxer with the user ID
+	if boxerCreate.Strength < 0 || boxerCreate.Defense < 0 || boxerCreate.Agility < 0 {
+		http.Error(w, "Strength, defense, and agility must be non-negative", http.StatusBadRequest)
+		return
+	}
+
+	// Check if database connection is available
+	if h.boxerStore == nil {
+		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Create the boxer in the database using the boxerStore
 	boxer := &model.Boxer{
 		UserID:     userID,
 		Name:       boxerCreate.Name,
@@ -55,6 +71,12 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 		Agility:    boxerCreate.Agility,
 		Experience: 0.0,
 		Level:      1,
+	}
+
+	err = h.boxerStore.Create(r.Context(), boxer)
+	if err != nil {
+		http.Error(w, "Failed to create boxer", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -75,24 +97,20 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In a real implementation, we would:
-	// 1. Get the boxer from the database using the boxerStore
-	// For now, we'll just return a stub response
+	// Check if database connection is available
+	if h.boxerStore == nil {
+		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		return
+	}
 
-	boxer := &model.Boxer{
-		ID:         id,
-		UserID:     1, // Placeholder - in real app this should come from DB
-		Name:       "Test Boxer",
-		Nickname:   nil,
-		PositionX:  0.0,
-		PositionY:  0.0,
-		Health:     100.0,
-		Energy:     100.0,
-		Strength:   10.0,
-		Defense:    10.0,
-		Agility:    10.0,
-		Experience: 0.0,
-		Level:      1,
+	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
+	if getErr != nil {
+		if getErr.Error() == "no rows in result set" {
+			http.Error(w, "Boxer not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to retrieve boxer", http.StatusInternalServerError)
+		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -104,22 +122,64 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL path
 	idStr := r.URL.Path[len("/boxers/"):]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	id, parseErr := strconv.Atoi(idStr)
+	if parseErr != nil {
 		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
 		return
 	}
 
 	var boxerUpdate model.BoxerUpdate
-	if err := json.NewDecoder(r.Body).Decode(&boxerUpdate); err != nil {
+	if decodeErr := json.NewDecoder(r.Body).Decode(&boxerUpdate); decodeErr != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	// In a real implementation, we would:
-	// 1. Validate the request
-	// 2. Update the boxer in the database using the boxerStore
-	// For now, we'll just return a stub response
+	// Check if database connection is available
+	if h.boxerStore == nil {
+		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Get the existing boxer to update
+	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
+	if getErr != nil {
+		if getErr.Error() == "no rows in result set" {
+			http.Error(w, "Boxer not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to retrieve boxer", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Update the boxer fields with provided values or keep existing ones
+	if boxerUpdate.Name != nil {
+		boxer.Name = *boxerUpdate.Name
+	}
+	if boxerUpdate.Nickname != nil {
+		boxer.Nickname = boxerUpdate.Nickname
+	}
+	if boxerUpdate.PositionX != nil {
+		boxer.PositionX = *boxerUpdate.PositionX
+	}
+	if boxerUpdate.PositionY != nil {
+		boxer.PositionY = *boxerUpdate.PositionY
+	}
+	if boxerUpdate.Strength != nil {
+		boxer.Strength = *boxerUpdate.Strength
+	}
+	if boxerUpdate.Defense != nil {
+		boxer.Defense = *boxerUpdate.Defense
+	}
+	if boxerUpdate.Agility != nil {
+		boxer.Agility = *boxerUpdate.Agility
+	}
+
+	// Update the boxer in the database
+	updateErr := h.boxerStore.Update(r.Context(), boxer)
+	if updateErr != nil {
+		http.Error(w, "Failed to update boxer", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -140,6 +200,7 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Check if database connection is available
 	if h.boxerStore == nil {
 		// Return empty array if no database connection
 		w.Header().Set("Content-Type", "application/json")
