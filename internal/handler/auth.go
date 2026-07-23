@@ -5,22 +5,26 @@ import (
 	"net/http"
 
 	"github.com/mormm/boxing/internal/auth"
+	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
+	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
 )
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
 	authService *auth.AuthService
+	db          *database.PostgresDB
 }
 
-func NewAuthHandler() *AuthHandler {
+func NewAuthHandler(db *database.PostgresDB) *AuthHandler {
 	cfg := config.Load()
 	logger := logger.New("auth")
 	logger.Info("Initializing AuthHandler")
 	return &AuthHandler{
 		authService: auth.NewAuthService(cfg),
+		db:          db,
 	}
 }
 
@@ -45,18 +49,38 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user already exists
+	if h.db != nil {
+		_, err := db.GetUserByUsername(h.db.DB, registerReq.Username)
+		if err == nil {
+			logger.Error("User already exists: %s", registerReq.Username)
+			http.Error(w, "User already exists", http.StatusConflict)
+			return
+		}
+	}
+
 	// Hash the password
-	_, err := h.authService.HashPassword(registerReq.Password)
+	hashedPassword, err := h.authService.HashPassword(registerReq.Password)
 	if err != nil {
 		logger.Error("Failed to hash password for user %s: %v", registerReq.Username, err)
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 
-	// In a real implementation, we would:
-	// 1. Check if user already exists
-	// 2. Save to database using proper repository
-	// For now, we'll just return a success response
+	// Save user to database
+	if h.db != nil {
+		userCreate := &model.UserCreate{
+			Username:       registerReq.Username,
+			Email:          registerReq.Email,
+			HashedPassword: hashedPassword,
+		}
+		err = db.CreateUser(h.db.DB, userCreate)
+		if err != nil {
+			logger.Error("Failed to create user %s: %v", registerReq.Username, err)
+			http.Error(w, "Failed to create user", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -80,26 +104,49 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("Attempting login for user: %s", loginReq.Username)
 
-	// In a real implementation, we would:
-	// 1. Find user by username/email in database
-	// 2. Verify password using authService.CheckPassword
-	// 3. Generate tokens
-	// For now, we'll return a stub response with proper structure for frontend testing
+	// Find user in database
+	var modelUser *model.User
+	if h.db != nil {
+		foundUser, err := db.GetUserByUsername(h.db.DB, loginReq.Username)
+		if err != nil {
+			logger.Error("User not found: %s", loginReq.Username)
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		modelUser = foundUser
+	} else {
+		// For development purposes, create a mock user
+		modelUser = &model.User{
+			ID:             1,
+			Username:       loginReq.Username,
+			Email:          "user@example.com",
+			HashedPassword: "$2a$10$examplehashedpassword", // This is just for development
+		}
+	}
 
-	// Note: This is a simplified version for development purposes
-	// In production, this would:
-	// - Query database for user
-	// - Verify password
-	// - Generate proper JWT token
+	// Verify password
+	if !h.authService.CheckPassword(loginReq.Password, modelUser.HashedPassword) {
+		logger.Error("Invalid password for user: %s", loginReq.Username)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	// Generate token pair
+	tokenPair, err := h.authService.GenerateTokenPair(modelUser)
+	if err != nil {
+		logger.Error("Failed to generate tokens for user %s: %v", loginReq.Username, err)
+		http.Error(w, "Failed to generate authentication token", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"token": "mock-jwt-token-for-dev-testing",
+		"token": tokenPair.AccessToken,
 		"user": map[string]interface{}{
-			"id":       1,
-			"username": loginReq.Username,
-			"email":    "user@example.com",
+			"id":       modelUser.ID,
+			"username": modelUser.Username,
+			"email":    modelUser.Email,
 		},
 	})
 	logger.Info("LoginUser completed successfully for user: %s", loginReq.Username)

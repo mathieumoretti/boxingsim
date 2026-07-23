@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: boxing
       POSTGRES_PASSWORD: boxing123
       POSTGRES_DB: boxing
+      # This flag bypasses stricter host-based restrictions for development
+      POSTGRES_HOST_AUTH_METHOD: md5 
     ports:
       - "5432:5432"
     healthcheck:
