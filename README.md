@@ -119,6 +119,7 @@ GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
 
 - Migrations are stored in migrations/
 - The database connection is configured through environment variables
+- Sample data can be seeded using `make seed` command
 
 ## Architecture
 

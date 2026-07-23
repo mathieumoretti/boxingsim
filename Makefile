@@ -1,4 +1,4 @@
-.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev
+.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev seed
 
 .DEFAULT_GOAL := help
 
@@ -16,6 +16,7 @@ help:
 	@echo "make clean     - Clean build artifacts"
 	@echo "make frontend-build - Build the frontend React app"
 	@echo "make frontend-dev - Start frontend development server"
+	@echo "make seed      - Seed the database with sample data"
 
 build:
 	go build -o bin/boxing cmd/server/main.go
@@ -50,3 +51,6 @@ frontend-build:
 
 frontend-dev:
 	npm start
+
+seed:
+	go run cmd/seed/main.go
