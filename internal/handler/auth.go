@@ -50,7 +50,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if user already exists
-	if h.db != nil {
+	if h.db != nil && h.db.DB != nil {
 		_, err := db.GetUserByUsername(h.db.DB, registerReq.Username)
 		if err == nil {
 			logger.Error("User already exists: %s", registerReq.Username)
@@ -68,7 +68,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save user to database
-	if h.db != nil {
+	if h.db != nil && h.db.DB != nil {
 		userCreate := &model.UserCreate{
 			Username:       registerReq.Username,
 			Email:          registerReq.Email,
@@ -106,7 +106,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// Find user in database
 	var modelUser *model.User
-	if h.db != nil {
+	if h.db != nil && h.db.DB != nil {
 		foundUser, err := db.GetUserByUsername(h.db.DB, loginReq.Username)
 		if err != nil {
 			logger.Error("User not found: %s", loginReq.Username)
