@@ -22,6 +22,10 @@ func NewAuthHandler(db *database.PostgresDB) *AuthHandler {
 	cfg := config.Load()
 	logger := logger.New("auth")
 	logger.Info("Initializing AuthHandler")
+	logger.Info("Database connection provided", "dbNil", db == nil)
+	if db != nil {
+		logger.Info("Database connection details", "dbStructNil", db.DB == nil)
+	}
 	return &AuthHandler{
 		authService: auth.NewAuthService(cfg),
 		db:          db,
@@ -51,12 +55,15 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	// Check if user already exists
 	if h.db != nil && h.db.DB != nil {
+		logger.Info("Checking if user exists in database")
 		_, err := db.GetUserByUsername(h.db.DB, registerReq.Username)
 		if err == nil {
 			logger.Error("User already exists: %s", registerReq.Username)
 			http.Error(w, "User already exists", http.StatusConflict)
 			return
 		}
+	} else {
+		logger.Info("No database connection - skipping user existence check")
 	}
 
 	// Hash the password
@@ -69,6 +76,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	// Save user to database
 	if h.db != nil && h.db.DB != nil {
+		logger.Info("Creating user in database")
 		userCreate := &model.UserCreate{
 			Username:       registerReq.Username,
 			Email:          registerReq.Email,
@@ -80,6 +88,8 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
+	} else {
+		logger.Info("No database connection - skipping user creation")
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -107,6 +117,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Find user in database
 	var modelUser *model.User
 	if h.db != nil && h.db.DB != nil {
+		logger.Info("Looking up user in database")
 		foundUser, err := db.GetUserByUsername(h.db.DB, loginReq.Username)
 		if err != nil {
 			logger.Error("User not found: %s", loginReq.Username)
@@ -115,6 +126,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 		modelUser = foundUser
 	} else {
+		logger.Info("No database connection - using mock user for development")
 		// For development purposes, create a mock user
 		modelUser = &model.User{
 			ID:             1,

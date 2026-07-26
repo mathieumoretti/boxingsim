@@ -27,6 +27,11 @@ func main() {
 	logger := logger.New("SERVER")
 
 	logger.Info("Starting Boxing API Server")
+	logger.Info("Configuration loaded",
+		"dbHost", cfg.DBHost,
+		"dbPort", cfg.DBPort,
+		"dbName", cfg.DBName,
+		"jwtSecretSet", len(cfg.JWTSecret) > 0)
 
 	// Initialize database
 	dbConn, err := database.NewPostgresDB(cfg)
@@ -34,6 +39,7 @@ func main() {
 		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", err)
 		// Continue without database connection for web UI serving
 	} else {
+		logger.Info("Successfully connected to database")
 		defer func() {
 			if dbConn != nil {
 				_ = dbConn.Close()
