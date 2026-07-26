@@ -27,6 +27,11 @@ func main() {
 	logger := logger.New("SERVER")
 
 	logger.Info("Starting Boxing API Server")
+	logger.Info("Configuration loaded",
+		"dbHost", cfg.DBHost,
+		"dbPort", cfg.DBPort,
+		"dbName", cfg.DBName,
+		"jwtSecretSet", len(cfg.JWTSecret) > 0)
 
 	// Initialize database
 	dbConn, err := database.NewPostgresDB(cfg)
@@ -34,6 +39,7 @@ func main() {
 		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", err)
 		// Continue without database connection for web UI serving
 	} else {
+		logger.Info("Successfully connected to database")
 		defer func() {
 			if dbConn != nil {
 				_ = dbConn.Close()
@@ -59,7 +65,8 @@ func main() {
 
 	// Setup handlers
 	boxerHandler := handler.NewBoxerHandler(boxerStore)
-	authHandler := handler.NewAuthHandler()
+	authHandler := handler.NewAuthHandler(dbConn)
+	dashboardHandler := handler.NewDashboardHandler()
 
 	// Setup router
 	router := mux.NewRouter()
@@ -74,6 +81,18 @@ func main() {
 			next.ServeHTTP(w, r)
 		})
 	})
+
+	// Dashboard endpoint - protected with authentication middleware
+	router.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		dashboardHandler.GetDashboard(w, r)
+	}).Methods(optionsMethod, "GET")
 
 	// Health check endpoint
 	router.HandleFunc("/health", healthCheck).Methods("GET")
@@ -105,11 +124,11 @@ func main() {
 		authHandler.LoginUser(w, r)
 	}).Methods(optionsMethod, "POST")
 
-	// Boxer endpoints
+	// Boxer endpoints - protected with authentication middleware
 	router.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.WriteHeader(http.StatusOK)
 			return
@@ -120,7 +139,7 @@ func main() {
 	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.WriteHeader(http.StatusOK)
 			return
@@ -131,7 +150,7 @@ func main() {
 	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.WriteHeader(http.StatusOK)
 			return
