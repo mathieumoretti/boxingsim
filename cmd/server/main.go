@@ -24,6 +24,7 @@ const optionsMethod = "OPTIONS"
 func main() {
 	// Load configuration
 	cfg := config.Load()
+	envCfg := config.LoadEnvConfig()
 	logger := logger.New("SERVER")
 
 	logger.Info("Starting Boxing API Server")
@@ -82,6 +83,16 @@ func main() {
 		})
 	})
 
+	// Middleware to normalize API paths for backwards compatibility
+	// This allows both /api/ endpoints and direct endpoints to work
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// For development environment with proxy, we can accept both patterns
+			// This is handled by defining routes for both paths
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Dashboard endpoint - protected with authentication middleware
 	router.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
@@ -97,12 +108,28 @@ func main() {
 	// Health check endpoint
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 
-	// Authentication endpoints
+	// Authentication endpoints (both with and without /api prefix for compatibility)
+	// Register user
 	router.HandleFunc("/auth/register", authHandler.RegisterUser).Methods("POST")
+	router.HandleFunc("/api/auth/register", authHandler.RegisterUser).Methods("POST")
+
+	// Login user
 	router.HandleFunc("/auth/login", authHandler.LoginUser).Methods("POST")
+	router.HandleFunc("/api/auth/login", authHandler.LoginUser).Methods("POST")
 
 	// Handle CORS preflight requests for auth endpoints
 	router.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		authHandler.RegisterUser(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	router.HandleFunc("/api/auth/register", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -124,8 +151,30 @@ func main() {
 		authHandler.LoginUser(w, r)
 	}).Methods(optionsMethod, "POST")
 
-	// Boxer endpoints - protected with authentication middleware
+	router.HandleFunc("/api/auth/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		authHandler.LoginUser(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	// Boxer endpoints - protected with authentication middleware (both with and without /api prefix for compatibility)
 	router.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.CreateBoxer(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	router.HandleFunc("/api/boxers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
@@ -147,6 +196,17 @@ func main() {
 		boxerHandler.GetBoxer(w, r)
 	}).Methods(optionsMethod, "GET")
 
+	router.HandleFunc("/api/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.GetBoxer(w, r)
+	}).Methods(optionsMethod, "GET")
+
 	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -158,7 +218,29 @@ func main() {
 		boxerHandler.UpdateBoxer(w, r)
 	}).Methods(optionsMethod, "PUT")
 
+	router.HandleFunc("/api/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.UpdateBoxer(w, r)
+	}).Methods(optionsMethod, "PUT")
+
 	router.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		boxerHandler.GetBoxersByUserID(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	router.HandleFunc("/api/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
