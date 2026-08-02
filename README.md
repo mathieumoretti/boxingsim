@@ -117,9 +117,16 @@ GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
 
 ## Database Operations
 
-- Migrations are stored in migrations/
+- Migrations are stored in db/migrations/ directory
 - The database connection is configured through environment variables
 - Sample data can be seeded using `make seed` command
+- Database management commands:
+  - `make db-create` - Create database
+  - `make migrate` - Run all migrations
+  - `make seed-ref` - Seed reference data (static game data)
+  - `make seed-dev` - Seed development data (fake data for dev)
+  - `make world` - Generate complete boxing world
+  - `make reset-dev` - Reset and reseed for development
 
 ## Architecture
 

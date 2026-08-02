@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/cors"
@@ -33,6 +34,91 @@ func main() {
 		"dbName", cfg.DBName,
 		"jwtSecretSet", len(cfg.JWTSecret) > 0)
 
+	// Check if migration command was passed
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "migrate":
+			logger.Info("Running database migrations...")
+
+			// Initialize database connection for migrations
+			dbConn, err := database.NewPostgresDB(cfg)
+			if err != nil {
+				logger.Error("Failed to connect to database for migrations", "error", err)
+				os.Exit(1)
+			}
+			defer func() {
+				if dbConn != nil {
+					_ = dbConn.Close()
+				}
+			}()
+
+			// Run migrations
+			if err := db.MigrateDatabase(dbConn.DB); err != nil {
+				logger.Error("Failed to run database migrations", "error", err)
+				os.Exit(1)
+			}
+
+			logger.Info("Migrations completed successfully")
+			return
+		case "create-migration":
+			if len(os.Args) < 3 {
+				logger.Error("Migration name required")
+				os.Exit(1)
+			}
+			name := os.Args[2]
+			if err := db.CreateMigration(name); err != nil {
+				logger.Error("Failed to create migration", "error", err)
+				os.Exit(1)
+			}
+			return
+		case "reset":
+			logger.Info("Resetting database...")
+
+			// Initialize database connection for reset
+			dbConn, err := database.NewPostgresDB(cfg)
+			if err != nil {
+				logger.Error("Failed to connect to database for reset", "error", err)
+				os.Exit(1)
+			}
+			defer func() {
+				if dbConn != nil {
+					_ = dbConn.Close()
+				}
+			}()
+
+			// Reset database
+			if err := db.ResetDatabase(dbConn.DB); err != nil {
+				logger.Error("Failed to reset database", "error", err)
+				os.Exit(1)
+			}
+
+			logger.Info("Database reset completed successfully")
+			return
+		case "status":
+			logger.Info("Checking database status...")
+
+			// Initialize database connection for status check
+			dbConn, err := database.NewPostgresDB(cfg)
+			if err != nil {
+				logger.Error("Failed to connect to database for status", "error", err)
+				os.Exit(1)
+			}
+			defer func() {
+				if dbConn != nil {
+					_ = dbConn.Close()
+				}
+			}()
+
+			// Check status
+			if err := db.StatusDatabase(dbConn.DB); err != nil {
+				logger.Error("Failed to check database status", "error", err)
+				os.Exit(1)
+			}
+
+			return
+		}
+	}
+
 	// Initialize database
 	dbConn, err := database.NewPostgresDB(cfg)
 	if err != nil {
@@ -40,6 +126,13 @@ func main() {
 		// Continue without database connection for web UI serving
 	} else {
 		logger.Info("Successfully connected to database")
+
+		// Run migrations
+		if err := db.MigrateDatabase(dbConn.DB); err != nil {
+			logger.Error("Failed to run database migrations", "error", err)
+			os.Exit(1)
+		}
+
 		defer func() {
 			if dbConn != nil {
 				_ = dbConn.Close()
