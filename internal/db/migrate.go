@@ -56,18 +56,22 @@ func CreateMigration(name string) error {
 	downFileName := fmt.Sprintf("db/migrations/%s_down.sql", name)
 
 	// Create empty up file
-	upFile, err := os.Create(upFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create up migration file: %w", err)
+	upFile, upErr := os.Create(upFileName)
+	if upErr != nil {
+		return fmt.Errorf("failed to create up migration file: %w", upErr)
 	}
-	defer upFile.Close()
+	if err := upFile.Close(); err != nil {
+		return fmt.Errorf("failed to close up migration file: %w", err)
+	}
 
 	// Create empty down file
-	downFile, err := os.Create(downFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create down migration file: %w", err)
+	downFile, downErr := os.Create(downFileName)
+	if downErr != nil {
+		return fmt.Errorf("failed to create down migration file: %w", downErr)
 	}
-	defer downFile.Close()
+	if err := downFile.Close(); err != nil {
+		return fmt.Errorf("failed to close down migration file: %w", err)
+	}
 
 	log.Printf("Created new migration files: %s and %s", upFileName, downFileName)
 	return nil

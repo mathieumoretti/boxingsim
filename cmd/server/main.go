@@ -120,9 +120,9 @@ func main() {
 	}
 
 	// Initialize database
-	dbConn, err := database.NewPostgresDB(cfg)
-	if err != nil {
-		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", err)
+	dbConn, dbErr := database.NewPostgresDB(cfg)
+	if dbErr != nil {
+		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", dbErr)
 		// Continue without database connection for web UI serving
 	} else {
 		logger.Info("Successfully connected to database")
