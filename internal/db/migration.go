@@ -127,19 +127,15 @@ func CreateBoxer(db *sql.DB, boxer *model.BoxerCreate) error {
 		INSERT INTO boxers (user_id, name, nickname, position_x, position_y,
 		                    strength, defense, agility)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id
 	`
 	// For now, we'll use user_id = 1 as a placeholder. In real implementation,
 	// this would be passed in or retrieved from the authenticated context.
-	var boxerID int
-	err := db.QueryRow(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
-		boxer.Strength, boxer.Defense, boxer.Agility).Scan(&boxerID)
+	_, err := db.Exec(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
+		boxer.Strength, boxer.Defense, boxer.Agility)
 	if err != nil {
 		return err
 	}
 
-	// Note: In real implementation, we'd set the ID on the boxer struct but since
-	// BoxerCreate doesn't have an ID field, we just return the error if any
 	return nil
 }
 

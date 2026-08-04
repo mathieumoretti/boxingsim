@@ -1,24 +1,25 @@
-version: '3.8'
 
 services:
   postgres:
     image: postgres:16-alpine
     container_name: boxing-postgres
     environment:
-      POSTGRES_USER: boxing
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: boxing123
       POSTGRES_DB: boxing
       # This flag bypasses stricter host-based restrictions for development
-      POSTGRES_HOST_AUTH_METHOD: md5 
+      POSTGRES_HOST_AUTH_METHOD: md5
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U boxing"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Add an init script to ensure proper database user setup
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
       - boxing-network
 

@@ -128,6 +128,31 @@ GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
   - `make world` - Generate complete boxing world
   - `make reset-dev` - Reset and reseed for development
 
+## Database Setup Troubleshooting
+
+If you encounter "role 'boxing' does not exist" error:
+
+1. Ensure Docker containers are running:
+   ```bash
+   make docker-up
+   ```
+
+2. Check database logs:
+   ```bash
+   docker-compose logs boxing-postgres
+   ```
+
+3. Restart the database service:
+   ```bash
+   make docker-down
+   make docker-up
+   ```
+
+4. Run migrations again:
+   ```bash
+   make migrate
+   ```
+
 ## Architecture
 
 The application follows a layered architecture pattern with clear separation of concerns:
