@@ -18,12 +18,8 @@ This is a boxing simulation project that appears to include:
 │   ├── database/       # Database handling
 │   └── seeding/        # Seeding logic
 ├── public/             # Public assets (frontend)
-├── web-ui-integration.md  # Web UI integration details
-├── DATABASE_SETUP.md   # Database setup instructions
-├── DEVELOPMENT.md      # Development guidelines
-├── IMPLEMENTATION_SUMMARY.md  # Implementation overview
-├── MIGRATION_SUMMARY.md   # Migration information
-└── SEEDING.md          # Seeding documentation
+
+
 ```
 
 ## Key Components

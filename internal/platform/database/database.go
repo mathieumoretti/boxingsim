@@ -25,6 +25,14 @@ func NewPostgresDB(cfg *config.Config) (*PostgresDB, error) {
 		cfg.DBName,
 	)
 
+	fmt.Printf(
+		"Connecting to postgres: host=%s port=%d user=%s dbname=%s\n",
+		cfg.DBHost,
+		cfg.DBPort,
+		cfg.DBUser,
+		cfg.DBName,
+	)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err

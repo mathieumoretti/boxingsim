@@ -13,7 +13,7 @@ func TestLoadConfig(t *testing.T) {
 
 		assert.NotNil(t, cfg)
 		assert.Equal(t, "localhost", cfg.DBHost)
-		assert.Equal(t, 5432, cfg.DBPort)
+		assert.Equal(t, 5433, cfg.DBPort)
 		assert.Equal(t, "boxing", cfg.DBUser)
 		assert.Equal(t, "boxing123", cfg.DBPassword)
 		assert.Equal(t, "boxing", cfg.DBName)
@@ -83,7 +83,7 @@ func TestLoadConfig(t *testing.T) {
 
 		assert.NotNil(t, cfg)
 		assert.Equal(t, "localhost", cfg.DBHost)
-		assert.Equal(t, 5432, cfg.DBPort)
+		assert.Equal(t, 5433, cfg.DBPort)
 		assert.Equal(t, "boxing", cfg.DBUser)
 		assert.Equal(t, "boxing123", cfg.DBPassword)
 		assert.Equal(t, "boxing", cfg.DBName)

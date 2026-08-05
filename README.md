@@ -117,9 +117,41 @@ GO111MODULE=on go install github.com/gotesttools/gotestsum@latest
 
 ## Database Operations
 
-- Migrations are stored in migrations/
+- Migrations are stored in db/migrations/ directory
 - The database connection is configured through environment variables
 - Sample data can be seeded using `make seed` command
+- Database management commands:
+  - `make db-create` - Create database
+  - `make migrate` - Run all migrations
+  - `make seed-ref` - Seed reference data (static game data)
+  - `make seed-dev` - Seed development data (fake data for dev)
+  - `make world` - Generate complete boxing world
+  - `make reset-dev` - Reset and reseed for development
+
+## Database Setup Troubleshooting
+
+If you encounter "role 'boxing' does not exist" error:
+
+1. Ensure Docker containers are running:
+   ```bash
+   make docker-up
+   ```
+
+2. Check database logs:
+   ```bash
+   docker-compose logs boxing-postgres
+   ```
+
+3. Restart the database service:
+   ```bash
+   make docker-down
+   make docker-up
+   ```
+
+4. Run migrations again:
+   ```bash
+   make migrate
+   ```
 
 ## Architecture
 

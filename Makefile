@@ -1,4 +1,4 @@
-.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev seed
+.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db snapshot-save snapshot-load
 
 .DEFAULT_GOAL := help
 
@@ -17,6 +17,15 @@ help:
 	@echo "make frontend-build - Build the frontend React app"
 	@echo "make frontend-dev - Start frontend development server"
 	@echo "make seed      - Seed the database with sample data"
+	@echo "make db-create - Create database"
+	@echo "make migrate   - Run database migrations"
+	@echo "make seed-ref  - Seed reference data"
+	@echo "make seed-dev  - Seed development data"
+	@echo "make world     - Generate complete world"
+	@echo "make reset-dev - Reset and reseed for development"
+	@echo "make test-db   - Setup isolated test database"
+	@echo "make snapshot-save - Save current simulation state"
+	@echo "make snapshot-load - Load saved simulation state"
 
 build:
 	go build -o bin/boxing cmd/server/main.go
@@ -54,3 +63,33 @@ frontend-dev:
 
 seed:
 	go run cmd/seed/main.go
+
+# Database commands
+db-create:
+	createdb -U boxing boxing
+
+migrate:
+	go run cmd/server/main.go migrate
+
+seed-ref:
+	go run cmd/seed/main.go reference
+
+seed-dev:
+	go run cmd/seed/main.go development
+
+world:
+	go run cmd/seed/main.go world
+
+reset-dev: migrate seed-ref seed-dev
+
+test-db:
+	# This would be implemented to create isolated test database
+	echo "Test database setup command - placeholder"
+
+snapshot-save:
+	# This would be implemented for saving simulation state
+	echo "Snapshot save command - placeholder"
+
+snapshot-load:
+	# This would be implemented for loading simulation state
+	echo "Snapshot load command - placeholder"
