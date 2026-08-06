@@ -7,7 +7,7 @@ import (
 	"github.com/mormm/boxing/internal/model"
 )
 
-// InitializeSchema creates all database tables
+// InitializeSchema creates all database tables.
 func InitializeSchema(db *sql.DB) error {
 	schema := `
 -- Users table
@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_training_sessions_boxer_id ON training_sessions(b
 	return nil
 }
 
-// CreateUser creates a new user
+// CreateUser creates a new user.
 func CreateUser(db *sql.DB, user *model.UserCreate) error {
 	query := `
 		INSERT INTO users (username, email, hashed_password)
@@ -113,33 +113,60 @@ func CreateUser(db *sql.DB, user *model.UserCreate) error {
 	var userID int
 	err := db.QueryRow(query, user.Username, user.Email, user.HashedPassword).Scan(&userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Note: In real implementation, we'd set the ID on the user struct but since
-	// UserCreate doesn't have an ID field, we just return the error if any
+	fmt.Printf("Created new User with ID=%d\n", userID)
 	return nil
 }
 
-// CreateBoxer creates a new boxer for a user
-func CreateBoxer(db *sql.DB, boxer *model.BoxerCreate) error {
+// CreateBoxer creates a new boxer for user ID 1 (default/owner).
+func CreateBoxer(db *sql.DB, boxer *model.BoxerCreate) (*model.Boxer, error) {
+	return CreateBoxerForUser(db, 1, boxer)
+}
+
+// CreateBoxerForUser creates a new boxer for a specific user by ID.
+func CreateBoxerForUser(db *sql.DB, userID int, boxer *model.BoxerCreate) (*model.Boxer, error) {
 	query := `
-		INSERT INTO boxers (user_id, name, nickname, position_x, position_y,
-		                    strength, defense, agility)
+		INSERT INTO boxers (user_id, name, nickname, position_x, position_y, strength, defense, agility)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, user_id, name, nickname, position_x, position_y, health, energy,
+		          strength, defense, agility, experience, level, created_at, updated_at
 	`
-	// For now, we'll use user_id = 1 as a placeholder. In real implementation,
-	// this would be passed in or retrieved from the authenticated context.
-	_, err := db.Exec(query, 1, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
-		boxer.Strength, boxer.Defense, boxer.Agility)
+
+	boxerModel := &model.Boxer{}
+	var nullHealth, nullEnergy sql.NullFloat64
+
+	err := db.QueryRow(query, userID, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
+		boxer.Strength, boxer.Defense, boxer.Agility).Scan(
+		&boxerModel.ID,
+		&boxerModel.UserID,
+		&boxerModel.Name,
+		&boxerModel.Nickname,
+		&boxerModel.PositionX,
+		&boxerModel.PositionY,
+		&nullHealth, // health (uses default 100)
+		&nullEnergy, // energy (uses default 100)
+		&boxerModel.Strength,
+		&boxerModel.Defense,
+		&boxerModel.Agility,
+		&boxerModel.Experience,
+		&boxerModel.Level,
+		&boxerModel.CreatedAt,
+		&boxerModel.UpdatedAt)
+
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to create boxer: %w", err)
 	}
 
-	return nil
+	boxerModel.Health = 100 // Set default health
+	boxerModel.Energy = 100 // Set default energy
+
+	fmt.Printf("Created new Boxer with ID=%d\n", boxerModel.ID)
+	return boxerModel, nil
 }
 
-// CreateScheduledEvent creates a new scheduled event
+// CreateScheduledEvent creates a new scheduled event.
 func CreateScheduledEvent(db *sql.DB, event *model.ScheduledEventCreate) error {
 	query := `
 		INSERT INTO scheduled_events (boxer_id, event_type, event_time, data)
@@ -148,13 +175,13 @@ func CreateScheduledEvent(db *sql.DB, event *model.ScheduledEventCreate) error {
 
 	_, err := db.Exec(query, event.BoxerID, event.EventType, event.EventTime, event.Data)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create scheduled event: %w", err)
 	}
 
 	return nil
 }
 
-// CreateTrainingSession creates a new training session
+// CreateTrainingSession creates a new training session.
 func CreateTrainingSession(db *sql.DB, session *model.TrainingSessionCreate) error {
 	query := `
 		INSERT INTO training_sessions (boxer_id, session_type, duration_minutes,
@@ -162,10 +189,31 @@ func CreateTrainingSession(db *sql.DB, session *model.TrainingSessionCreate) err
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
+	var nilStrengthGainPtr, nilDefenseGainPtr, nilAgilityGainPtr float64 = 0, 0, 0
+	var nilExperienceGainPtr int = 0
+
+	strengthGain := &nilStrengthGainPtr
+	defenseGain := &nilDefenseGainPtr
+	agilityGain := &nilAgilityGainPtr
+	experienceGain := &nilExperienceGainPtr
+
+	if session.StrengthGain != nil {
+		strengthGain = session.StrengthGain
+	}
+	if session.DefenseGain != nil {
+		defenseGain = session.DefenseGain
+	}
+	if session.AgilityGain != nil {
+		agilityGain = session.AgilityGain
+	}
+	if session.ExperienceGain != nil {
+		experienceGain = session.ExperienceGain
+	}
+
 	_, err := db.Exec(query, session.BoxerID, session.SessionType, session.DurationMinutes,
-		session.StrengthGain, session.DefenseGain, session.AgilityGain, session.ExperienceGain)
+		*strengthGain, *defenseGain, *agilityGain, *experienceGain)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create training session: %w", err)
 	}
 
 	return nil
