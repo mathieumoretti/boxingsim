@@ -69,7 +69,7 @@ db-create:
 	createdb -U boxing boxing
 
 migrate:
-	go run cmd/server/main.go migrate
+	go run cmd/migrate/main.go up
 
 seed-ref:
 	go run cmd/seed/main.go reference
