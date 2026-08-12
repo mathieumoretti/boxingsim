@@ -5,15 +5,24 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/pressly/goose/v3"
 )
 
-// MigrateDatabase runs database migrations
+const defaultMigrationsDir = "db/migrations"
+
+// MigrateDatabase runs all pending migrations using the default migrations directory.
+// This is the entry point used by main.go for automatic migration on server startup.
 func MigrateDatabase(db *sql.DB) error {
-	// Run migrations
+	return MigrateUp(db, defaultMigrationsDir)
+}
+
+// MigrateUp runs all pending migrations up to the latest one.
+func MigrateUp(db *sql.DB, dir string) error {
 	log.Println("Running database migrations...")
-	if err := goose.Up(db, "db/migrations"); err != nil {
+	if err := goose.Up(db, dir); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -21,17 +30,26 @@ func MigrateDatabase(db *sql.DB) error {
 	return nil
 }
 
-// ResetDatabase resets the database by rolling back all migrations and re-running them
-func ResetDatabase(db *sql.DB) error {
-	log.Println("Resetting database...")
-
-	// Rollback all migrations
-	if err := goose.DownTo(db, "db/migrations", 0); err != nil {
+// MigrateDownToZero rolls back all applied migrations.
+func MigrateDownToZero(db *sql.DB, dir string) error {
+	log.Println("Rolling back all migrations...")
+	if err := goose.DownTo(db, dir, 0); err != nil {
 		return fmt.Errorf("failed to rollback migrations: %w", err)
 	}
 
-	// Re-run all migrations
-	if err := goose.Up(db, "db/migrations"); err != nil {
+	log.Println("All migrations rolled back successfully")
+	return nil
+}
+
+// ResetDatabase resets the database by rolling back all migrations and re-running them.
+func ResetDatabase(db *sql.DB, dir string) error {
+	log.Println("Resetting database...")
+
+	if err := goose.DownTo(db, dir, 0); err != nil {
+		return fmt.Errorf("failed to rollback migrations: %w", err)
+	}
+
+	if err := goose.Up(db, dir); err != nil {
 		return fmt.Errorf("failed to re-run migrations: %w", err)
 	}
 
@@ -39,40 +57,57 @@ func ResetDatabase(db *sql.DB) error {
 	return nil
 }
 
-// StatusDatabase shows the current migration status
-func StatusDatabase(db *sql.DB) error {
-	log.Println("Database migration status:")
-	if err := goose.Status(db, "db/migrations"); err != nil {
+// ShowStatus shows the current migration status.
+func ShowStatus(db *sql.DB, dir string) error {
+	if err := goose.Status(db, dir); err != nil {
 		return fmt.Errorf("failed to get migration status: %w", err)
 	}
 
 	return nil
 }
 
-// CreateMigration creates a new migration file
-func CreateMigration(name string) error {
-	// Generate up and down files with timestamp
-	upFileName := fmt.Sprintf("db/migrations/%s_up.sql", name)
-	downFileName := fmt.Sprintf("db/migrations/%s_down.sql", name)
-
-	// Create empty up file
-	upFile, upErr := os.Create(upFileName)
-	if upErr != nil {
-		return fmt.Errorf("failed to create up migration file: %w", upErr)
-	}
-	if err := upFile.Close(); err != nil {
-		return fmt.Errorf("failed to close up migration file: %w", err)
+// MigrateUpOne runs the next single pending migration.
+func MigrateUpOne(db *sql.DB, dir string) error {
+	log.Println("Running one pending migration (up)...")
+	if err := goose.UpByOne(db, dir); err != nil {
+		return fmt.Errorf("failed to run migration up by one: %w", err)
 	}
 
-	// Create empty down file
-	downFile, downErr := os.Create(downFileName)
-	if downErr != nil {
-		return fmt.Errorf("failed to create down migration file: %w", downErr)
-	}
-	if err := downFile.Close(); err != nil {
-		return fmt.Errorf("failed to close down migration file: %w", err)
+	log.Println("Migration completed successfully")
+	return nil
+}
+
+// MigrateDownOne rolls back the last applied migration.
+func MigrateDownOne(db *sql.DB, dir string) error {
+	log.Println("Rolling back one migration (down)...")
+	if err := goose.Down(db, dir); err != nil {
+		return fmt.Errorf("failed to run migration down by one: %w", err)
 	}
 
-	log.Printf("Created new migration files: %s and %s", upFileName, downFileName)
+	log.Println("Migration rollback completed successfully")
+	return nil
+}
+
+// CreateMigration creates a new empty timestamped migration file.
+func CreateMigration(name string, migrationsDir string) error {
+	timestamp := time.Now().Format("20060102150405")
+	filename := fmt.Sprintf("%s_%s.sql", timestamp, name)
+
+	fullPath := filepath.Join(migrationsDir, filename)
+
+	// Create empty file with goose up/down markers
+	content := `-- +goose Up
+-- SQL in this section is executed when the migration is applied.
+
+
+-- +goose Down
+-- SQL in this section is executed when the migration is rolled back.
+
+`
+	if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to create migration file: %w", err)
+	}
+
+	log.Printf("Created new migration file at: %s", fullPath)
 	return nil
 }

@@ -52,3 +52,28 @@ The repository has recent commits related to:
 - The project appears to be using Go as the primary language
 - There's a focus on boxing simulation and management
 - Frontend integration seems to be part of the scope
+
+## File Path Rules
+* Always use Windows-style backslashes (`\`) for file operations.
+* Always use absolute paths with drive letters (e.g., `C:\path\to\project\main.go`).
+* NEVER use relative paths or forward slashes.
+
+## Go Writing Rules
+* If a file write or edit fails due to string matching, do not try to use the Edit tool again.
+* Fall back immediately to writing the file using a shell block via powershell: `New-Item -Force` or a redirect script.
+
+## Makefile Operations
+* Use `make <command>` for common operations instead of running commands directly.
+* Available make targets (see `make help`):
+  * **build** - Build the application (`go build`)
+  * **run** - Run the built application
+  * **dev** - Run with hot reload using air
+  * **test** - Run all tests with gotestsum
+  * **lint** - Run golangci-lint
+  * **fmt** - Format code with gofmt
+  * **migrate** - Run database migrations
+  * **seed-ref** - Seed reference data
+  * **seed-dev** - Seed development data  
+  * **world** - Generate complete world (full seeding)
+  * **reset-dev** - Reset and reseed for development (migrate + seed-ref + seed-dev)
+* If a needed operation doesn't exist in the Makefile, add a new make target following the existing conventions.
