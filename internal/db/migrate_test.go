@@ -13,7 +13,7 @@ func TestMigrateDatabase(t *testing.T) {
 	// For now, we'll just verify that the function exists and doesn't panic
 	assert.NotNil(t, MigrateDatabase)
 	assert.NotNil(t, ResetDatabase)
-	assert.NotNil(t, StatusDatabase)
+	assert.NotNil(t, ShowStatus)
 
 	t.Log("Migration functions are properly defined")
 }

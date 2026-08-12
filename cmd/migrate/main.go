@@ -128,7 +128,7 @@ func connectDB() (*sql.DB, error) {
 
 func closeConn(conn *sql.DB) {
 	if conn != nil {
-		conn.Close()
+		_ = conn.Close()
 		fmt.Println("\nClosed connection")
 	}
 }

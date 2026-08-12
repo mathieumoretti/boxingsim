@@ -13,7 +13,7 @@ func TestMigrationSystemEndToEnd(t *testing.T) {
 	// Just verify that functions exist and can be called without panic
 	assert.NotNil(t, MigrateDatabase)
 	assert.NotNil(t, ResetDatabase)
-	assert.NotNil(t, StatusDatabase)
+	assert.NotNil(t, ShowStatus)
 	assert.NotNil(t, CreateMigration)
 
 	t.Log("Migration system is properly implemented and functional")
