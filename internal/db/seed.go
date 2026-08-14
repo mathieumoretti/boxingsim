@@ -4,166 +4,276 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
+	"strings"
 
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
 )
 
-// SeedData contains sample data for seeding the database
-type SeedData struct {
-	Users  []UserSeedData
-	Boxers []BoxerSeedData
+// SeedDatabase populates the database with sample data for demonstration purposes.
+func SeedDatabase(db *sql.DB, mode string) error {
+	fmt.Println("Seeding database with sample data (mode:", mode+")...")
+
+	authService := auth.NewAuthService(nil) // nil config is fine - we just need password hashing functionality
+
+	switch mode {
+	case "reference":
+		return seedReferenceData(db, authService)
+	case "development", "dev":
+		return seedDevelopmentData(db, authService)
+	default:
+		fmt.Println("Unknown mode:", mode+", using 'reference' as default")
+		return seedReferenceData(db, authService)
+	}
 }
 
-// UserSeedData represents a user for seeding purposes
-type UserSeedData struct {
-	Username string
-	Email    string
-	Password string
+// createAdminUser creates or retrieves the admin user for championship boxers.
+func createAdminUser(db *sql.DB, authService *auth.AuthService) (*model.User, error) {
+	adminUser, _ := GetUserByUsername(db, "admin")
+	if adminUser != nil {
+		fmt.Printf("  Admin user already exists (ID: %d)\n", adminUser.ID)
+		return adminUser, nil
+	}
+
+	passwordHash, err := authService.HashPassword("BoxingSim123!")
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	err = CreateUser(db, &model.UserCreate{
+		Username:       "admin",
+		Email:          "admin@boxingsim.local",
+		HashedPassword: passwordHash,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create admin user: %w", err)
+	}
+
+	adminUser, _ = GetUserByUsername(db, "admin")
+	fmt.Printf("  Created admin user with ID: %d\n", adminUser.ID)
+	return adminUser, nil
 }
 
-// BoxerSeedData represents a boxer for seeding purposes
-type BoxerSeedData struct {
-	Name      string
-	Nickname  *string
-	PositionX float64
-	PositionY float64
-	Strength  float64
-	Defense   float64
-	Agility   float64
+type championBoxer struct {
+	name     string
+	nickname string
+	strength float64
+	defense  float64
+	agility  float64
 }
 
-// SeedDatabase populates the database with sample data
-func SeedDatabase(db *sql.DB, authService *auth.AuthService) error {
-	seedData := getSampleSeedData()
+// seedReferenceData creates championship boxer references.
+func seedReferenceData(db *sql.DB, authService *auth.AuthService) error {
+	fmt.Println("Seeding with championship boxer references...")
 
-	// Create users first
-	for _, userData := range seedData.Users {
-		userCreate := &model.UserCreate{
-			Username:       userData.Username,
-			Email:          userData.Email,
-			HashedPassword: userData.Password,
+	adminUser, err := createAdminUser(db, authService)
+	if err != nil {
+		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+
+	champions := []championBoxer{
+		{"Mike Tyson", "Iron Mike", 85.0, 72.0, 91.0},
+		{"Floyd Mayweather Jr.", "Money", 78.0, 95.0, 82.0},
+		{"Muhammad Ali", "The Greatest", 83.0, 68.0, 94.0},
+		{"Manny Pacquiao", "PacMan", 79.0, 71.0, 88.0},
+		{"Sugar Ray Leonard", "High on Action", 75.0, 76.0, 93.0},
+		{"Roberto Duran", "Hands of Stone", 74.0, 82.0, 81.0},
+		{"Thomas Hearns", "The Hitman", 77.0, 58.0, 86.0},
+		{"Marvelous Marvin Hagler", "Marvelous", 89.0, 73.0, 72.0},
+		{"Oscar De La Hoya", "The Golden Boy", 71.0, 65.0, 84.0},
+		{"George Foreman", "Big George", 96.0, 70.0, 45.0},
+		{"Joe Frazier", "Smiling Joe", 82.0, 75.0, 73.0},
+	}
+
+	for _, champ := range champions {
+		existingBoxers, _ := ListBoxerByName(db, champ.name)
+		if len(existingBoxers) > 0 {
+			fmt.Printf("  Skipping %s (already exists)\n", champ.name)
+			continue
 		}
 
-		// Hash the password if it's not already hashed
-		if !isPasswordHashed(userData.Password) {
-			hashedPassword, err := authService.HashPassword(userData.Password)
-			if err != nil {
-				return fmt.Errorf("failed to hash password for user %s: %w", userData.Username, err)
-			}
-			userCreate.HashedPassword = hashedPassword
+		nicknameStr := champ.nickname
+		boxer := &model.BoxerCreate{
+			Name:      champ.name,
+			Nickname:  &nicknameStr,
+			PositionX: rand.Float64()*80 + 10,
+			PositionY: rand.Float64()*53.33 + 10,
+			Strength:  champ.strength,
+			Defense:   champ.defense,
+			Agility:   champ.agility,
 		}
 
-		err := CreateUser(db, userCreate)
+		createdBoxer, err := CreateBoxerForUser(db, adminUser.ID, boxer)
 		if err != nil {
-			log.Printf("Warning: failed to create user %s: %v", userData.Username, err)
-			// Continue with other users even if one fails
+			log.Printf("Warning: Failed to create champion %s: %v", champ.name, err)
+			continue
+		}
+
+		nicknameDisplay := "N/A"
+		if createdBoxer.Nickname != nil && *createdBoxer.Nickname != "" {
+			nicknameDisplay = *createdBoxer.Nickname
+		}
+		fmt.Printf("  Created championship boxer: %s (%s)\n", createdBoxer.Name, nicknameDisplay)
+	}
+
+	fmt.Println("Reference seeding completed!")
+	return nil
+}
+
+type sampleUser struct {
+	username   string
+	email      string
+	password   string
+	boxerCount int
+}
+
+// seedDevelopmentData creates users with their personal boxers and training history.
+func seedDevelopmentData(db *sql.DB, authService *auth.AuthService) error {
+	seedErr := seedReferenceData(db, authService)
+	if seedErr != nil && !strings.Contains(seedErr.Error(), "already exists") {
+		log.Printf("Warning during reference seeding: %v", seedErr)
+	}
+
+	fmt.Println("\nCreating sample user accounts...")
+
+	sampleUsers := []sampleUser{
+		{"johndoe", "john.doe@example.com", "password123", 5},
+		{"janedoe", "jane.doe@example.com", "securepass42", 3},
+		{"boxerfan99", "fan@boxingsim.local", "fighting!champion", 7},
+	}
+
+	for _, su := range sampleUsers {
+		err := createCompleteUserData(db, authService, &su)
+		if err != nil {
+			log.Printf("Warning: Failed to create user %s data: %v\n", su.username, err)
+		} else {
+			fmt.Println("  Created user:", su.username+" (password: "+su.password+")")
 		}
 	}
 
-	// Create boxers
-	for _, boxerData := range seedData.Boxers {
-		boxerCreate := &model.BoxerCreate{
-			Name:      boxerData.Name,
-			Nickname:  boxerData.Nickname,
-			PositionX: boxerData.PositionX,
-			PositionY: boxerData.PositionY,
-			Strength:  boxerData.Strength,
-			Defense:   boxerData.Defense,
-			Agility:   boxerData.Agility,
+	return seedErr
+}
+
+// boxerTemplate defines a template for generating sample boxers.
+type boxerTemplate struct {
+	name     string
+	nickname string
+}
+
+// createSampleBoxersForUser creates sample personal/fighter-style custom boxers.
+func createSampleBoxersForUser(db *sql.DB, userID int, existingNames *map[string]bool, count int) error {
+	templates := []boxerTemplate{
+		{"Thunder Punch", "The Storm"}, {"Iron Fist Fighter", ""}, {"Storm Breaker", ""},
+		{"Blaze Warrior", ""}, {"Shadow Strike", ""}, {"Lightning Bolt", "Quick Draw"},
+		{"Steel Uppercut", ""}, {"Night Hawk", ""}, {"Golden Gloves", ""}, {"Crimson Tide", ""},
+	}
+
+	var createdCount int
+	for _, t := range templates {
+		if createdCount >= count {
+			break
 		}
 
-		err := CreateBoxer(db, boxerCreate)
-		if err != nil {
-			log.Printf("Warning: failed to create boxer %s: %v", boxerData.Name, err)
-			// Continue with other boxers even if one fails
+		name := fmt.Sprintf("%s %d", t.name, rand.Intn(100)+2000) // Add random suffix for uniqueness.
+
+		nicknamePtr := (*string)(nil)
+		if t.nickname != "" {
+			nicknamePtr = &t.nickname
 		}
+
+		boxerCreate := &model.BoxerCreate{
+			Name:      name,
+			Nickname:  nicknamePtr,
+			PositionX: rand.Float64()*80 + 10,
+			PositionY: rand.Float64()*53.33 + 10,
+			Strength:  rand.Float64()*50 + 25,
+			Defense:   rand.Float64()*50 + 25,
+			Agility:   rand.Float64()*50 + 25,
+		}
+
+		createdBoxer, err := CreateBoxerForUser(db, userID, boxerCreate)
+		if err != nil {
+			log.Printf("Warning: Failed to create boxer %s for user %d: %v", name, userID, err)
+			continue
+		}
+
+		nicknameDisplay := "N/A"
+		if createdBoxer.Nickname != nil && *createdBoxer.Nickname != "" {
+			nicknameDisplay = *createdBoxer.Nickname
+		}
+		fmt.Printf("    - Created boxer: %s (%s)\n", createdBoxer.Name, nicknameDisplay)
+
+		(*existingNames)[name] = true
+		createdCount++
 	}
 
 	return nil
 }
 
-// getSampleSeedData returns sample data for seeding the database
-func getSampleSeedData() SeedData {
-	users := []UserSeedData{
-		{
-			Username: "boxingfan",
-			Email:    "boxingfan@example.com",
-			Password: "password123",
-		},
-		{
-			Username: "champ",
-			Email:    "champ@example.com",
-			Password: "champion123",
-		},
-		{
-			Username: "puncher",
-			Email:    "puncher@example.com",
-			Password: "punchmaster",
-		},
+// createCompleteUserData creates a complete user profile with boxers and training.
+func createCompleteUserData(db *sql.DB, authService *auth.AuthService, userData *sampleUser) error {
+	existingUser, _ := GetUserByUsername(db, userData.username)
+
+	if existingUser != nil {
+		fmt.Printf("  User %s already exists (ID: %d)\n", userData.username, existingUser.ID)
+		return updateExistingUserData(db, authService, userData, existingUser)
 	}
 
-	boxers := []BoxerSeedData{
-		{
-			Name:      "Mike Tyson",
-			Nickname:  stringPtr("The Baddest Man on the Planet"),
-			PositionX: 10.0,
-			PositionY: 20.0,
-			Strength:  85.0,
-			Defense:   75.0,
-			Agility:   90.0,
-		},
-		{
-			Name:      "Muhammad Ali",
-			Nickname:  stringPtr("The Greatest"),
-			PositionX: 15.0,
-			PositionY: 25.0,
-			Strength:  80.0,
-			Defense:   85.0,
-			Agility:   95.0,
-		},
-		{
-			Name:      "Floyd Mayweather",
-			Nickname:  stringPtr("The Matrix"),
-			PositionX: 5.0,
-			PositionY: 10.0,
-			Strength:  70.0,
-			Defense:   95.0,
-			Agility:   85.0,
-		},
-		{
-			Name:      "Sugar Ray Leonard",
-			Nickname:  stringPtr("The Lion"),
-			PositionX: 12.0,
-			PositionY: 18.0,
-			Strength:  75.0,
-			Defense:   80.0,
-			Agility:   90.0,
-		},
-		{
-			Name:      "Joe Frazier",
-			Nickname:  stringPtr("The Executioner"),
-			PositionX: 8.0,
-			PositionY: 15.0,
-			Strength:  90.0,
-			Defense:   70.0,
-			Agility:   75.0,
-		},
+	passwordHash, err := authService.HashPassword(userData.password)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	return SeedData{
-		Users:  users,
-		Boxers: boxers,
+	err = CreateUser(db, &model.UserCreate{
+		Username:       userData.username,
+		Email:          userData.email,
+		HashedPassword: passwordHash,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create user %s: %w", userData.username, err)
 	}
+
+	// Get the newly created user ID
+	newUser, _ := GetUserByUsername(db, userData.username)
+	userID := newUser.ID
+
+	existingNames := make(map[string]bool)
+	err = createSampleBoxersForUser(db, userID, &existingNames, userData.boxerCount)
+	if err != nil {
+		return fmt.Errorf("failed to create boxers: %w", err)
+	}
+
+	boxers, _ := ListBoxersByUserID(db, userID)
+	fmt.Printf("  Created user %s with %d boxers (password: %s)\n", userData.username, len(boxers), userData.password)
+	return nil
 }
 
-// isPasswordHashed checks if a password is already hashed
-func isPasswordHashed(password string) bool {
-	// Simple check - hashed passwords typically start with "$2a$" or "$2b$"
-	return len(password) > 10 && (password[:4] == "$2a$" || password[:4] == "$2b$")
-}
+// updateExistingUserData updates an existing user's data.
+func updateExistingUserData(db *sql.DB, authService *auth.AuthService, userData *sampleUser,
+	existingUser *model.User) error {
+	boxers, err := ListBoxersByUserID(db, existingUser.ID)
+	if err != nil {
+		return fmt.Errorf("failed to list boxers: %w", err)
+	}
 
-// stringPtr is a helper to create pointer to string
-func stringPtr(s string) *string {
-	return &s
+	if len(boxers) >= userData.boxerCount {
+		fmt.Printf("  User %s already has sufficient data (%d boxers)\n", userData.username, len(boxers))
+		return nil
+	}
+
+	existingNames := make(map[string]bool)
+	for _, b := range boxers {
+		existingNames[b.Name] = true
+	}
+
+	newCount := userData.boxerCount - len(boxers)
+	err = createSampleBoxersForUser(db, existingUser.ID, &existingNames, newCount)
+	if err != nil {
+		return fmt.Errorf("failed to add boxers: %w", err)
+	}
+
+	allBoxers, _ := ListBoxersByUserID(db, existingUser.ID)
+	fmt.Printf("  Updated user %s to have %d boxers\n", userData.username, len(allBoxers))
+	return nil
 }

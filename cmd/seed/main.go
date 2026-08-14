@@ -1,48 +1,73 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/platform/config"
+	"github.com/mormm/boxing/internal/platform/database"
 )
 
 func main() {
-	// Test the seed data structure first (this doesn't require database connection)
-	log.Println("Testing sample seed data structure...")
+	fmt.Println("Starting database seeding...")
 
-	// Create a simple validation by checking that our seed data is properly structured
-	users := []db.UserSeedData{
-		{
-			Username: "testuser",
-			Email:    "test@example.com",
-			Password: "password123",
-		},
+	cfg := config.Load()
+
+	// Get mode from command line argument or default to "reference"
+	mode := getSeedModeFromArgs(os.Args[1:])
+	if !isValidMode(mode) {
+		validModesMsg := map[string]bool{"reference": true, "development": true}
+		fmt.Println("Invalid mode:", mode+", using 'reference' as default")
+		fmt.Printf("\nValid modes: ")
+		for m := range validModesMsg {
+			fmt.Print(m + " ")
+		}
+		fmt.Println()
+		mode = "reference"
 	}
 
-	boxers := []db.BoxerSeedData{
-		{
-			Name:      "Test Boxer",
-			PositionX: 10.0,
-			PositionY: 20.0,
-			Strength:  80.0,
-			Defense:   70.0,
-			Agility:   90.0,
-		},
+	// Initialize database connection
+	pgDB, err := database.NewPostgresDB(cfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer func() {
+		if err := pgDB.Close(); err != nil {
+			log.Printf("Error closing database connection: %v", err)
+		}
+	}()
+
+	// Check if we can connect
+	if err := pgDB.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	if len(users) == 0 {
-		log.Fatal("No sample users found in seed data")
+	fmt.Println("Connected to database successfully")
+
+	// Seed the database with mode parameter
+	if err := db.SeedDatabase(pgDB.DB, mode); err != nil {
+		log.Fatalf("Failed to seed database: %v", err)
 	}
 
-	if len(boxers) == 0 {
-		log.Fatal("No sample boxers found in seed data")
+	fmt.Println("Database seeding completed successfully!")
+}
+
+// getSeedModeFromArgs extracts the mode from command line arguments.
+func getSeedModeFromArgs(args []string) string {
+	if len(args) > 0 && args[0] != "" {
+		return args[0]
 	}
+	return "reference" // default mode
+}
 
-	log.Printf("Found %d sample users and %d sample boxers", len(users), len(boxers))
-	log.Printf("Sample user: %s (%s)", users[0].Username, users[0].Email)
-	log.Printf("Sample boxer: %s", boxers[0].Name)
-
-	log.Println("Seed data structure validation completed successfully!")
-	log.Println("To actually seed the database, please ensure your database is running and properly configured.")
-	log.Println("Use 'make docker-up' to start the database services, then run 'make seed'.")
+// isValidMode checks if a given mode is valid (idempotent seeding modes).
+func isValidMode(mode string) bool {
+	validModes := map[string]bool{
+		"reference":   true,
+		"development": true,
+		"dev":         true, // alias for development
+	}
+	return validModes[mode]
 }

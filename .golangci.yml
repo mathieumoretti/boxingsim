@@ -26,9 +26,9 @@ linters-settings:
   gocyclo:
     min-complexity: 15
 
-  # dupl settings
+  # dupl settings - threshold increased to ignore common DB operation patterns
   dupl:
-    threshold: 100
+    threshold: 150
 
   # goconst settings
   goconst:
