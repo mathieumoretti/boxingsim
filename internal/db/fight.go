@@ -13,14 +13,16 @@ var (
 	ErrBoxerNotExists  = errors.New("boxer does not exist")
 )
 
+// FightSelectColumns defines the standard SELECT clause for fight records.
+const fightSelectColumns = `
+	id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+	winner_id, round, data, created_at, updated_at
+`
+
 // GetFightByID retrieves a fight by ID
 func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
-	query := `
-			SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-			       winner_id, round, data, created_at, updated_at
-		FROM fights
-		WHERE id = $1
-	`
+	query := `SELECT ` + fightSelectColumns + ` FROM fights WHERE id = $1`
+
 	fight := &model.Fight{}
 	err := db.QueryRow(query, id).Scan(
 		&fight.ID,
@@ -49,26 +51,15 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 
 // CreateFight creates a new fight
 func CreateFight(db *sql.DB, fight *model.FightCreate) error {
-	query := `
-			INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round)
-			VALUES ($1, $2, $3, $4)
-	`
+	query := `INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round) VALUES ($1, $2, $3, $4)`
 	_, err := db.Exec(query, fight.Boxer1ID, fight.Boxer2ID, fight.ScheduledTime, fight.Round)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // BoxerInFight checks if a boxer is currently in a fight
 func BoxerInFight(db *sql.DB, boxerID int) (bool, error) {
-	query := `
-			SELECT COUNT(*) > 0
-			FROM fights
-			WHERE (boxer1_id = $1 OR boxer2_id = $1)
-			  AND status IN ('scheduled', 'in_progress')
-	`
+	query := `SELECT COUNT(*) > 0 FROM fights WHERE (boxer1_id = $1 OR boxer2_id = $1) AND status IN ('scheduled', 'in_progress')`
+
 	var inFight bool
 	err := db.QueryRow(query, boxerID).Scan(&inFight)
 	return inFight, err
@@ -76,20 +67,13 @@ func BoxerInFight(db *sql.DB, boxerID int) (bool, error) {
 
 // GetAvailableOpponents retrieves available opponents for a boxer
 func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
-	query := `
-			SELECT id, user_id, name, nickname, position_x, position_y,
-			       health, energy, strength, defense, agility, experience, level,
-			       created_at, updated_at
-			FROM boxers
-			WHERE id != $1 AND user_id != (SELECT user_id FROM boxers WHERE id = $1)
-	`
+	query := `SELECT id, user_id, name, nickname, position_x, position_y, health, energy, strength, defense, agility, experience, level, created_at, updated_at FROM boxers WHERE id != $1 AND user_id != (SELECT user_id FROM boxers WHERE id = $1)`
+
 	rows, err := db.Query(query, boxerID)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	defer func() { _ = rows.Close() }()
 
 	boxers := []*model.Boxer{}
 	for rows.Next() {
@@ -122,21 +106,13 @@ func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
 
 // GetFightHistory retrieves fight history for a boxer
 func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
-	query := `
-			SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-			       winner_id, round, data, created_at, updated_at
-			FROM fights
-			WHERE boxer1_id = $1 OR boxer2_id = $1
-			ORDER BY created_at DESC
-			LIMIT 50
-	`
+	query := `SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time, winner_id, round, data, created_at, updated_at FROM fights WHERE boxer1_id = $1 OR boxer2_id = $1 ORDER BY created_at DESC LIMIT 50`
+
 	rows, err := db.Query(query, boxerID)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	defer func() { _ = rows.Close() }()
 
 	fights := []*model.Fight{}
 	for rows.Next() {
@@ -162,4 +138,54 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 	}
 
 	return fights, rows.Err()
+}
+
+// scanFights scans sql.Rows into a slice of Fight pointers.
+func scanFights(rows *sql.Rows) ([]*model.Fight, error) {
+	defer func() { _ = rows.Close() }()
+
+	var fights []*model.Fight
+	for rows.Next() {
+		fight := &model.Fight{}
+		err := rows.Scan(
+			&fight.ID,
+			&fight.Boxer1ID,
+			&fight.Boxer2ID,
+			&fight.Status,
+			&fight.ScheduledTime,
+			&fight.StartTime,
+			&fight.EndTime,
+			&fight.WinnerID,
+			&fight.Round,
+			&fight.Data,
+			&fight.CreatedAt,
+			&fight.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		fights = append(fights, fight)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return fights, nil
+}
+
+// GetActiveFights retrieves all active fights (scheduled or in_progress). Optionally filter by status.
+func GetActiveFights(db *sql.DB, statuses []string) ([]*model.Fight, error) {
+	if len(statuses) == 0 {
+		statuses = []string{"scheduled", "in_progress"}
+	}
+
+	query := `SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time, winner_id, round, data, created_at, updated_at FROM fights WHERE status = ANY($1) ORDER BY scheduled_time ASC`
+
+	rows, err := db.Query(query, statuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return scanFights(rows)
 }
