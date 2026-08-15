@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './Dashboard.css';
 import { Link } from 'react-router-dom';
+import './Dashboard.css';
+import BoxerCard from './BoxerCard.jsx';
 
 const Dashboard = ({ user, onLogout }) => {
   const [boxers, setBoxers] = useState([]);
@@ -28,7 +29,8 @@ const Dashboard = ({ user, onLogout }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setBoxers(data);
+        // Ensure we always have an array, even if API returns null for empty results
+        setBoxers(Array.isArray(data) ? data : []);
       } else {
         setError(data.error || 'Failed to load boxers');
       }
@@ -71,16 +73,7 @@ const Dashboard = ({ user, onLogout }) => {
           ) : (
             <div className="boxers-grid">
               {boxers.map((boxer) => (
-                <div key={boxer.id} className="boxer-card">
-                  <div className="boxer-card-info">
-                    <h4>{boxer.name}</h4>
-                    <div className="boxer-stats">
-                      <p>Level: {boxer.level}</p>
-                      <p>Health: {boxer.health}/{boxer.max_health}</p>
-                      <p>Strength: {boxer.strength}</p>
-                    </div>
-                  </div>
-                </div>
+                <BoxerCard key={boxer.id} boxer={boxer} />
               ))}
             </div>
           )}

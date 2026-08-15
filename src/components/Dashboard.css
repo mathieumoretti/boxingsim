@@ -1,181 +1,129 @@
+/* Dashboard - Main Layout */
+
 .dashboard {
-  padding: 20px;
+  min-height: 100vh;
+  background-color: #f5f7fa; /* light gray-blue page bg */
 }
 
+/* Header with User Info & Logout */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2c3e50;
-  color: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 30px;
+  padding: 20px 30px;
+  margin-bottom: 0;
+}
+
+.dashboard h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #344054; /* Dark slate text for visibility on light background */
+  letter-spacing: -0.5px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
 }
 
 .logout-btn {
-  background-color: #e74c3c;
-  color: white;
+  background-color: rgba(239, 68, 68, 0.9); /* red-500 */
+  color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 10px 24px;
+  border-radius: 7px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .logout-btn:hover {
-  background-color: #c0392b;
+  background-color: rgba(220, 38, 38, 1); /* red-600 */
+  transform: translateY(-1px);
 }
 
+/* Dashboard Content Grid - Boxer Section & Fight Arena */
 .dashboard-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 40px;
+  padding: 24px 30px calc(80px + env(safe-area-inset-bottom, 0));
+  max-width: 1400px; /* prevent excessive width */
+}
+
+.boxer-section {
+  background-color: rgba(255, 255, 255, 0.7); /* softer card feel without box-shadow/borders that clash with boxer-card */
+  padding: 28px;
+  border-radius: 16px;
+}
+
+.boxer-section h2 {
+  font-size: 20px;
+  color: #344054; /* slate-700 equivalent (softer than pure black) */
+  margin-bottom: 24px;
+  letter-spacing: -0.2px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 16px; /* if wrapping on mobile, adds consistent spacing */
 }
 
 .create-boxer-btn {
-  background-color: #3498db;
-  color: white;
+  background-color: rgba(59, 130, 246, 1); /* blue-500 base for button (no gradient needed) */
+  color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 28px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.25px; /* tighter fit for button text */
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .create-boxer-btn:hover {
-  background-color: #2980b9;
+  background-color: rgba(37, 99, 235, 1); /* blue-600 hover */
+  transform: translateY(-2px);
 }
 
-.boxer-section, .fight-section {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-}
 
-.boxer-section h2, .fight-section h2 {
-  margin-bottom: 15px;
-  color: #2c3e50;
-}
-
+/* Boxers Grid Layout - now with enhanced cards that cast shadows (remove gap overlap) */
 .boxers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(315px, 340px)); /* wider minimum for new card width */
+  row-gap: 28px; /* increased vertical spacing to account for shadows without overlap */
 }
 
-.boxer-card {
-  background-color: white;
-  padding: 15px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+/* Fight Arena - simplified placeholder (can be replaced with actual fight UI later) */
 
-.boxer-card-info {
-  flex: 1;
-}
 
-.boxer-card-info h4 {
-  margin-bottom: 5px;
-  color: #2c3e50;
-}
+.fight-section { display: none; }
 
-.boxer-stats {
-  font-size: 14px;
-  color: #666;
-}
 
-.boxer-stats p {
-  margin: 3px 0;
-}
+.loading, .error-message { text-align: center; padding: 40px; color: #374151; font-size: 16px; border-radius: 8px;}
+.error-message { background-color: rgba(239, 68, 68, 0.1); }
 
-/* Fight Arena */
-.fight-arena {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.boxer-display {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  text-align: center;
-  width: 100%;
-}
-
-.boxer-stats {
-  margin-top: 15px;
-}
-
-.fight-controls {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.fight-btn, .reset-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.fight-btn:hover, .reset-btn:hover {
-  background-color: #c0392b;
-}
-
-.loading {
-  text-align: center;
-  padding: 20px;
-}
-
-.error-message {
-  background-color: #e74c3c;
-  color: white;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-/* Responsive design */
+/* Mobile-first responsive design */
 @media (max-width: 768px) {
-  .dashboard-content {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-header {
     flex-direction: column;
-    gap: 15px;
-    text-align: center;
+    align-items: stretch;
+    gap: 14px; /* less than full line-height to keep compact while on mobile */
+    padding: 20px;
   }
 
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
+  .user-info { justify-content: space-between; width: auto;} /* restore horizontal layout for user + button */
+
+  .create-boxer-btn { font-size: 13.5px; padding: 9px 20px;}
+
+  .dashboard h1 { text-align: center; flex: none; }
+    .section-header { flex-direction: column; align-items: stretch; gap: 12px; width: auto;} /* full-width items */
+        .boxers-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 305px)); row-gap: 24px; }
+
+      html { overflow-x: hidden;}
+          body > div .boxers-grid:not(:only-child):not(:last-of-type) { margin-bottom: 20px; } /* extra space if fight arena follows (but it's display:none now) */
 }

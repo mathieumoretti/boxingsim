@@ -17,38 +17,21 @@ function App() {
   useEffect(() => {
     // Check if user is already logged in
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    const storedUser = localStorage.getItem('user');
+    if (storedToken && storedUser) {
       setToken(storedToken);
-      // Validate token by fetching user info
-      fetchUser();
+      setCurrentUser(JSON.parse(storedUser));
+      setIsLoading(false);
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const fetchUser = async () => {
-    try {
-      // For now, we'll just use mock user data since the real endpoint isn't implemented
-      // In a real implementation, this would be a call to fetch user details from backend
-      const userData = {
-        id: 1,
-        username: "testuser",
-        email: "user@example.com"
-      };
-
-      setCurrentUser(userData);
-      setIsLoading(false);
-    } catch (error) {
-      localStorage.removeItem('token');
-      setToken(null);
-      setIsLoading(false);
-    }
-  };
-
   const handleLogin = (userData, tokenData) => {
     setCurrentUser(userData);
     setToken(tokenData);
     localStorage.setItem('token', tokenData);
+    localStorage.setItem('user', JSON.stringify(userData)); // Persist user data including ID
     // Redirect to dashboard after successful login
     // Using window.location.replace to avoid going back in browser history
     window.location.replace('/dashboard');
@@ -58,6 +41,7 @@ function App() {
     setCurrentUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user'); // Also clear persisted user data
   };
 
   const ProtectedRoute = ({ children }) => {
