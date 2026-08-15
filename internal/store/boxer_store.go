@@ -82,7 +82,7 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 		_ = rows.Close()
 	}()
 
-	var boxers []*model.Boxer
+	var boxers []*model.Boxer = make([]*model.Boxer, 0)
 	for rows.Next() {
 		boxer := &model.Boxer{}
 		err := rows.Scan(
