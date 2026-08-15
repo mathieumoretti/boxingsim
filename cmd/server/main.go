@@ -13,6 +13,7 @@ import (
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
+	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -67,12 +68,15 @@ func main() {
 
 	// Setup repositories only if DB is connected
 	var boxerStore *store.BoxerStore
+	var fightService *service.FightService
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
+		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
 	}
 
 	// Setup handlers
 	boxerHandler := handler.NewBoxerHandler(boxerStore)
+	fightHandler := handler.NewFightHandler(fightService)
 	authHandler := handler.NewAuthHandler(dbConn)
 	dashboardHandler := handler.NewDashboardHandler()
 
@@ -175,6 +179,40 @@ func main() {
 			return
 		}
 		boxerHandler.GetBoxersByUserID(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	// Fight endpoints - protected with CORS middleware
+	router.HandleFunc("/fights/book", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		fightHandler.BookFight(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	router.HandleFunc("/fights/active", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		fightHandler.GetActiveFights(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	router.HandleFunc("/fights/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		fightHandler.GetFightByID(w, r)
 	}).Methods(optionsMethod, "GET")
 
 	// Serve static files for the UI (React app)
