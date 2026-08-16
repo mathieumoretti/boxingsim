@@ -24,7 +24,8 @@ type PostgresDBWrapper struct {
 	Conn *sql.DB
 }
 
-func (s *FightService) BookFight(ctx context.Context, boxer1ID int, boxer2ID int, scheduledTime time.Time, round int) error {
+func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
+	boxer2ID int, scheduledTime time.Time, round int) error {
 	if boxer1ID <= 0 || boxer2ID <= 0 {
 		return errors.New("invalid request parameters")
 	}

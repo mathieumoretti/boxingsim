@@ -13,11 +13,11 @@ import (
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
-	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/platform/redis"
+	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
 )
 

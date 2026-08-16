@@ -134,4 +134,3 @@ func BoxerExists(db *sql.DB, id int) (bool, error) {
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM boxers WHERE id = $1)", id).Scan(&exists)
 	return exists, err
 }
-

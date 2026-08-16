@@ -56,9 +56,10 @@ func (h *FightHandler) BookFight(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Fight booked successfully",
-	})
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Fight booked successfully"}); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetActiveFights returns all active (scheduled/in_progress) fights (GET /fights/active)
@@ -72,7 +73,10 @@ func (h *FightHandler) GetActiveFights(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(fights)
+	if err := json.NewEncoder(w).Encode(fights); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetFightByID returns a specific fight by ID (GET /fights/{id})
@@ -104,6 +108,8 @@ func (h *FightHandler) GetFightByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(fight)
+	if err := json.NewEncoder(w).Encode(fight); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
 }
-
