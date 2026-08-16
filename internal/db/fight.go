@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	ErrFightNotFound = errors.New("fight not found")
+	ErrFightNotFound   = errors.New("fight not found")
+	ErrBoxerInUse      = errors.New("boxer is currently involved in another fight")
+	ErrBoxerNotExists  = errors.New("boxer does not exist")
 )
 
 // GetFightByID retrieves a fight by ID
