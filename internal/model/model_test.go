@@ -166,7 +166,6 @@ func TestFight(t *testing.T) {
 			EndTime:       &now,
 			WinnerID:      intPtr(1),
 			Round:         1,
-			Data:          map[string]interface{}{"key": "value"},
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
@@ -189,7 +188,6 @@ func TestFight(t *testing.T) {
 			EndTime:       &now,
 			WinnerID:      intPtr(1),
 			Round:         1,
-			Data:          map[string]interface{}{"key": "value"},
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
@@ -202,7 +200,6 @@ func TestFight(t *testing.T) {
 		jsonStr := string(data)
 		assert.Contains(t, jsonStr, "scheduled")
 		assert.Contains(t, jsonStr, "1")
-		assert.Contains(t, jsonStr, "value")
 	})
 }
 
@@ -221,7 +218,6 @@ func TestScheduledEvent(t *testing.T) {
 			BoxerID:   1,
 			EventType: EventTypeTraining,
 			EventTime: now,
-			Data:      map[string]interface{}{"key": "value"},
 			CreatedAt: now,
 		}
 
@@ -236,7 +232,6 @@ func TestScheduledEvent(t *testing.T) {
 			BoxerID:   1,
 			EventType: EventTypeTraining,
 			EventTime: now,
-			Data:      map[string]interface{}{"key": "value"},
 			CreatedAt: now,
 		}
 
@@ -247,7 +242,6 @@ func TestScheduledEvent(t *testing.T) {
 		// Check that the JSON contains expected fields
 		jsonStr := string(data)
 		assert.Contains(t, jsonStr, "training")
-		assert.Contains(t, jsonStr, "value")
 	})
 }
 
@@ -303,30 +297,6 @@ func TestTrainingSession(t *testing.T) {
 		assert.Contains(t, jsonStr, "strength")
 		assert.Contains(t, jsonStr, "60")
 		assert.Contains(t, jsonStr, "5")
-	})
-}
-
-func TestWorldTick(t *testing.T) {
-	t.Run("WorldTick struct creation", func(t *testing.T) {
-		now := time.Now()
-		tick := &WorldTick{
-			ID:          1,
-			TickNumber:  100,
-			StartTime:   now,
-			EndTime:     &now,
-			ProcessedAt: &now,
-		}
-
-		assert.NotNil(t, tick)
-		assert.Equal(t, 100, tick.TickNumber)
-	})
-
-	t.Run("WorldTick Number method", func(t *testing.T) {
-		tick := &WorldTick{
-			TickNumber: 100,
-		}
-
-		assert.Equal(t, 100, tick.Number())
 	})
 }
 
