@@ -29,14 +29,18 @@ func NewScheduledEventStore(db *sql.DB) *ScheduledEventStore {
 
 // Create inserts a new scheduled event and returns the generated ID.
 func (s *ScheduledEventStore) Create(ctx context.Context, event *model.ScheduledEvent) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
 	query := `
-		INSERT INTO scheduled_events (
-			boxer_id, event_type, event_time, processed, created_at
-		) VALUES ($1, $2, $3, FALSE, CURRENT_TIMESTAMP)
-		RETURNING id`
+			INSERT INTO scheduled_events (
+				boxer_id, event_type, event_time, processed, created_at
+			) VALUES ($1, $2, $3, FALSE, CURRENT_TIMESTAMP)
+			RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
-		event.BoxerID, event.EventType, event.EventTime).Scan(&event.ID)
+			event.BoxerID, event.EventType, event.EventTime).Scan(&event.ID)
 	if err != nil {
 		return ErrFailedToInsert
 	}
@@ -45,11 +49,15 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 
 // GetByID retrieves a scheduled event by its ID. Returns ErrEventNotFound if the event doesn't exist.
 func (s *ScheduledEventStore) GetByID(ctx context.Context, id int) (*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
 	query := `
-		SELECT
-			id, boxer_id, event_type, event_time, processed, event_data,
-			error_message, created_at
-		FROM scheduled_events WHERE id = $1`
+			SELECT
+				id, boxer_id, event_type, event_time, processed, event_data,
+				error_message, created_at
+			FROM scheduled_events WHERE id = $1`
 
 	event := &model.ScheduledEvent{}
 	row := s.db.QueryRowContext(ctx, query, id)
@@ -69,11 +77,15 @@ func (s *ScheduledEventStore) GetByID(ctx context.Context, id int) (*model.Sched
 
 // GetByBoxerID retrieves all scheduled events for a specific boxer.
 func (s *ScheduledEventStore) GetByBoxerID(ctx context.Context, boxerID int) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
 	query := `
-		SELECT
-			id, boxer_id, event_type, event_time, processed, event_data,
-			error_message, created_at
-		FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
+			SELECT
+				id, boxer_id, event_type, event_time, processed, event_data,
+				error_message, created_at
+			FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
 
 	rows, err := s.db.QueryContext(ctx, query, boxerID)
 	if err != nil {
@@ -107,13 +119,17 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 	gameTime time.Time,
 	limit int,
 ) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
 	query := `
-		SELECT
-			id, boxer_id, event_type, event_time, processed, event_data,
-			error_message, created_at
-		FROM scheduled_events
-		WHERE event_time <= $1 AND NOT processed
-		ORDER BY event_time ASC LIMIT $2`
+			SELECT
+				id, boxer_id, event_type, event_time, processed, event_data,
+				error_message, created_at
+			FROM scheduled_events
+			WHERE event_time <= $1 AND NOT processed
+			ORDER BY event_time ASC LIMIT $2`
 
 	rows, err := s.db.QueryContext(ctx, query, gameTime, limit)
 	if err != nil {
@@ -143,10 +159,14 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 // MarkAsProcessed marks a scheduled event as processed atomically using row-level locking.
 // Returns ErrAlreadyProcessed if the event was already marked as processed (idempotent operation).
 func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId int) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
 	query := `
-		UPDATE scheduled_events
-		SET processed = TRUE
-		WHERE id = $1 AND NOT processed`
+			UPDATE scheduled_events
+			SET processed = TRUE
+			WHERE id = $1 AND NOT processed`
 
 	result, err := s.db.ExecContext(ctx, query, eventId)
 	if err != nil {
@@ -170,6 +190,9 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 	eventTime time.Time,
 	data []byte, // JSONB data as raw bytes
 ) (*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -178,9 +201,9 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 	defer func() { _ = tx.Rollback() }() // Will be ignored if committed
 
 	insertQuery := `
-		INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, event_data, created_at)
-		VALUES ($1, $2, $3, FALSE, COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
-		RETURNING id`
+			INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, event_data, created_at)
+			VALUES ($1, $2, $3, FALSE, COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
+			RETURNING id`
 
 	var eventId int
 	err = tx.QueryRowContext(ctx, insertQuery, boxerID, eventType, eventTime, data).Scan(&eventId)
@@ -206,6 +229,10 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 
 // DeleteByBoxerID deletes all scheduled events for a specific boxer. Used for cleanup when boxing is deleted.
 func (s *ScheduledEventStore) DeleteByBoxerID(ctx context.Context, boxerID int) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
 	query := "DELETE FROM scheduled_events WHERE boxer_id = $1"
 	_, err := s.db.ExecContext(ctx, query, boxerID)
 	return err
