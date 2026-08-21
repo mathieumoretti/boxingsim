@@ -31,11 +31,9 @@ help:
 build:
 	go build -o bin/boxing cmd/server/main.go
 
-run: build
-	./bin/boxing
+run: build ./bin/boxing
 
-dev:
-.air
+dev: .air
 
 docker-up:
 	docker-compose up -d

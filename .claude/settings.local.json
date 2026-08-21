@@ -18,7 +18,8 @@
       "Bash(goimports *)",
       "Bash(go list *)",
       "Bash(gotestsum *)",
-      "mcp__linear-server__get_issue"
+      "mcp__linear-server__get_issue",
+      "Bash(go fmt *)"
     ]
   }
 }
