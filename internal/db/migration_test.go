@@ -7,9 +7,10 @@ import (
 )
 
 func TestInitializeSchema(t *testing.T) {
+	t.Skip("integration test - requires live PostgreSQL database")
+
 	// Integration test using PostgreSQL database
 	db := SetupTestDB(t)
-	defer CleanupTestDB(db)
 
 	// Test schema initialization
 	err := InitializeSchema(db)

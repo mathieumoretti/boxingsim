@@ -147,19 +147,82 @@ func TestDBConfig() *dbConfig {
 	return testDBConfig()
 }
 
-// SetupTestDB creates a fresh isolated PostgreSQL database with migrations applied.
-// Use this helper in tests that need an empty schema without full migration history.
-// It registers cleanup via t.Cleanup and returns the opened connection ready for queries.
+// SetupTestDB creates a fresh isolated PostgreSQL database with the initial schema.
+// It runs migrations from "./db/migrations" and registers cleanup via t.Cleanup.
+// Returns the opened connection ready for queries or skips the test if DB unavailable.
 func SetupTestDB(t *testing.T) *sql.DB {
-	db, _ := FreshDatabase(t, "test", "") // no migrations - just fresh DB with InitSchema needed manually
+	t.Helper()
+	db, _ := FreshDatabaseWithMigrations(t, "test", true)
 	return db
 }
 
-// CleanupTestDB drops a test database after cleanup is registered via t.Cleanup in FreshDatabase.
+// CleanupTestDB drops a test database after cleanup is registered via t.Cleanup in FreshDatabase*.
 // This function exists for backwards compatibility but should not be called directly since
-// FreshDatabase already handles teardown automatically through the testing.T interface itself.
+// FreshDatabase* already handles teardown automatically through the testing.T interface itself.
 func CleanupTestDB(db *sql.DB) {
 	if db != nil {
 		db.Close()
 	}
+}
+
+// FreshDatabaseWithMigrations is a convenience wrapper that creates a fresh database and applies migrations,
+// or skips without migration if skipMigrations=true (for tests using InitializeSchema directly).
+func FreshDatabaseWithMigrations(t *testing.T, prefix string, runMigrations bool) (*sql.DB, func()) {
+	t.Helper()
+	if !runMigrations {
+		return FreshDatabaseWithoutMigrations(t, prefix)
+	}
+	migrationsDir := getEnv("TEST_MIGRATIONS_DIR", "db/migrations")
+	if migrationsDir == "" {
+		migrationsDir = "db/migrations"
+	}
+	db, cleanupFn := FreshDatabase(t, prefix, migrationsDir)
+	return db, cleanupFn
+}
+
+// FreshDatabaseWithoutMigrations creates a fresh isolated database without running any migrations.
+// Use this for tests that manually call InitializeSchema or test migration behavior itself.
+func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func()) {
+	t.Helper()
+	cfg := testDBConfig()
+	testDBName := fmt.Sprintf("%s_%d", strings.ToLower(prefix), time.Now().UnixNano())
+
+	baseDSN := buildBaseDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password)
+	baseConn, err := sql.Open("postgres", baseDSN)
+	if err != nil {
+		t.Fatalf("FreshDatabaseWithoutMigrations: failed to open postgres connection: %v", err)
+	}
+
+	dropExistingDB(baseConn, testDBName)
+
+	createQuery := fmt.Sprintf(`CREATE DATABASE "%s"`, sanitizeIdentifier(testDBName))
+	if _, execErr := baseConn.Exec(createQuery); execErr != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: create database failed: %v", execErr)
+	}
+
+	testDSN := buildDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password, testDBName)
+	db, err := sql.Open("postgres", testDSN)
+	if err != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: open connection failed: %v", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		db.Close()
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: cannot connect to %s: %v", testDBName, err)
+	}
+
+	cleanupFn := func() {
+		if db != nil {
+			db.Close()
+		}
+		dropExistingDB(baseConn, testDBName)
+		baseConn.Close()
+	}
+
+	t.Cleanup(cleanupFn)
+
+	return db, cleanupFn
 }

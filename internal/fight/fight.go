@@ -63,7 +63,6 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 		INSERT INTO fights (boxer1_id, boxer2_id, status, scheduled_time, round, data)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`, boxer1ID, boxer2ID, "scheduled", scheduledTime, 1, fight.Data)
-
 	if err != nil {
 		s.logger.Error("Failed to schedule fight", err)
 		return nil, err
@@ -117,7 +116,6 @@ func (s *FightService) GetByID(id int) (*Fight, error) {
 		&fight.CreatedAt,
 		&fight.UpdatedAt,
 	)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -213,7 +211,6 @@ func (s *FightService) UpdateRound(id int, round int) error {
 		UPDATE fights SET round = $1
 		WHERE id = $2
 	`, round, id)
-
 	if err != nil {
 		s.logger.Error("Failed to update fight round", err)
 		return err
