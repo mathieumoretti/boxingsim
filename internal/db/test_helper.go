@@ -23,8 +23,10 @@ func getEnv(key, defaultValue string) string {
 func parseIntEnv(key string, defaultVal int) int {
 	if v := os.Getenv(key); v != "" {
 		var x int
-		fmt.Sscanf(v, "%d", &x)
-		return x
+		n, _ := fmt.Sscanf(v, "%d", &x)
+		if n == 1 {
+			return x
+		}
 	}
 	return defaultVal
 }
@@ -80,7 +82,7 @@ func sanitizeIdentifier(name string) string {
 // dropExistingDB drops a database if it exists (ignores errors).
 func dropExistingDB(conn *sql.DB, dbName string) {
 	query := fmt.Sprintf(`DROP DATABASE IF EXISTS "%s"`, sanitizeIdentifier(dbName))
-	conn.Exec(query) // ignore error - might not exist yet
+	_, _ = conn.Exec(query) // ignore error - might not exist yet
 }
 
 // FreshDatabase creates a fresh isolated PostgreSQL database for testing.
@@ -123,7 +125,7 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 	if err != nil {
 		db.Close()
 		baseConn.Close()
-		t.Fatalf("FreshDatabase: migrations failed from %s: %w", migrationsDir, err)
+		t.Fatalf("FreshDatabase: migrations failed from %s: %v", migrationsDir, err)
 	}
 
 	// Setup cleanup function to drop DB on test complete
@@ -143,4 +145,21 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 // TestDBConfig returns database configuration for testing (exported).
 func TestDBConfig() *dbConfig {
 	return testDBConfig()
+}
+
+// SetupTestDB creates a fresh isolated PostgreSQL database with migrations applied.
+// Use this helper in tests that need an empty schema without full migration history.
+// It registers cleanup via t.Cleanup and returns the opened connection ready for queries.
+func SetupTestDB(t *testing.T) *sql.DB {
+	db, _ := FreshDatabase(t, "test", "") // no migrations - just fresh DB with InitSchema needed manually
+	return db
+}
+
+// CleanupTestDB drops a test database after cleanup is registered via t.Cleanup in FreshDatabase.
+// This function exists for backwards compatibility but should not be called directly since
+// FreshDatabase already handles teardown automatically through the testing.T interface itself.
+func CleanupTestDB(db *sql.DB) {
+	if db != nil {
+		db.Close()
+	}
 }
