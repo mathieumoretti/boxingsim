@@ -2,21 +2,9 @@ package db
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
+// TestInitializeSchema - moved to schema_integration_test.go for live database testing.
 func TestInitializeSchema(t *testing.T) {
-	t.Skip("integration test - requires live PostgreSQL database")
-
-	// Integration test using PostgreSQL database
-	db := SetupTestDB(t)
-
-	// Test schema initialization
-	err := InitializeSchema(db)
-	assert.NoError(t, err)
-
-	// Test that schema can be run multiple times (idempotent)
-	err = InitializeSchema(db)
-	assert.NoError(t, err)
+	t.Skip("unit test stub - see TestInitializeSchemaIntegration in schema_integration_test.go")
 }

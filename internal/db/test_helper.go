@@ -4,12 +4,79 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/lib/pq"
 )
+
+// GetRepoRoot finds the repository root by searching upwards for .git directory or go.mod file.
+// Returns the path to the repo root, starting from current working directory.
+func GetRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Walk up the directory tree looking for repo root markers
+	for currentDir := dir; ; currentDir = filepath.Dir(currentDir) {
+		// Check if we've reached filesystem root
+		parentDir := filepath.Dir(currentDir)
+		if parentDir == currentDir || strings.TrimSuffix(parentDir, string(filepath.Separator)) != parentDir && len(strings.Split(currentDir, string(filepath.Separator))) <= 2 {
+			break // Reached the beginning of path (e.g. C:\ on Windows or / on Unix)
+		}
+
+		gitPath := filepath.Join(currentDir, ".git")
+		if _, err := os.Stat(gitPath); err == nil {
+			return currentDir, nil
+		}
+
+		goModPath := filepath.Join(currentDir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			return currentDir, nil
+		}
+
+		// Safety check: if parent is same as current (reached root) or path components are very short, stop
+		if strings.Count(parentDir+string(filepath.Separator), string(filepath.Separator)) <= 2 || parentDir == filepath.VolumeName(currentDir)+":" {
+			break
+		}
+
+		parentDir = filepath.Dir(currentDir)
+		if currentDir == parentDir {
+			break // Reached root (e.g., / or C:\) - can't go higher on that drive/volume.
+		}
+		currentDir = parentDir
+	}
+
+	return "", fmt.Errorf("repository root not found (no .git directory or go.mod detected while walking up from %s)", dir)
+}
+
+// GetMigrationsDir returns the absolute path to the migrations directory.
+// It first checks TEST_MIGRATIONS_DIR env var, and if empty, constructs it relative to repo root.
+func GetMigrationsDir() string {
+	if v := os.Getenv("TEST_MIGRATIONS_DIR"); v != "" && filepath.IsAbs(v) {
+		return v // Use absolute path from env var as-is
+	}
+
+	repoRoot, err := GetRepoRoot()
+	if err == nil {
+		migrationsDir := filepath.Join(repoRoot, "db", "migrations")
+		if _, statErr := os.Stat(migrationsDir); statErr == nil {
+			return migrationsDir
+		}
+	}
+
+	// Fallback: try relative path from CWD (original behavior)
+	const defaultMigrationsPath = "db/migrations"
+	if _, err := os.Stat(defaultMigrationsPath); err == nil {
+		defaultAbs, _ := filepath.Abs(defaultMigrationsPath) // ignore error - will fail later anyway if bad
+		return defaultAbs
+	}
+
+	return filepath.Join("db", "migrations") // fallback to relative (will likely not work but maintains behavior)
+}
 
 // getEnv returns environment variable or default value.
 func getEnv(key, defaultValue string) string {
@@ -172,10 +239,7 @@ func FreshDatabaseWithMigrations(t *testing.T, prefix string, runMigrations bool
 	if !runMigrations {
 		return FreshDatabaseWithoutMigrations(t, prefix)
 	}
-	migrationsDir := getEnv("TEST_MIGRATIONS_DIR", "db/migrations")
-	if migrationsDir == "" {
-		migrationsDir = "db/migrations"
-	}
+	migrationsDir := GetMigrationsDir()
 	db, cleanupFn := FreshDatabase(t, prefix, migrationsDir)
 	return db, cleanupFn
 }
