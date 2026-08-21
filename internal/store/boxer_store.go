@@ -58,7 +58,6 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 		&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
 		&boxer.Experience, &boxer.Level, &boxer.CreatedAt, &boxer.UpdatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}

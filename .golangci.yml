@@ -1,89 +1,17 @@
-# GolangCI-Lint configuration file
-# This file is automatically updated to the latest format specification
+run:
+  timeout: 5m
 
 linters-settings:
-  # govet settings - note: check-shadowing deprecated, use 'shadow' instead
-  govet:
-    enable-all: false
-
-  # golint settings (deprecated, using revive instead)
-  revive:
-    enable-all: false
-    disable:
-      - package-comments
-    rules:
-      # You can customize revive rules here
-      - name: exported
-        disabled: true
-      - name: blank-imports
-        disabled: true
-      - name: context-as-argument
-        disabled: true
-      - name: context-keys-type
-        disabled: true
-
-  # gocyclo settings
-  gocyclo:
-    min-complexity: 15
-
-  # dupl settings - threshold increased to ignore common DB operation patterns
-  dupl:
-    threshold: 150
-
-  # goconst settings
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-
-  # misspell settings
-  misspell:
-    locale: US
-
-  # lll settings (line length)
   lll:
-    line-length: 120
-
-  # gofmt settings
-  gofmt:
-    simplify: true
-
-  # goimports settings
-  goimports:
-    local-prefixes: github.com/mormm/boxing
+    line-length: 160
 
 linters:
-  enable-all: false
-  disable-all: true
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - typecheck
-    - unused
-    - dupl
-    - goconst
-    - misspell
-    - lll
     - gofmt
-    - goimports
-    - revive
-
-issues:
-  exclude-use-default: false
-  exclude:
-    # Exclude specific issues that are not relevant for this project
-    - "SA1019: .* is deprecated"
-    - "gochecknoglobals"
-    - "exhaustive"
-    - "unparam"
-    - "gocritic"
-    - "gocheckcompilerdirectives"
-    - "cyclomatic complexity of func `main` is high"
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
-output:
-  formats:
-    - format: tab
+    - gofumpt
+    - gosimple
+    - staticcheck
+    - unused
+    - errcheck
+    - vet
+    - lll

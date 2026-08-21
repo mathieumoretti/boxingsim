@@ -40,7 +40,7 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 			RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
-			event.BoxerID, event.EventType, event.EventTime).Scan(&event.ID)
+		event.BoxerID, event.EventType, event.EventTime).Scan(&event.ID)
 	if err != nil {
 		return ErrFailedToInsert
 	}

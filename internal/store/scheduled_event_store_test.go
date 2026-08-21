@@ -70,7 +70,9 @@ func TestScheduledEventStore_GetPendingEventsBeforeGameTime(t *testing.T) {
 	_, err := store.GetPendingEventsBeforeGameTime(ctx, gameTime, 50)
 
 	assert.Error(t, err, "GetPendingEventsBeforeGameTime should fail with nil database")
-	t.Log("ScheduledEventStore_GetPendingEventsBeforeGameTime test structure verified - requires integration DB setup per MAT-23 scope")
+	t.Log(
+		"ScheduledEventStore_GetPendingEventsBeforeGameTime: needs integration DB",
+	)
 }
 
 // TestScheduledEventStore_MarkAsProcessed tests the MarkAsProcessed method of ScheduledEventStore.
@@ -102,7 +104,9 @@ func TestScheduledEventStore_CreateAndProcessIfPastTime(t *testing.T) {
 	_, err := store.CreateAndProcessIfPastTime(ctx, boxerID, eventType, eventTime, data)
 
 	assert.Error(t, err, "CreateAndProcessIfPastTime should fail with nil database") // Expected for stubbed connection
-	t.Log("ScheduledEventStore_CreateAndProcessIfPastTime test structure verified - requires integration DB setup per MAT-23 scope")
+	t.Log(
+		"ScheduledEventStore_CreateAndProcessIfPastTime: needs integration DB",
+	)
 }
 
 // TestScheduledEventStore_DeleteByBoxerID tests the DeleteByBoxerID method of ScheduledEventStore.
