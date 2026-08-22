@@ -10,8 +10,6 @@ import (
 
 // TestInitializeSchemaIntegration tests schema initialization with live database.
 func TestInitializeSchemaIntegration(t *testing.T) {
-	t.Parallel()
-
 	testDB, _ := FreshDatabaseWithoutMigrations(t, "integration_schema")
 	if testDB == nil {
 		t.Skip("FreshDatabase returned nil - PostgreSQL not available at TEST_DB_HOST")

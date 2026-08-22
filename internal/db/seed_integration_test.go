@@ -10,8 +10,6 @@ import (
 
 // TestSeedDatabaseIntegration tests the seeding functionality with live database.
 func TestSeedDatabaseIntegration(t *testing.T) {
-	t.Parallel()
-
 	testDB, _ := FreshDatabaseWithMigrations(t, "integration_seed", true)
 	if testDB == nil {
 		t.Skip("FreshDatabase returned nil - PostgreSQL not available at TEST_DB_HOST")

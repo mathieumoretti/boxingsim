@@ -11,8 +11,6 @@ import (
 
 // TestDBConnection tests database connectivity with isolated test database per-test.
 func TestDBConnection(t *testing.T) {
-	t.Parallel()
-
 	testDB, _ := db.FreshDatabaseWithMigrations(t, "integration_dbconn", true)
 	if testDB == nil {
 		t.Skip("FreshDatabase returned nil - PostgreSQL not available at TEST_DB_HOST")
@@ -29,8 +27,6 @@ func TestDBConnection(t *testing.T) {
 
 // TestAuthIntegration tests the authentication service logic without requiring a database.
 func TestAuthIntegration(t *testing.T) {
-	t.Parallel()
-
 	cfg := &config.Config{JWTSecret: "integration-test-secret-key"}
 	service := auth.NewAuthService(cfg)
 
@@ -76,8 +72,6 @@ func TestAuthIntegration(t *testing.T) {
 
 // TestDatabaseOperations tests CRUD operations using isolated test database.
 func TestDatabaseOperations(t *testing.T) {
-	t.Parallel()
-
 	testDB, _ := db.FreshDatabaseWithMigrations(t, "integration_dbops", true)
 	if testDB == nil {
 		t.Skip("FreshDatabase returned nil - PostgreSQL not available at TEST_DB_HOST")
@@ -117,8 +111,6 @@ func TestDatabaseOperations(t *testing.T) {
 
 // TestCompleteFlow tests end-to-end flow combining auth service and database operations.
 func TestCompleteFlow(t *testing.T) {
-	t.Parallel()
-
 	// TODO: Skip until refresh token generation is implemented (auth.GenerateTokenPair missing RefreshToken)
 	t.Skip("Skipping until JWT refresh token implementation completes")
 
