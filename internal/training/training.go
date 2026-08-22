@@ -17,6 +17,7 @@ type TrainingQueue struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	CompletedAt *time.Time `json:"completed_at"`
 }
+
 // TrainingService handles training operations
 type TrainingService struct {
 }

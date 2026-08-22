@@ -3,7 +3,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop/* ]
+    branches: [ main, "develop/**" ] # Fixed glob pattern (wrapped in quotes for YAML safety)
   pull_request:
     branches: [ main ]
 
@@ -11,39 +11,67 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+        ports:
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
 
-    - name: Install dependencies
-      run: |
-        go mod download
-        # Set git config to avoid authentication issues in CI
-        git config --global url."https://github.com/".insteadOf "https://github.com/"
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: Install dependencies
+        run: |
+          go mod download
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-    - name: Run linters
-      continue-on-error: true
-      run: |
-        go vet ./...
-        golangci-lint version
-        golangci-lint run ./...
+      - name: Run linters
+        continue-on-error: true
+        run: |
+          go vet ./...
+          golangci-lint version
+          golangci-lint run ./...
 
-    - name: Build application
-      run: |
-        go build -o boxing-server ./cmd/server
+      - name: Build application
+        run: |
+          go build -o boxing-server ./cmd/server
 
-    - name: Run tests with gotestsum
-      run: |
-        # Run tests using go run approach to avoid installation issues
-        go run gotest.tools/gotestsum@latest --format=short-verbose ./...
+      - name: Run unit tests (fast, no database required)
+        run: |
+          # Unit tests only - excludes internal/integration package; integration-tagged test files are automatically excluded by Go build tags
+          go run gotest.tools/gotestsum@latest --format=short-verbose $(go list ./... | grep -v 'internal/integration$')
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: boxing-server
-        path: boxing-server
+      - name: Run integration tests with isolated databases
+        env:
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_PORT: 5432 # Fixed invalid service context token reference
+          TEST_DB_USER: postgres
+          TEST_DB_PASSWORD: postgres
+        run: |
+          # Integration tests from internal/integration package (no tag needed)
+          go run gotest.tools/gotestsum@latest --format=short-verbose ./internal/integration/...
+
+          # Also run integration-tagged tests in db package (schema_integration_test.go, seed_integration_test.go)
+          GOFLAGS="-tags=integration" go run gotest.tools/gotestsum@latest --format=short-verbose ./internal/db
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()  # Always upload even on failure for debugging
+        with:
+          name: boxing-server
+          path: boxing-server
