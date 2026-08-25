@@ -25,15 +25,20 @@ const optionsMethod = "OPTIONS"
 
 func main() {
 	// Load configuration
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		logger := logger.New("SERVER")
+		logger.Error("Failed to load configuration", "error", err)
+		os.Exit(1)
+	}
 	logger := logger.New("SERVER")
 
 	logger.Info("Starting Boxing API Server")
 	logger.Info("Configuration loaded",
-		"dbHost", cfg.DBHost,
-		"dbPort", cfg.DBPort,
-		"dbName", cfg.DBName,
-		"jwtSecretSet", len(cfg.JWTSecret) > 0)
+		"dbHost", cfg.Database.Host,
+		"dbPort", cfg.Database.Port,
+		"dbName", cfg.Database.Name,
+		"jwtSecretSet", len(cfg.JWT.Secret) > 0)
 
 	// Initialize database
 	dbConn, dbErr := database.NewPostgresDB(cfg)

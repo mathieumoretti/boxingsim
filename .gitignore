@@ -38,3 +38,6 @@ Thumbs.db
 
 build/*
 node_modules
+
+#claude
+.claude/*

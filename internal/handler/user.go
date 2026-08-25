@@ -5,8 +5,7 @@ import (
 )
 
 // UserHandler handles user-related HTTP requests
-type UserHandler struct {
-}
+type UserHandler struct{}
 
 func NewUserHandler() *UserHandler {
 	return &UserHandler{}

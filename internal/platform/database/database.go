@@ -18,19 +18,19 @@ type PostgresDB struct {
 func NewPostgresDB(cfg *config.Config) (*PostgresDB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBUser,
-		cfg.DBPassword,
-		cfg.DBName,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name,
 	)
 
 	fmt.Printf(
 		"Connecting to postgres: host=%s port=%d user=%s dbname=%s\n",
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBUser,
-		cfg.DBName,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Name,
 	)
 
 	db, err := sql.Open("postgres", connStr)

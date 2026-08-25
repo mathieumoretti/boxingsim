@@ -48,7 +48,7 @@ func (s *AuthService) GenerateTokenPair(user *model.User) (*TokenPair, error) {
 		"exp":      now.Add(15 * time.Minute).Unix(),
 		"username": user.Username,
 	})
-	accessToken, err := atClaims.SignedString([]byte(s.cfg.JWTSecret))
+	accessToken, err := atClaims.SignedString([]byte(s.cfg.JWT.Secret))
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +63,8 @@ func (s *AuthService) VerifyToken(tokenString string) (*jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return []byte(s.cfg.JWTSecret), nil
+		return []byte(s.cfg.JWT.Secret), nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

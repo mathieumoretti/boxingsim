@@ -7,8 +7,7 @@ import (
 )
 
 // DashboardHandler handles dashboard-related HTTP requests
-type DashboardHandler struct {
-}
+type DashboardHandler struct{}
 
 func NewDashboardHandler() *DashboardHandler {
 	return &DashboardHandler{}

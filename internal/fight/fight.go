@@ -225,7 +225,6 @@ func (s *FightService) SetWinner(id int, winnerID int) error {
 		UPDATE fights SET winner_id = $1, status = 'completed'
 		WHERE id = $2
 	`, winnerID, id)
-
 	if err != nil {
 		s.logger.Error("Failed to set fight winner", err)
 		return err
@@ -242,7 +241,6 @@ func (s *FightService) GetByBoxer(boxerID int, limit int) ([]*Fight, error) {
 		FROM fights WHERE boxer1_id = $1 OR boxer2_id = $1
 		ORDER BY scheduled_time DESC LIMIT $2
 	`, boxerID, limit)
-
 	if err != nil {
 		s.logger.Error("Failed to get fights by boxer", err)
 		return nil, err
@@ -501,7 +499,6 @@ func (s *FightService) updateBoxers(boxer1, boxer2 model.Boxer, boxer1ID, boxer2
 		SET health = $1, energy = $2, position_x = $3, position_y = $4
 		WHERE id = $5
 	`, boxer1.Health, boxer1.Energy, boxer1.PositionX, boxer1.PositionY, *boxer1ID)
-
 	if err != nil {
 		return err
 	}
@@ -541,7 +538,8 @@ func (s *FightService) determineWinnerAndStatus(
 	fightID int,
 	fight *Fight,
 	boxer1, boxer2 *model.Boxer,
-	ctx context.Context) error {
+	ctx context.Context,
+) error {
 	var winnerID *int
 	if boxer1.Health > boxer2.Health {
 		winnerID = fight.Boxer1ID

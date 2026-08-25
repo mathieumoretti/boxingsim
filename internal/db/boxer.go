@@ -7,9 +7,7 @@ import (
 	"github.com/mormm/boxing/internal/model"
 )
 
-var (
-	ErrBoxerNotFound = errors.New("boxer not found")
-)
+var ErrBoxerNotFound = errors.New("boxer not found")
 
 // boxerSelectColumns defines the standard SELECT clause for boxing records.
 const boxerSelectColumns = `
@@ -81,7 +79,6 @@ func GetBoxerByID(db *sql.DB, id int) (*model.Boxer, error) {
 		&boxer.CreatedAt,
 		&boxer.UpdatedAt,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrBoxerNotFound
