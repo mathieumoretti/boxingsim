@@ -15,7 +15,12 @@ import (
 
 func main() {
 	// Load configuration
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		logger := logger.New("WORKER")
+		logger.Error("Failed to load configuration: " + err.Error())
+		os.Exit(1)
+	}
 	logger := logger.New("WORKER")
 
 	logger.Info("Starting Boxing World Worker")

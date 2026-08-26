@@ -31,10 +31,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Verify the token
-		cfg := config.Load()
+		cfg, err := config.Load()
+		if err != nil {
+			logger.Error("Failed to load configuration: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 		authService := auth.NewAuthService(cfg)
 
-		_, err := authService.VerifyToken(tokenString)
+		_, err = authService.VerifyToken(tokenString)
 		if err != nil {
 			logger.Error("Invalid token: %v", err)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)

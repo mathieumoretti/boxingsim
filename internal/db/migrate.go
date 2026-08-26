@@ -104,7 +104,7 @@ func CreateMigration(name string, migrationsDir string) error {
 -- SQL in this section is executed when the migration is rolled back.
 
 `
-	if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to create migration file: %w", err)
 	}
 

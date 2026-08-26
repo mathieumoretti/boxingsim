@@ -29,7 +29,6 @@ func GetUserByID(db *sql.DB, id int) (*model.User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -56,7 +55,6 @@ func GetUserByUsername(db *sql.DB, username string) (*model.User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound

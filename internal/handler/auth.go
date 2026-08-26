@@ -19,7 +19,12 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(db *database.PostgresDB) *AuthHandler {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		logger := logger.New("auth")
+		logger.Error("Failed to load configuration: %v", err)
+		panic(err) // In production, handle gracefully; for now panic on startup failure
+	}
 	logger := logger.New("auth")
 	logger.Info("Initializing AuthHandler")
 	logger.Info("Database connection provided", "dbNil", db == nil)

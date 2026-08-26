@@ -154,7 +154,6 @@ func CreateBoxerForUser(db *sql.DB, userID int, boxer *model.BoxerCreate) (*mode
 		&boxerModel.Level,
 		&boxerModel.CreatedAt,
 		&boxerModel.UpdatedAt)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create boxer: %w", err)
 	}

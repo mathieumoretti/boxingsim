@@ -164,9 +164,16 @@ type boxerTemplate struct {
 // createSampleBoxersForUser creates sample personal/fighter-style custom boxers.
 func createSampleBoxersForUser(db *sql.DB, userID int, existingNames *map[string]bool, count int) error {
 	templates := []boxerTemplate{
-		{"Thunder Punch", "The Storm"}, {"Iron Fist Fighter", ""}, {"Storm Breaker", ""},
-		{"Blaze Warrior", ""}, {"Shadow Strike", ""}, {"Lightning Bolt", "Quick Draw"},
-		{"Steel Uppercut", ""}, {"Night Hawk", ""}, {"Golden Gloves", ""}, {"Crimson Tide", ""},
+		{"Thunder Punch", "The Storm"},
+		{"Iron Fist Fighter", ""},
+		{"Storm Breaker", ""},
+		{"Blaze Warrior", ""},
+		{"Shadow Strike", ""},
+		{"Lightning Bolt", "Quick Draw"},
+		{"Steel Uppercut", ""},
+		{"Night Hawk", ""},
+		{"Golden Gloves", ""},
+		{"Crimson Tide", ""},
 	}
 
 	var createdCount int
@@ -251,7 +258,8 @@ func createCompleteUserData(db *sql.DB, authService *auth.AuthService, userData 
 
 // updateExistingUserData updates an existing user's data.
 func updateExistingUserData(db *sql.DB, authService *auth.AuthService, userData *sampleUser,
-	existingUser *model.User) error {
+	existingUser *model.User,
+) error {
 	boxers, err := ListBoxersByUserID(db, existingUser.ID)
 	if err != nil {
 		return fmt.Errorf("failed to list boxers: %w", err)

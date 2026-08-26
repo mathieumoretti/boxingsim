@@ -12,7 +12,9 @@ import (
 func TestNewAuthService(t *testing.T) {
 	t.Run("Creates service with config", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 
 		service := NewAuthService(cfg)
@@ -25,7 +27,9 @@ func TestNewAuthService(t *testing.T) {
 func TestHashPassword(t *testing.T) {
 	t.Run("Successfully hashes password", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -43,7 +47,9 @@ func TestHashPassword(t *testing.T) {
 
 	t.Run("Hashes different passwords differently", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -57,7 +63,9 @@ func TestHashPassword(t *testing.T) {
 func TestCheckPassword(t *testing.T) {
 	t.Run("Correctly validates password", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -76,7 +84,9 @@ func TestCheckPassword(t *testing.T) {
 func TestGenerateTokenPair(t *testing.T) {
 	t.Run("Successfully generates token pair", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -108,7 +118,9 @@ func TestGenerateTokenPair(t *testing.T) {
 	t.Run("Handles invalid secret", func(t *testing.T) {
 		// Test with empty secret to see error handling
 		cfg := &config.Config{
-			JWTSecret: "",
+			JWT: config.JWTConfig{
+				Secret: "",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -132,7 +144,9 @@ func TestGenerateTokenPair(t *testing.T) {
 func TestVerifyToken(t *testing.T) {
 	t.Run("Successfully verifies valid token", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -155,7 +169,9 @@ func TestVerifyToken(t *testing.T) {
 
 	t.Run("Returns error for invalid token", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -171,7 +187,9 @@ func TestVerifyToken(t *testing.T) {
 
 	t.Run("Returns error for wrong secret", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 
@@ -187,7 +205,9 @@ func TestVerifyToken(t *testing.T) {
 
 		// Change the config secret to something else
 		cfg2 := &config.Config{
-			JWTSecret: "different-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "different-secret-key",
+			},
 		}
 		service2 := NewAuthService(cfg2)
 
@@ -212,7 +232,9 @@ func TestVerifyToken(t *testing.T) {
 func TestAuthServiceIntegration(t *testing.T) {
 	t.Run("Complete authentication flow", func(t *testing.T) {
 		cfg := &config.Config{
-			JWTSecret: "integration-test-secret-key",
+			JWT: config.JWTConfig{
+				Secret: "integration-test-secret-key",
+			},
 		}
 		service := NewAuthService(cfg)
 

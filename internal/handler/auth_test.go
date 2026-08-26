@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,18 @@ import (
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/database"
 )
+
+func init() {
+	// Set required environment variables for config loading in tests
+	// These need to be set before any test runs because NewAuthHandler calls config.Load()
+	os.Setenv("BOXING_DATABASE_HOST", "localhost")
+	os.Setenv("BOXING_DATABASE_PORT", "5432")
+	os.Setenv("BOXING_DATABASE_USER", "testuser")
+	os.Setenv("BOXING_DATABASE_PASSWORD", "testpass")
+	os.Setenv("BOXING_DATABASE_NAME", "testdb")
+	os.Setenv("BOXING_REDIS_ADDR", "localhost:6379")
+	os.Setenv("BOXING_JWT_SECRET", "test-jwt-secret-key-for-testing-only-long-enough")
+}
 
 func TestAuthHandler_RegisterUser(t *testing.T) {
 	// Create a mock auth service
@@ -34,10 +47,10 @@ func TestAuthHandler_RegisterUser(t *testing.T) {
 	// Create response recorder
 	w := httptest.NewRecorder()
 
-	// Call handler - we're just testing that it doesn't panic
+	// Call handler
 	handler.RegisterUser(w, req)
 
-	// We expect OK status now since we have an implementation
+	// We expect OK status since we have an implementation
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 

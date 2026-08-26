@@ -13,7 +13,10 @@ import (
 func main() {
 	fmt.Println("Starting database seeding...")
 
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
 	// Get mode from command line argument or default to "reference"
 	mode := getSeedModeFromArgs(os.Args[1:])

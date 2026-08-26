@@ -38,7 +38,6 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 		&fight.CreatedAt,
 		&fight.UpdatedAt,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrFightNotFound
