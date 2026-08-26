@@ -1,0 +1,25 @@
+# Development environment configuration
+# Non-secret default values for local development
+# Secrets should be set via environment variables (BOXING_* prefix)
+
+server:
+  port: 8080
+  host: "localhost"
+  logLevel: "debug"
+
+database:
+  host: "localhost"
+  port: 5433
+  user: "postgres"
+  name: "boxing_dev"
+  # password must be set via BOXING_DATABASE_PASSWORD env var
+
+redis:
+  addr: "localhost:6379"
+  # password comes from BOXING_REDIS_PASSWORD env var (if needed)
+
+jwt:
+  # secret must be set via BOXING_JWT_SECRET env var
+
+logging:
+  level: "debug"

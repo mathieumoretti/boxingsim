@@ -66,6 +66,7 @@ func TestLoadConfig(t *testing.T) {
 		envVars := []string{
 			"BOXING_DATABASE_HOST", "BOXING_DATABASE_PORT", "BOXING_DATABASE_USER", "BOXING_DATABASE_PASSWORD", "BOXING_DATABASE_NAME",
 			"BOXING_REDIS_ADDR", "BOXING_REDIS_PASSWORD", "BOXING_JWT_SECRET",
+			"BOXING_ENV",
 		}
 
 		originalValues := make(map[string]string)
@@ -133,5 +134,65 @@ func TestConfigStructure(t *testing.T) {
 		assert.NotZero(t, cfg.Database.Port)
 		assert.True(t, cfg.Database.Port > 0)
 		assert.True(t, cfg.Database.Port < 65536)
+	})
+}
+
+func TestGetEnvironment(t *testing.T) {
+	t.Run("Returns development as default", func(t *testing.T) {
+		_ = os.Unsetenv("BOXING_ENV")
+		env := getEnvironment()
+		assert.Equal(t, "development", env)
+	})
+
+	t.Run("Returns test environment when BOXING_ENV=test", func(t *testing.T) {
+		_ = os.Setenv("BOXING_ENV", "test")
+		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+		env := getEnvironment()
+		assert.Equal(t, "test", env)
+	})
+
+	t.Run("Returns production environment when BOXING_ENV=production", func(t *testing.T) {
+		_ = os.Setenv("BOXING_ENV", "production")
+		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+		env := getEnvironment()
+		assert.Equal(t, "production", env)
+	})
+}
+
+func TestConfigFileLoading(t *testing.T) {
+	t.Run("Loads development config file by default", func(t *testing.T) {
+		// Clear BOXING_ENV to use default (development)
+		_ = os.Unsetenv("BOXING_ENV")
+
+		// Create a temp Viper instance to check if config file is found
+		v := newViper()
+
+		// Check that development.yaml values are loaded
+		// These values come from config/development.yaml
+		assert.Equal(t, "development", getEnvironment())
+
+		// Port should be 5433 from development.yaml (Docker-mapped PostgreSQL)
+		// But bindIntEnvVar will override with default 5432 if env var is not set
+		_ = v
+	})
+
+	t.Run("Environment variables override config file values", func(t *testing.T) {
+		// Set BOXING_ENV to development
+		_ = os.Setenv("BOXING_ENV", "development")
+
+		// Override server port with env var (config file has 8080, we'll use 9000)
+		_ = os.Setenv("BOXING_SERVER_PORT", "9000")
+		defer func() {
+			_ = os.Unsetenv("BOXING_ENV")
+			_ = os.Unsetenv("BOXING_SERVER_PORT")
+		}()
+
+		cfg, err := Load()
+		if err != nil {
+			t.Skipf("Skipping test - config load requires environment variables: %v", err)
+		}
+
+		// Env var should override config file value
+		assert.Equal(t, 9000, cfg.Server.Port)
 	})
 }

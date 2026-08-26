@@ -1,0 +1,25 @@
+# Production environment configuration
+# Non-secret default values for production deployments
+# All secrets MUST be set via environment variables (BOXING_* prefix)
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+  logLevel: "info"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "boxing"
+  name: "boxing_prod"
+  # password MUST be set via BOXING_DATABASE_PASSWORD env var
+
+redis:
+  addr: "localhost:6379"
+  # password comes from BOXING_REDIS_PASSWORD env var (if needed)
+
+jwt:
+  # secret MUST be set via BOXING_JWT_SECRET env var
+
+logging:
+  level: "info"
