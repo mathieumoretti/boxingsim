@@ -30,11 +30,24 @@ func newViper() *viper.Viper {
 	v.AddConfigPath(".")
 	v.SetConfigType("yaml")
 
+	// Determine environment and config name
+	env := getEnvironment()
+	v.SetConfigName(env)
+
 	// Try to read config file (optional - env vars override)
 	// If no config file exists, this is fine - defaults + env vars will be used
 	_ = v.ReadInConfig()
 
 	return v
+}
+
+// getEnvironment returns the current environment based on BOXING_ENV or DEFAULTS to "development".
+func getEnvironment() string {
+	env := os.Getenv(envPrefix + "_ENV")
+	if env == "" {
+		return "development"
+	}
+	return env
 }
 
 // bindEnvVar explicitly binds an environment variable to a viper key.

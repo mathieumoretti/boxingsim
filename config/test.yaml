@@ -1,0 +1,27 @@
+# Test environment configuration
+# Non-secret default values for testing
+# Integration tests use TEST_* env vars for database isolation
+
+server:
+  port: 8081
+  host: "localhost"
+  logLevel: "warn"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "boxing"
+  name: "boxing_test"
+  # password comes from BOXING_DATABASE_PASSWORD env var
+  # Integration tests override with TEST_* env vars
+
+redis:
+  addr: "localhost:6380"
+  # Separate Redis instance for tests to avoid polluting dev Redis
+  # password comes from BOXING_REDIS_PASSWORD env var (if needed)
+
+jwt:
+  secret: "test-jwt-secret-do-not-use-in-production"
+
+logging:
+  level: "warn"
