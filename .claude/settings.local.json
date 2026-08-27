@@ -19,7 +19,8 @@
       "Bash(go list *)",
       "Bash(gotestsum *)",
       "mcp__linear-server__get_issue",
-      "mcp__linear-server__save_issue"
+      "mcp__linear-server__save_issue",
+      "mcp__linear-server__list_issues"
     ]
   }
 }

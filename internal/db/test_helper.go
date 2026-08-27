@@ -79,6 +79,29 @@ func sanitizeIdentifier(name string) string {
 	return result + "_test"
 }
 
+// verifyConnectedDatabase checks that the connected database matches the expected name.
+// This is a CRITICAL safety check to prevent tests from running against the wrong database.
+func verifyConnectedDatabase(db *sql.DB, expectedDB, host string, port int, user string) error {
+	var actualDB string
+	if err := db.QueryRow("SELECT current_database()").Scan(&actualDB); err != nil {
+		return fmt.Errorf("failed to verify connected database: %w", err)
+	}
+
+	if actualDB != expectedDB {
+		return fmt.Errorf(
+			"connected to WRONG DATABASE (safety check failed):\n"+
+				"  expected database: %s\n"+
+				"  actual database:   %s\n"+
+				"  PostgreSQL server: %s:%d\n"+
+				"  user:              %s\n"+
+				"\nThis indicates TEST_DB_HOST or TEST_DB_PORT may be pointing to the wrong PostgreSQL instance.",
+			expectedDB, actualDB, host, port, user,
+		)
+	}
+
+	return nil
+}
+
 // dropExistingDB drops a database if it exists (ignores errors).
 func dropExistingDB(conn *sql.DB, dbName string) {
 	query := fmt.Sprintf(`DROP DATABASE IF EXISTS "%s"`, sanitizeIdentifier(dbName))
@@ -119,6 +142,13 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 		db.Close()
 		baseConn.Close()
 		t.Fatalf("FreshDatabase: cannot connect to %s: %v", testDBName, err)
+	}
+
+	// 🔴 CRITICAL SAFETY CHECK: Verify we connected to the correct database
+	if err := verifyConnectedDatabase(db, testDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
+		db.Close()
+		baseConn.Close()
+		t.Fatalf("FreshDatabase: %v", err)
 	}
 
 	err = MigrateUp(db, migrationsDir)
@@ -212,6 +242,13 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 		db.Close()
 		baseConn.Close()
 		t.Fatalf("FreshDatabaseWithoutMigrations: cannot connect to %s: %v", testDBName, err)
+	}
+
+	// 🔴 CRITICAL SAFETY CHECK: Verify we connected to the correct database
+	if err := verifyConnectedDatabase(db, testDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
+		db.Close()
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: %v", err)
 	}
 
 	cleanupFn := func() {
