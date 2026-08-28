@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -226,10 +227,11 @@ func main() {
 	webDir := http.Dir("./dist/")
 	router.PathPrefix("/").Handler(http.FileServer(webDir)).Methods("GET")
 
-	// Start server
-	logger.Info("Server starting on port 8080")
+	// Start server with configured port
+	serverAddr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	logger.Info("Server starting", "address", serverAddr)
 	server := &http.Server{
-		Addr:         ":8080",
+		Addr:         serverAddr,
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
