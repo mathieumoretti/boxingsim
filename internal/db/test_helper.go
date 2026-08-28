@@ -9,58 +9,29 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
-// getEnv returns environment variable or default value.
-func getEnv(key, defaultValue string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return defaultValue
-}
-
-// parseIntEnv parses integer env var with fallback to defaultVal.
-func parseIntEnv(key string, defaultVal int) int {
-	if v := os.Getenv(key); v != "" {
-		var x int
-		n, _ := fmt.Sscanf(v, "%d", &x)
-		if n == 1 {
-			return x
-		}
-	}
-	return defaultVal
-}
-
 // buildDSN builds a PostgreSQL connection string.
-func buildDSN(host string, port int, user, password, dbname string) string {
+func buildDSN(cfg *config.TestDBConfig, dbname string) string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname,
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, dbname,
 	)
 }
 
 // buildBaseDSN builds a connection to the postgres template database.
-func buildBaseDSN(host string, port int, user, password string) string {
+func buildBaseDSN(cfg *config.TestDBConfig) string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=postgres sslmode=disable",
-		host, port, user, password,
+		cfg.Host, cfg.Port, cfg.User, cfg.Password,
 	)
 }
 
-// TestDBConfig returns database configuration for testing.
-func testDBConfig() *dbConfig {
-	return &dbConfig{
-		Host:     getEnv("TEST_DB_HOST", "localhost"),
-		Port:     parseIntEnv("TEST_DB_PORT", 5432),
-		User:     getEnv("TEST_DB_USER", "postgres"),
-		Password: getEnv("TEST_DB_PASSWORD", ""),
-	}
-}
-
-// dbConfig holds database connection parameters.
-type dbConfig struct {
-	Host, User, Password string
-	Port                 int
+// loadTestDBConfig loads test database configuration using centralized config loader.
+// All fields are required - no defaults to prevent silent connection to wrong PostgreSQL instance.
+func loadTestDBConfig() (*config.TestDBConfig, error) {
+	return config.LoadTestDBConfig()
 }
 
 // sanitizeIdentifier makes a safe SQL identifier (starts with letter/underscore).
@@ -112,11 +83,16 @@ func dropExistingDB(conn *sql.DB, dbName string) {
 // It: (1) drops existing DB if present; (2) creates new empty one with timestamp suffix;
 // (3) runs MigrateUp from migrationsDir; returns connection and cleanup function.
 func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB, func()) {
-	cfg := testDBConfig()
+	t.Helper()
+	cfg, err := loadTestDBConfig()
+	if err != nil {
+		t.Fatalf("FreshDatabase: failed to load test DB config: %v", err)
+	}
+
 	testDBName := fmt.Sprintf("%s_%d", strings.ToLower(dbPrefix), time.Now().UnixNano())
 
 	// Connect to postgres template DB for creating new databases
-	baseDSN := buildBaseDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password)
+	baseDSN := buildBaseDSN(cfg)
 	baseConn, err := sql.Open("postgres", baseDSN)
 	if err != nil {
 		t.Fatalf("FreshDatabase: failed to open postgres connection: %v", err)
@@ -131,7 +107,7 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 		t.Fatalf("FreshDatabase: create database failed: %v", execErr)
 	}
 
-	testDSN := buildDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password, testDBName)
+	testDSN := buildDSN(cfg, testDBName)
 	db, err := sql.Open("postgres", testDSN)
 	if err != nil {
 		baseConn.Close()
@@ -172,9 +148,10 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 	return db, nil
 }
 
-// TestDBConfig returns database configuration for testing (exported).
-func TestDBConfig() *dbConfig {
-	return testDBConfig()
+// TestDBConfig loads and returns database configuration for testing (exported).
+// DEPRECATED: Use config.LoadTestDBConfig() directly instead.
+func TestDBConfig() (*config.TestDBConfig, error) {
+	return loadTestDBConfig()
 }
 
 // SetupTestDB creates a fresh isolated PostgreSQL database with the initial schema.
@@ -202,7 +179,7 @@ func FreshDatabaseWithMigrations(t *testing.T, prefix string, runMigrations bool
 	if !runMigrations {
 		return FreshDatabaseWithoutMigrations(t, prefix)
 	}
-	migrationsDir := getEnv("TEST_MIGRATIONS_DIR", "db/migrations")
+	migrationsDir := os.Getenv("TEST_MIGRATIONS_DIR")
 	if migrationsDir == "" {
 		migrationsDir = "db/migrations"
 	}
@@ -214,10 +191,14 @@ func FreshDatabaseWithMigrations(t *testing.T, prefix string, runMigrations bool
 // Use this for tests that manually call InitializeSchema or test migration behavior itself.
 func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func()) {
 	t.Helper()
-	cfg := testDBConfig()
+	cfg, err := loadTestDBConfig()
+	if err != nil {
+		t.Fatalf("FreshDatabaseWithoutMigrations: failed to load test DB config: %v", err)
+	}
+
 	testDBName := fmt.Sprintf("%s_%d", strings.ToLower(prefix), time.Now().UnixNano())
 
-	baseDSN := buildBaseDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password)
+	baseDSN := buildBaseDSN(cfg)
 	baseConn, err := sql.Open("postgres", baseDSN)
 	if err != nil {
 		t.Fatalf("FreshDatabaseWithoutMigrations: failed to open postgres connection: %v", err)
@@ -231,7 +212,7 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 		t.Fatalf("FreshDatabaseWithoutMigrations: create database failed: %v", execErr)
 	}
 
-	testDSN := buildDSN(cfg.Host, cfg.Port, cfg.User, cfg.Password, testDBName)
+	testDSN := buildDSN(cfg, testDBName)
 	db, err := sql.Open("postgres", testDSN)
 	if err != nil {
 		baseConn.Close()
