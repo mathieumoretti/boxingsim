@@ -24,7 +24,7 @@ A Go-based REST API backend for a boxing simulation game with a modern React fro
 - **Fight System**: Fight logic between boxers with combat mechanics
 - **Database Integration**: PostgreSQL storage with migrations
 - **Caching Layer**: Redis for performance optimization
-- **Configuration Management**: Environment-based configuration
+- **Configuration Management**: Viper with strongly-typed config structs ([docs/configuration.md](docs/configuration.md))
 
 ### API Endpoints
 
@@ -160,6 +160,53 @@ The application follows a layered architecture pattern with clear separation of 
 2. **Business Logic Layer**: Services in `/service` 
 3. **Data Access Layer**: Repositories in `/store` and `/db`
 4. **Platform Layer**: Database, Redis, configuration utilities
+
+## Configuration
+
+The application uses Viper for configuration management with a priority hierarchy:
+
+1. **Environment Variables** (highest priority) - `BOXING_*` prefixed variables
+2. **YAML Config Files** - `config/{environment}.yaml` files  
+3. **Default Values** (lowest priority) - Hardcoded fallbacks
+
+### Quick Setup
+
+```bash
+# 1. Copy the example environment file
+cp .env.example .env.local
+
+# 2. Edit .env.local with your secrets:
+#    - BOXING_JWT_SECRET (generate with: openssl rand -base64 32)
+#    - BOXING_DATABASE_PASSWORD (use a strong password)
+
+# 3. Start PostgreSQL via Docker
+make docker-up
+
+# 4. Run the application  
+make dev
+```
+
+### Environment Variables Reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BOXING_ENV` | No | `development` | Environment name (loads corresponding YAML) |
+| `BOXING_SERVER_PORT` | No | `8080` | HTTP server port |
+| `BOXING_DATABASE_HOST` | No | `localhost` | PostgreSQL host |
+| `BOXING_DATABASE_PORT` | No | `5432` | PostgreSQL port (use `5433` for Docker) |
+| `BOXING_DATABASE_PASSWORD` | **Yes** | `boxing123`⚠️ | Database password (**change in prod!**) |
+| `BOXING_JWT_SECRET` | **Yes** | *default*⚠️ | JWT signing key (**REQUIRED!**) |
+| `BOXING_LOGGING_LEVEL` | No | `info` | Log level (debug/info/warn/error) |
+
+⚠️ **Security Warning**: Default passwords are for development only. Always set strong secrets via `.env.local`.
+
+**Full Documentation**: See [docs/configuration.md](docs/configuration.md) for complete configuration guide, including:
+- Configuration loading hierarchy details
+- Complete environment variables reference
+- Secrets management best practices
+- Docker Compose configuration
+- Integration test database setup
+- Troubleshooting guide
 
 ## Getting Started
 
