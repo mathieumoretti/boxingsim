@@ -5,7 +5,6 @@
 *.so
 *.dylib
 
-
 # Test binary
 *.test
 
@@ -29,15 +28,54 @@ vendor/
 .DS_Store
 Thumbs.db
 
-# Environment
+# =============================================================================
+# ENVIRONMENT FILES - SECRETS PROTECTION
+# =============================================================================
+# Ignore all .env files (contain secrets)
 .env
 .env.local
+.env.*.local
+
+# Also ignore any file matching *.env pattern except examples
+*.env
+!important.env
+!*.example
+!.env.example
+!.env.example.*
 
 # Logs
+logs/
 *.log
 
-build/*
-node_modules
+# Build output
+build/
+dist/
+bin/
 
-#claude
-.claude/*
+# Node modules (frontend)
+node_modules/
+
+# Frontend build output
+frontend/dist/
+frontend/build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Editor backup files
+*~
+.*.swp
+.*.swo
+.*.bak
+
+# Coverage reports
+coverage.out
+coverage.html
+cover/
+
+# =============================================================================
+# CLAUDE CODE
+# =============================================================================
+.claude/
