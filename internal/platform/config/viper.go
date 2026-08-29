@@ -26,8 +26,9 @@ func newViper() *viper.Viper {
 	v.SetEnvKeyReplacer(strings.NewReplacer("_", "."))
 
 	// Add config paths (search for config files)
-	v.AddConfigPath("./config")
-	v.AddConfigPath(".")
+	// Use absolute path to handle tests running from different directories
+	configPath := getProjectConfigPath()
+	v.AddConfigPath(configPath)
 	v.SetConfigType("yaml")
 
 	// Determine environment and config name
@@ -36,7 +37,7 @@ func newViper() *viper.Viper {
 
 	// Try to read config file (optional - env vars override)
 	// If no config file exists, this is fine - defaults + env vars will be used
-	_ = v.ReadInConfig()
+	_ = v.ReadInConfig() // Ignore error - config file is optional
 
 	return v
 }
@@ -50,6 +51,35 @@ func getEnvironment() string {
 	return env
 }
 
+// getProjectConfigPath returns the absolute path to the config directory.
+// This handles tests running from different directories by finding the project root.
+func getProjectConfigPath() string {
+	// Try to find the project root by looking for go.mod
+	// Go changes working directory during test execution, so relative paths fail
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "./config" // fallback
+	}
+
+	// Search upwards for go.mod (project root marker)
+	searchDir := currentDir
+	for {
+		goModPath := strings.Join([]string{searchDir, "go.mod"}, string(rune(os.PathSeparator)))
+		if _, err := os.Stat(goModPath); err == nil {
+			// Found go.mod - this is the project root
+			return strings.Join([]string{searchDir, "config"}, string(rune(os.PathSeparator)))
+		}
+
+		// Move up one directory
+		parentDir := strings.Split(searchDir, string(rune(os.PathSeparator)))
+		if len(parentDir) <= 1 {
+			// Reached filesystem root, use default
+			return "./config"
+		}
+		searchDir = strings.Join(parentDir[:len(parentDir)-1], string(rune(os.PathSeparator)))
+	}
+}
+
 // bindEnvVar explicitly binds an environment variable to a viper key.
 // This is needed because AutomaticEnv() with nested keys doesn't work reliably.
 func bindEnvVar(v *viper.Viper, key string, envVar string) {
@@ -59,14 +89,15 @@ func bindEnvVar(v *viper.Viper, key string, envVar string) {
 }
 
 // bindIntEnvVar explicitly binds an integer environment variable to a viper key.
-func bindIntEnvVar(v *viper.Viper, key string, envVar string, defaultVal int) {
+// Only sets the value if env var is present; defaults are applied in applyDefaults().
+func bindIntEnvVar(v *viper.Viper, key string, envVar string, _ int) {
 	if val := os.Getenv(envVar); val != "" {
 		if parsed, err := strconv.Atoi(val); err == nil {
 			v.Set(key, parsed)
-			return
 		}
 	}
-	v.Set(key, defaultVal)
+	// If env var not set or invalid, don't set anything - let YAML file value persist
+	// and applyDefaults() will fill in if still empty after unmarshal.
 }
 
 // readEnvConfig reads configuration from environment variables with BOXING_ prefix.

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"os"
 	"testing"
 	"time"
 
@@ -55,6 +56,11 @@ func TestNewPostgresDB(t *testing.T) {
 	})
 
 	t.Run("Creates database connection with default values", func(t *testing.T) {
+		// Set BOXING_ENV to a non-existent environment so no YAML file loads
+		// This tests the applyDefaults() function behavior
+		_ = os.Setenv("BOXING_ENV", "nonexistent-for-database-test")
+		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+
 		// Load config using the actual Load function to ensure defaults are properly set
 		cfg, err := config.Load()
 		if err != nil {
@@ -159,6 +165,11 @@ func TestDatabasePoolSettings(t *testing.T) {
 
 func TestDatabaseIntegration(t *testing.T) {
 	t.Run("Database configuration structure", func(t *testing.T) {
+		// Set BOXING_ENV to a non-existent environment so no YAML file loads
+		// This tests the applyDefaults() function behavior
+		_ = os.Setenv("BOXING_ENV", "nonexistent-for-integration-test")
+		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+
 		cfg, err := config.Load()
 		if err != nil {
 			t.Skipf("Skipping test - config load requires environment variables: %v", err)
