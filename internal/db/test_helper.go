@@ -1,12 +1,14 @@
 package db
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -34,20 +36,85 @@ func loadTestDBConfig() (*config.TestDBConfig, error) {
 	return config.LoadTestDBConfig()
 }
 
+// GetRepoRoot finds the repository root by walking up the directory tree
+// looking for .git or go.mod. This is used to resolve migration paths
+// regardless of the current working directory during test execution.
+func GetRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return dir, nil
+		}
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break // reached root without finding repo markers
+		}
+		dir = parentDir
+	}
+
+	return "", fmt.Errorf("could not find repository root (no .git or go.mod found)")
+}
+
+// GetMigrationsDir returns the absolute path to the migrations directory.
+// It first checks TEST_MIGRATIONS_DIR env var if set and absolute,
+// then tries to locate it relative to the repo root, finally falling back
+// to a relative path. This ensures migrations are found during test execution
+// when Go changes the working directory.
+func GetMigrationsDir() string {
+	// Allow override via environment variable (must be absolute path)
+	if v := os.Getenv("TEST_MIGRATIONS_DIR"); v != "" && filepath.IsAbs(v) {
+		return v
+	}
+
+	// Try to find migrations relative to repo root
+	repoRoot, err := GetRepoRoot()
+	if err == nil {
+		migrationsDir := filepath.Join(repoRoot, "db", "migrations")
+		if _, statErr := os.Stat(migrationsDir); statErr == nil {
+			return migrationsDir
+		}
+	}
+
+	// Fallback to relative path
+	return "db/migrations"
+}
+
+// generateUniqueDBName generates a unique database name with crypto-random suffix.
+// Uses 64 bits of entropy (10 hex chars) to ensure uniqueness across concurrent tests.
+func generateUniqueDBName(prefix string) string {
+	b := make([]byte, 8) // 64 bits of entropy
+	if _, err := rand.Read(b); err != nil {
+		// Fallback to timestamp if rand fails (should never happen)
+		panic(fmt.Sprintf("generateUniqueDBName: crypto/rand failed: %v", err))
+	}
+	hexStr := hex.EncodeToString(b)[:10] // e.g., "f2a9b3c8d1"
+	return fmt.Sprintf("test_%s_%s", prefix, hexStr)
+}
+
 // sanitizeIdentifier makes a safe SQL identifier (starts with letter/underscore).
 func sanitizeIdentifier(name string) string {
-	result := "db_"
+	var builder strings.Builder
+	builder.WriteString("db_")
 	for _, r := range name {
 		switch {
 		case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'):
-			result += string(r)
+			builder.WriteRune(r)
 		case r == '_':
-			result += "_"
+			builder.WriteRune('_')
 		default:
 			continue // skip invalid chars
 		}
 	}
-	return result + "_test"
+	builder.WriteString("_test")
+	return builder.String()
 }
 
 // verifyConnectedDatabase checks that the connected database matches the expected name.
@@ -65,7 +132,7 @@ func verifyConnectedDatabase(db *sql.DB, expectedDB, host string, port int, user
 				"  actual database:   %s\n"+
 				"  PostgreSQL server: %s:%d\n"+
 				"  user:              %s\n"+
-				"\nThis indicates TEST_DB_HOST or TEST_DB_PORT may be pointing to the wrong PostgreSQL instance.",
+				"\nThis indicates DATABASE config (BOXING_DATABASE_* or TEST_DB_*) may be pointing to the wrong PostgreSQL instance.",
 			expectedDB, actualDB, host, port, user,
 		)
 	}
@@ -89,7 +156,7 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 		t.Fatalf("FreshDatabase: failed to load test DB config: %v", err)
 	}
 
-	testDBName := fmt.Sprintf("%s_%d", strings.ToLower(dbPrefix), time.Now().UnixNano())
+	testDBName := generateUniqueDBName(dbPrefix)
 
 	// Connect to postgres template DB for creating new databases
 	baseDSN := buildBaseDSN(cfg)
@@ -98,16 +165,58 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 		t.Fatalf("FreshDatabase: failed to open postgres connection: %v", err)
 	}
 
+	// Drop existing db using original name (sanitizeIdentifier will sanitize it)
 	dropExistingDB(baseConn, testDBName) // ignore errors if not exists yet
 
+	// Sanitize the database name for PostgreSQL compatibility (use consistently throughout)
+	sanitizedDBName := sanitizeIdentifier(testDBName)
+	t.Logf("FreshDatabase: original name=%s, sanitized name=%s", testDBName, sanitizedDBName)
+
 	// Create fresh database
-	createQuery := fmt.Sprintf(`CREATE DATABASE "%s"`, sanitizeIdentifier(testDBName))
-	if _, execErr := baseConn.Exec(createQuery); execErr != nil {
+	createQuery := fmt.Sprintf(`CREATE DATABASE "%s"`, sanitizedDBName)
+	t.Logf("FreshDatabase: executing %s", createQuery)
+	result, execErr := baseConn.Exec(createQuery)
+	if execErr != nil {
 		baseConn.Close()
 		t.Fatalf("FreshDatabase: create database failed: %v", execErr)
 	}
+	rowsAffected, _ := result.RowsAffected()
+	t.Logf("FreshDatabase: CREATE DATABASE result: rows=%d", rowsAffected)
 
-	testDSN := buildDSN(cfg, testDBName)
+	// Ping to ensure the command is flushed to PostgreSQL
+	if err := baseConn.Ping(); err != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabase: failed to ping after CREATE DATABASE: %v", err)
+	}
+
+	// Verify the database was created by querying pg_database on the base connection
+	var dbExists bool
+	checkQuery := `SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)`
+	t.Logf("FreshDatabase: checking if database %s exists", sanitizedDBName)
+	if err := baseConn.QueryRow(checkQuery, sanitizedDBName).Scan(&dbExists); err != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabase: failed to verify database creation: %v", err)
+	}
+	t.Logf("FreshDatabase: dbExists = %v for %s", dbExists, sanitizedDBName)
+	if !dbExists {
+		// List all databases to debug
+		var debugInfo string
+		rows, _ := baseConn.Query("SELECT datname FROM pg_database WHERE datname LIKE 'test_%' OR datname LIKE 'db_test_%' ORDER BY datname")
+		if rows != nil {
+			var dbNames []string
+			for rows.Next() {
+				var name string
+				rows.Scan(&name)
+				dbNames = append(dbNames, name)
+			}
+			rows.Close()
+			debugInfo = fmt.Sprintf("Existing test databases: %v", dbNames)
+		}
+		baseConn.Close()
+		t.Fatalf("FreshDatabase: database %s was not created (verification failed). %s", sanitizedDBName, debugInfo)
+	}
+
+	testDSN := buildDSN(cfg, sanitizedDBName)
 	db, err := sql.Open("postgres", testDSN)
 	if err != nil {
 		baseConn.Close()
@@ -117,11 +226,11 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 	if err := db.Ping(); err != nil {
 		db.Close()
 		baseConn.Close()
-		t.Fatalf("FreshDatabase: cannot connect to %s: %v", testDBName, err)
+		t.Fatalf("FreshDatabase: cannot connect to %s: %v", sanitizedDBName, err)
 	}
 
 	// 🔴 CRITICAL SAFETY CHECK: Verify we connected to the correct database
-	if err := verifyConnectedDatabase(db, testDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
+	if err := verifyConnectedDatabase(db, sanitizedDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
 		db.Close()
 		baseConn.Close()
 		t.Fatalf("FreshDatabase: %v", err)
@@ -179,10 +288,7 @@ func FreshDatabaseWithMigrations(t *testing.T, prefix string, runMigrations bool
 	if !runMigrations {
 		return FreshDatabaseWithoutMigrations(t, prefix)
 	}
-	migrationsDir := os.Getenv("TEST_MIGRATIONS_DIR")
-	if migrationsDir == "" {
-		migrationsDir = "db/migrations"
-	}
+	migrationsDir := GetMigrationsDir()
 	db, cleanupFn := FreshDatabase(t, prefix, migrationsDir)
 	return db, cleanupFn
 }
@@ -196,7 +302,11 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 		t.Fatalf("FreshDatabaseWithoutMigrations: failed to load test DB config: %v", err)
 	}
 
-	testDBName := fmt.Sprintf("%s_%d", strings.ToLower(prefix), time.Now().UnixNano())
+	testDBName := generateUniqueDBName(prefix)
+
+	// Sanitize the database name for PostgreSQL compatibility (use consistently throughout)
+	sanitizedDBName := sanitizeIdentifier(testDBName)
+	t.Logf("FreshDatabaseWithoutMigrations: original name=%s, sanitized name=%s", testDBName, sanitizedDBName)
 
 	baseDSN := buildBaseDSN(cfg)
 	baseConn, err := sql.Open("postgres", baseDSN)
@@ -204,15 +314,39 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 		t.Fatalf("FreshDatabaseWithoutMigrations: failed to open postgres connection: %v", err)
 	}
 
-	dropExistingDB(baseConn, testDBName)
+	dropExistingDB(baseConn, sanitizedDBName)
 
-	createQuery := fmt.Sprintf(`CREATE DATABASE "%s"`, sanitizeIdentifier(testDBName))
-	if _, execErr := baseConn.Exec(createQuery); execErr != nil {
+	// Create fresh database
+	createQuery := fmt.Sprintf(`CREATE DATABASE "%s"`, sanitizedDBName)
+	t.Logf("FreshDatabaseWithoutMigrations: executing %s", createQuery)
+	result, execErr := baseConn.Exec(createQuery)
+	if execErr != nil {
 		baseConn.Close()
 		t.Fatalf("FreshDatabaseWithoutMigrations: create database failed: %v", execErr)
 	}
+	rowsAffected, _ := result.RowsAffected()
+	t.Logf("FreshDatabaseWithoutMigrations: CREATE DATABASE result: rows=%d", rowsAffected)
 
-	testDSN := buildDSN(cfg, testDBName)
+	// Ping to ensure the command is flushed to PostgreSQL
+	if err := baseConn.Ping(); err != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: failed to ping after CREATE DATABASE: %v", err)
+	}
+
+	// Verify the database was created by querying pg_database on the base connection
+	var dbExists bool
+	checkQuery := `SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)`
+	if err := baseConn.QueryRow(checkQuery, sanitizedDBName).Scan(&dbExists); err != nil {
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: failed to verify database creation: %v", err)
+	}
+	t.Logf("FreshDatabaseWithoutMigrations: dbExists = %v for %s", dbExists, sanitizedDBName)
+	if !dbExists {
+		baseConn.Close()
+		t.Fatalf("FreshDatabaseWithoutMigrations: database %s was not created (verification failed)", sanitizedDBName)
+	}
+
+	testDSN := buildDSN(cfg, sanitizedDBName)
 	db, err := sql.Open("postgres", testDSN)
 	if err != nil {
 		baseConn.Close()
@@ -222,11 +356,11 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 	if err := db.Ping(); err != nil {
 		db.Close()
 		baseConn.Close()
-		t.Fatalf("FreshDatabaseWithoutMigrations: cannot connect to %s: %v", testDBName, err)
+		t.Fatalf("FreshDatabaseWithoutMigrations: cannot connect to %s: %v", sanitizedDBName, err)
 	}
 
 	// 🔴 CRITICAL SAFETY CHECK: Verify we connected to the correct database
-	if err := verifyConnectedDatabase(db, testDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
+	if err := verifyConnectedDatabase(db, sanitizedDBName, cfg.Host, cfg.Port, cfg.User); err != nil {
 		db.Close()
 		baseConn.Close()
 		t.Fatalf("FreshDatabaseWithoutMigrations: %v", err)
@@ -236,7 +370,7 @@ func FreshDatabaseWithoutMigrations(t *testing.T, prefix string) (*sql.DB, func(
 		if db != nil {
 			db.Close()
 		}
-		dropExistingDB(baseConn, testDBName)
+		dropExistingDB(baseConn, sanitizedDBName)
 		baseConn.Close()
 	}
 
