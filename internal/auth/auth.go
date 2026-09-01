@@ -2,6 +2,8 @@ package auth
 
 import (
 	"log"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -74,4 +76,62 @@ func (s *AuthService) VerifyToken(tokenString string) (*jwt.MapClaims, error) {
 	}
 
 	return nil, jwt.ErrSignatureInvalid
+}
+
+// RequireAuth middleware extracts and validates JWT from Authorization header.
+// If valid, injects user into context; otherwise returns 401 Unauthorized.
+func (s *AuthService) RequireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract Bearer token
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, `{"error": "Missing Authorization header"}`, http.StatusUnauthorized)
+			return
+		}
+
+		// Parse "Bearer <token>" format
+		const bearerPrefix = "Bearer "
+		if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
+			http.Error(w, `{"error": "Authorization header must use Bearer scheme"}`, http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := strings.TrimSpace(authHeader[len(bearerPrefix):])
+
+		// Verify JWT using existing method
+		claims, err := s.VerifyToken(tokenString)
+		if err != nil {
+			http.Error(w, `{"error": "Invalid or expired token"}`, http.StatusUnauthorized)
+			return
+		}
+
+		// Extract user identity from claims
+		subFloat, ok := (*claims)["sub"]
+		if !ok {
+			http.Error(w, `{"error": "Invalid token: missing subject claim"}`, http.StatusUnauthorized)
+			return
+		}
+
+		userID, ok := subFloat.(float64)
+		if !ok {
+			http.Error(w, `{"error": "Invalid token: malformed subject claim"}`, http.StatusUnauthorized)
+			return
+		}
+
+		username, ok := (*claims)["username"].(string)
+		if !ok {
+			http.Error(w, `{"error": "Invalid token: missing username claim"}`, http.StatusUnauthorized)
+			return
+		}
+
+		// Create user object from claims (password not needed for auth context)
+		user := &model.User{
+			ID:       int(userID),
+			Username: username,
+		}
+
+		// Inject user into context
+		ctx := WithUser(r.Context(), user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

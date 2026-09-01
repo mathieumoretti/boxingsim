@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/store"
 )
@@ -28,15 +29,10 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert user-id from header to int
-	userIDStr := r.Header.Get("user-id")
-	if userIDStr == "" {
-		http.Error(w, "User ID header is required - make sure the frontend sets the 'user-id' header", http.StatusBadRequest)
-		return
-	}
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+	// Get authenticated user from context (injected by middleware)
+	user := auth.UserFromRequest(r)
+	if user == nil {
+		http.Error(w, `{"error": "Authentication failed"}`, http.StatusUnauthorized)
 		return
 	}
 
@@ -59,7 +55,7 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 
 	// Create the boxer in the database using the boxerStore
 	boxer := &model.Boxer{
-		UserID:     userID,
+		UserID:     user.ID,
 		Name:       boxerCreate.Name,
 		Nickname:   boxerCreate.Nickname,
 		PositionX:  boxerCreate.PositionX,
@@ -73,7 +69,7 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 		Level:      1,
 	}
 
-	err = h.boxerStore.Create(r.Context(), boxer)
+	err := h.boxerStore.Create(r.Context(), boxer)
 	if err != nil {
 		http.Error(w, "Failed to create boxer", http.StatusInternalServerError)
 		return
@@ -189,14 +185,12 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetBoxersByUserID handles retrieving all boxers for a specific user
+// GetBoxersByUserID handles retrieving all boxers for the authenticated user
 func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request) {
-	// Parse user ID from URL path
-	userIDStr := r.URL.Path[len("/users/"):]
-	userIDStr = userIDStr[:len(userIDStr)-len("/boxers")]
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+	// Get authenticated user from context (injected by middleware)
+	user := auth.UserFromRequest(r)
+	if user == nil {
+		http.Error(w, `{"error": "Authentication failed"}`, http.StatusUnauthorized)
 		return
 	}
 
@@ -210,7 +204,7 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Get the boxers from the database using the boxerStore
-	boxers, err := h.boxerStore.GetByUserID(r.Context(), userID)
+	boxers, err := h.boxerStore.GetByUserID(r.Context(), user.ID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve boxers", http.StatusInternalServerError)
 		return

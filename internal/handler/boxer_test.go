@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mormm/boxing/internal/auth"
+	"github.com/mormm/boxing/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +29,10 @@ func TestBoxerHandler_CreateBoxer(t *testing.T) {
 	jsonData, _ := json.Marshal(boxerCreate)
 	req := httptest.NewRequest("POST", "/boxers", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("user-id", "1")
+
+	// Inject mock authenticated user into context (simulating middleware)
+	mockUser := &model.User{ID: 1, Username: "testuser"}
+	req = req.WithContext(auth.WithUser(req.Context(), mockUser))
 
 	w := httptest.NewRecorder()
 
@@ -78,6 +83,11 @@ func TestBoxerHandler_GetBoxersByUserID(t *testing.T) {
 	handler := NewBoxerHandler(nil) // Using nil store for this test
 
 	req := httptest.NewRequest("GET", "/users/1/boxers", nil)
+
+	// Inject mock authenticated user into context (simulating middleware)
+	mockUser := &model.User{ID: 1, Username: "testuser"}
+	req = req.WithContext(auth.WithUser(req.Context(), mockUser))
+
 	w := httptest.NewRecorder()
 
 	handler.GetBoxersByUserID(w, req)

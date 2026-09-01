@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -80,6 +81,9 @@ func main() {
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
 	}
 
+	// Setup auth service for middleware
+	authService := auth.NewAuthService(cfg)
+
 	// Setup handlers
 	boxerHandler := handler.NewBoxerHandler(boxerStore)
 	fightHandler := handler.NewFightHandler(fightService)
@@ -100,8 +104,12 @@ func main() {
 		})
 	})
 
+	// Create protected subrouter for authenticated endpoints
+	protectedRouter := router.NewRoute().Subrouter()
+	protectedRouter.Use(authService.RequireAuth)
+
 	// Dashboard endpoint - protected with authentication middleware
-	router.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -112,7 +120,7 @@ func main() {
 		dashboardHandler.GetDashboard(w, r)
 	}).Methods(optionsMethod, "GET")
 
-	// Health check endpoint
+	// Health check endpoint (public)
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 
 	// Authentication endpoints
@@ -143,7 +151,7 @@ func main() {
 	}).Methods(optionsMethod, "POST")
 
 	// Boxer endpoints - protected with authentication middleware
-	router.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
@@ -154,7 +162,7 @@ func main() {
 		boxerHandler.CreateBoxer(w, r)
 	}).Methods(optionsMethod, "POST")
 
-	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
@@ -165,7 +173,7 @@ func main() {
 		boxerHandler.GetBoxer(w, r)
 	}).Methods(optionsMethod, "GET")
 
-	router.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
@@ -176,7 +184,7 @@ func main() {
 		boxerHandler.UpdateBoxer(w, r)
 	}).Methods(optionsMethod, "PUT")
 
-	router.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -187,8 +195,8 @@ func main() {
 		boxerHandler.GetBoxersByUserID(w, r)
 	}).Methods(optionsMethod, "GET")
 
-	// Fight endpoints - protected with CORS middleware
-	router.HandleFunc("/fights/book", func(w http.ResponseWriter, r *http.Request) {
+	// Fight endpoints - protected with authentication middleware
+	protectedRouter.HandleFunc("/fights/book", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -199,7 +207,7 @@ func main() {
 		fightHandler.BookFight(w, r)
 	}).Methods(optionsMethod, "POST")
 
-	router.HandleFunc("/fights/active", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/fights/active", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -210,7 +218,7 @@ func main() {
 		fightHandler.GetActiveFights(w, r)
 	}).Methods(optionsMethod, "GET")
 
-	router.HandleFunc("/fights/{id}", func(w http.ResponseWriter, r *http.Request) {
+	protectedRouter.HandleFunc("/fights/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
