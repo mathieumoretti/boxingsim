@@ -124,41 +124,60 @@ func validateRequiredFields(cfg *Config) error {
 	return nil
 }
 
-// LoadTestDBConfig loads test database configuration from environment variables.
-// All fields are required for integration tests to ensure proper isolation.
+// LoadTestDBConfig loads test database configuration.
+// Priority: TEST_DB_* env vars → main DATABASE config from file/env → defaults.
+// Using TEST_DB_* allows isolating tests from the main development database.
 func LoadTestDBConfig() (*TestDBConfig, error) {
 	cfg := &TestDBConfig{}
 
-	host := os.Getenv("TEST_DB_HOST")
-	if host == "" {
-		return nil, errors.New("TEST_DB_HOST environment variable is required for integration tests")
-	}
-	cfg.Host = host
+	// Check if explicit test DB is configured via env vars
+	testHost := os.Getenv("TEST_DB_HOST")
+	testPort := os.Getenv("TEST_DB_PORT")
+	testUser := os.Getenv("TEST_DB_USER")
+	testPassword := os.Getenv("TEST_DB_PASSWORD")
 
-	portStr := os.Getenv("TEST_DB_PORT")
-	if portStr == "" {
-		return nil, errors.New("TEST_DB_PORT environment variable is required for integration tests (prevents connecting to wrong PostgreSQL instance)")
+	// If any TEST_DB_* var is set, all must be set (partial config is error-prone)
+	if testHost != "" || testPort != "" || testUser != "" || testPassword != "" {
+		if testHost == "" {
+			return nil, errors.New("TEST_DB_HOST environment variable is required when using TEST_DB_* configuration")
+		}
+		cfg.Host = testHost
+
+		if testPort == "" {
+			return nil, errors.New("TEST_DB_PORT environment variable is required when using TEST_DB_* configuration")
+		}
+		port, err := strconv.Atoi(testPort)
+		if err != nil {
+			return nil, fmt.Errorf("invalid TEST_DB_PORT value: %w", err)
+		}
+		if port <= 0 || port > 65535 {
+			return nil, fmt.Errorf("TEST_DB_PORT must be a valid port number (1-65535), got: %d", port)
+		}
+		cfg.Port = port
+
+		if testUser == "" {
+			return nil, errors.New("TEST_DB_USER environment variable is required when using TEST_DB_* configuration")
+		}
+		cfg.User = testUser
+
+		if testPassword == "" {
+			return nil, errors.New("TEST_DB_PASSWORD environment variable is required when using TEST_DB_* configuration")
+		}
+		cfg.Password = testPassword
+
+		return cfg, nil
 	}
-	port, err := strconv.Atoi(portStr)
+
+	// Fall back to main DATABASE config (from config file or BOXING_DATABASE_* env vars)
+	mainCfg, err := Load()
 	if err != nil {
-		return nil, fmt.Errorf("invalid TEST_DB_PORT value: %w", err)
+		return nil, fmt.Errorf("failed to load main config for tests: %w", err)
 	}
-	if port <= 0 || port > 65535 {
-		return nil, fmt.Errorf("TEST_DB_PORT must be a valid port number (1-65535), got: %d", port)
-	}
-	cfg.Port = port
 
-	user := os.Getenv("TEST_DB_USER")
-	if user == "" {
-		return nil, errors.New("TEST_DB_USER environment variable is required for integration tests")
-	}
-	cfg.User = user
-
-	password := os.Getenv("TEST_DB_PASSWORD")
-	if password == "" {
-		return nil, errors.New("TEST_DB_PASSWORD environment variable is required for integration tests")
-	}
-	cfg.Password = password
+	cfg.Host = mainCfg.Database.Host
+	cfg.Port = mainCfg.Database.Port
+	cfg.User = mainCfg.Database.User
+	cfg.Password = mainCfg.Database.Password
 
 	return cfg, nil
 }

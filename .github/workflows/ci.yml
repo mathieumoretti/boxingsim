@@ -37,10 +37,10 @@ jobs:
       run: |
         go build -o boxing-server ./cmd/server
 
-    - name: Run tests with gotestsum
+    - name: Run unit tests with gotestsum
       run: |
-        # Run tests using go run approach to avoid installation issues
-        go run gotest.tools/gotestsum@latest --format=short-verbose ./...
+        # Run unit tests only (exclude integration tests)
+        go run gotest.tools/gotestsum@latest --format=short-verbose $(go list ./... | grep -v 'internal/integration$')
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
