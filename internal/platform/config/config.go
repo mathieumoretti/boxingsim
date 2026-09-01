@@ -150,6 +150,9 @@ func LoadTestDBConfig() (*TestDBConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid TEST_DB_PORT value: %w", err)
 		}
+		if port <= 0 || port > 65535 {
+			return nil, fmt.Errorf("TEST_DB_PORT must be a valid port number (1-65535), got: %d", port)
+		}
 		cfg.Port = port
 
 		if testUser == "" {

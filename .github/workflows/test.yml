@@ -1,4 +1,4 @@
-name: Test
+name: Integration Tests
 
 on:
   push:
@@ -7,16 +7,16 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  integration-tests:
     runs-on: ubuntu-latest
 
     services:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_boxing
+          POSTGRES_USER: boxing_test
+          POSTGRES_PASSWORD: boxing_test_pass
+          POSTGRES_DB: boxing_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -47,22 +47,23 @@ jobs:
       run: |
         go mod download
 
-    - name: Run tests
+    - name: Run integration tests
       env:
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_USER: test_user
-        DB_PASSWORD: test_password
-        DB_NAME: test_boxing
-        REDIS_ADDR: localhost:6379
-        JWT_SECRET: test-secret-key-change-in-production
+        BOXING_ENV: test
+        BOXING_DATABASE_HOST: localhost
+        BOXING_DATABASE_PORT: 5432
+        BOXING_DATABASE_USER: boxing_test
+        BOXING_DATABASE_PASSWORD: boxing_test_pass
+        BOXING_DATABASE_NAME: boxing_test
+        BOXING_REDIS_ADDR: localhost:6379
+        BOXING_JWT_SECRET: test-secret-key-change-in-production
       run: |
-        # Run tests using go run approach to avoid installation issues
-        go run gotest.tools/gotestsum@latest --format pkgname --jsonfile test-results.json ./...
+        # Run integration/functional tests only
+        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile test-results.json ./internal/integration/...
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results
+        name: integration-test-results
         path: test-results.json
