@@ -22,7 +22,8 @@
       "mcp__linear-server__save_issue",
       "mcp__linear-server__list_issues",
       "PowerShell(go build *)",
-      "PowerShell(go test *)"
+      "PowerShell(go test *)",
+      "mcp__linear-server__list_projects"
     ]
   }
 }

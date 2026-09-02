@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Auth.css';
+import { API_BASE_URL } from '../utils/auth';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -13,7 +14,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -28,7 +29,8 @@ const Login = ({ onLogin }) => {
 
       if (response.ok) {
         // Pass the token and user data to the parent component
-        onLogin(data.user, data.token);
+        // The parent will handle storing it in localStorage
+        onLogin(data.user, data.accessToken || data.token);
       } else {
         setError(data.message || data.error || 'Login failed');
       }

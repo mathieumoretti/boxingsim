@@ -5,43 +5,39 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CreateBoxer from './components/CreateBoxer';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
-// API base URL - will be proxied by webpack dev server
-const API_BASE_URL = '/api';
+import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setTokenState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = getToken();
+    const storedUser = getUser();
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setCurrentUser(JSON.parse(storedUser));
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
+      setTokenState(storedToken);
+      setCurrentUser(storedUser);
     }
+    setIsLoading(false);
   }, []);
 
   const handleLogin = (userData, tokenData) => {
     setCurrentUser(userData);
-    setToken(tokenData);
-    localStorage.setItem('token', tokenData);
-    localStorage.setItem('user', JSON.stringify(userData)); // Persist user data including ID
+    setTokenState(tokenData);
+    // Store token and user using the centralized helper
+    setToken(tokenData, userData);
     // Redirect to dashboard after successful login
-    // Using window.location.replace to avoid going back in browser history
     window.location.replace('/dashboard');
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user'); // Also clear persisted user data
+    setTokenState(null);
+    // Clear token and user using the centralized helper
+    clearToken();
+    window.location.replace('/login');
   };
 
   const ProtectedRoute = ({ children }) => {

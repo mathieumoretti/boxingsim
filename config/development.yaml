@@ -10,8 +10,8 @@ server:
 database:
   host: "localhost"
   port: 5433
-  user: "postgres"
-  name: "boxing_dev"
+  user: "boxing"
+  name: "boxing"
   # password must be set via BOXING_DATABASE_PASSWORD env var
 
 redis:

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Auth.css';
+import { API_BASE_URL } from '../utils/auth';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -14,7 +15,7 @@ const Register = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
