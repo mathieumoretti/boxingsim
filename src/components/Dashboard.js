@@ -2,28 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import BoxerCard from './BoxerCard.jsx';
+import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const Dashboard = ({ user, onLogout }) => {
   const [boxers, setBoxers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      loadUserBoxers();
+    // Get user from props or localStorage
+    const currentUser = user || getUser();
+    setCurrentUser(currentUser);
+
+    if (currentUser) {
+      loadUserBoxers(currentUser.id);
+    } else {
+      setIsLoading(false);
     }
   }, [user]);
 
-  const loadUserBoxers = async () => {
+  const loadUserBoxers = async (userId) => {
     setIsLoading(true);
     setError('');
 
     try {
-      const response = await fetch(`/api/users/${user.id}/boxers`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/users/${userId}/boxers`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
 
       const data = await response.json();
@@ -35,7 +40,10 @@ const Dashboard = ({ user, onLogout }) => {
         setError(data.error || 'Failed to load boxers');
       }
     } catch (error) {
-      setError('Network error: ' + error.message);
+      // Don't show error if redirected to login (401 handled by authenticatedFetch)
+      if (!error.message.includes('Unauthorized')) {
+        setError('Network error: ' + error.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +58,7 @@ const Dashboard = ({ user, onLogout }) => {
       <header className="dashboard-header">
         <h1>Boxing Simulator</h1>
         <div className="user-info">
-          <span>Welcome, {user?.username || 'User'}!</span>
+          <span>Welcome, {currentUser?.username || 'User'}!</span>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </header>

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/platform/config"
 )
 
 const migrationsDir = "db/migrations"
@@ -134,15 +135,18 @@ func closeConn(conn *sql.DB) {
 }
 
 func buildDSN() string {
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "")
-	dbname := getEnv("DATABASE_NAME", "boxingsimdb")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
 	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name)
 }
 
 func printUsage() {
@@ -157,11 +161,4 @@ func printUsage() {
 	fmt.Println("  migrate reset    Drop and recreate database from zero")
 	fmt.Println("  migrate status   Show current migration status (applied/pending)")
 	fmt.Println("  create <name>    Create a new named migration file with up/down blocks")
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

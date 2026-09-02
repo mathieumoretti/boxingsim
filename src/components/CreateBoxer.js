@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './CreateBoxer.css';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const CreateBoxer = ({ user }) => {
   const [name, setName] = useState('');
@@ -15,27 +16,25 @@ const CreateBoxer = ({ user }) => {
     setIsLoading(true);
     setError('');
 
-    if (!user) {
+    // Ensure user is loaded from storage if not passed via props
+    const currentUser = user || getUser();
+    if (!currentUser) {
       setError('Please login first');
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:8080/boxers', {
+      const response = await authenticatedFetch(`${API_BASE_URL}/boxers`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           name: name,
-          class: boxerClass,
-          max_health: 100,
-          max_energy: 100,
-          strength: 10,
-          defense: 10,
-          agility: 10,
-          skill_points: 0
+          nickname: '',
+          position_x: 0.0,
+          position_y: 0.0,
+          strength: 10.0,
+          defense: 10.0,
+          agility: 10.0,
         })
       });
 
@@ -49,7 +48,10 @@ const CreateBoxer = ({ user }) => {
         setError(data.error || 'Failed to create boxer');
       }
     } catch (error) {
-      setError('Network error: ' + error.message);
+      // Don't show error if redirected to login (401 handled by authenticatedFetch)
+      if (!error.message.includes('Unauthorized')) {
+        setError('Network error: ' + error.message);
+      }
     } finally {
       setIsLoading(false);
     }
