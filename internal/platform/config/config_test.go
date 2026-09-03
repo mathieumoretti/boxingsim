@@ -9,10 +9,17 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	t.Run("Loads configuration with default values", func(t *testing.T) {
-		// Set BOXING_ENV to a non-existent environment so no YAML file loads
+		// Save and clear BOXING_ENV to use a non-existent environment so no YAML file loads
 		// This tests the applyDefaults() function behavior
+		savedEnv := os.Getenv("BOXING_ENV")
 		_ = os.Setenv("BOXING_ENV", "nonexistent-for-test")
-		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+		defer func() {
+			if savedEnv != "" {
+				_ = os.Setenv("BOXING_ENV", savedEnv)
+			} else {
+				_ = os.Unsetenv("BOXING_ENV")
+			}
+		}()
 
 		cfg, err := Load()
 		if err != nil {

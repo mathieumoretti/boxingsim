@@ -99,7 +99,7 @@ test-unit-only: ## Run unit tests only (fast, no database required)
 
 test-integration: ## Run integration tests with isolated database per-test (uses BOXING_DATABASE_* or TEST_DB_* config)
 	@echo "Running integration tests..."
-	gotestsum --format=short-verbose ./internal/integration/...
+	gotestsum --format=short-verbose -- -tags=integration ./internal/integration/...
 
 snapshot-save:
 	# This would be implemented for saving simulation state

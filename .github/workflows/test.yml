@@ -58,8 +58,9 @@ jobs:
         BOXING_REDIS_ADDR: localhost:6379
         BOXING_JWT_SECRET: test-secret-key-change-in-production
       run: |
-        # Run integration/functional tests only
-        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile test-results.json ./internal/integration/...
+        # Run integration/functional tests only (with integration build tag)
+        # Note: Only targeting internal/integration package - other packages with integration tests need separate handling
+        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile test-results.json -- -tags=integration ./internal/integration/...
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
