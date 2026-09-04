@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import './BoxerCard.css';
-import TrainingScheduler from './TrainingScheduler';
 
-const BoxerCard = ({ boxer }) => {
-  const [showTraining, setShowTraining] = useState(false);
+const BoxerCard = ({ boxer, onOpenTraining }) => {
   // Generate a consistent avatar based on boxer name (hash to emoji)
   const getAvatarEmoji = (name) => {
     const avatars = ['🥊', '💪', '🏆', '⚡', '🔥', '🛡️', '🎯', '😤'];
@@ -112,22 +110,12 @@ const BoxerCard = ({ boxer }) => {
       <div className="card-actions">
         <button
           className="train-btn"
-          onClick={() => setShowTraining(!showTraining)}
+          onClick={onOpenTraining}
           disabled={boxer.health < 50 || boxer.energy < 15}
         >
-          {showTraining ? 'Hide Training' : 'Schedule Training'}
+          Schedule Training
         </button>
       </div>
-
-      {/* Training Scheduler Modal */}
-      {showTraining && (
-        <div className="training-modal-overlay" onClick={() => setShowTraining(false)}>
-          <div className="training-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowTraining(false)}>×</button>
-            <TrainingScheduler boxerId={boxer.id} boxer={boxer} />
-          </div>
-        </div>
-      )}
 
       {/* Position coordinates (optional - can be removed) */}
       <div className="card-footer">

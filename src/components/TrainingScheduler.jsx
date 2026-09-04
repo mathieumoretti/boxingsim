@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './TrainingScheduler.css';
 import { API_BASE_URL } from '../utils/auth';
 
-const TrainingScheduler = ({ boxerId, boxer }) => {
+const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [durationHours, setDurationHours] = useState(2);
@@ -85,6 +85,11 @@ const TrainingScheduler = ({ boxerId, boxer }) => {
         // Reset form after success
         setSelectedType('');
         setDurationHours(2);
+        // Close modal after a brief delay to show success message
+        setTimeout(() => {
+          setSuccess('');
+          if (onClose) onClose();
+        }, 1500);
       } else {
         setError(data.error || 'Failed to schedule training');
       }
