@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/mormm/boxing/internal/model"
 )
@@ -180,37 +181,23 @@ func CreateScheduledEvent(db *sql.DB, event *model.ScheduledEventCreate) error {
 	return nil
 }
 
-// CreateTrainingSession creates a new training session.
+// CreateTrainingSession creates a new training session using the MAT-72 schema.
 func CreateTrainingSession(db *sql.DB, session *model.TrainingSessionCreate) error {
+	now := time.Now()
 	query := `
-		INSERT INTO training_sessions (boxer_id, session_type, duration_minutes,
-		                               strength_gain, defense_gain, agility_gain, experience_gain)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO training_sessions (boxer_id, training_type_id, scheduled_event_id,
+		                               duration_hours, planned_strength_gain, planned_defense_gain,
+		                               planned_agility_gain, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, 0.0, 0.0, 0.0, 'pending', $5, $6)
 	`
 
-	var nilStrengthGainPtr, nilDefenseGainPtr, nilAgilityGainPtr float64 = 0, 0, 0
-	var nilExperienceGainPtr int = 0
-
-	strengthGain := &nilStrengthGainPtr
-	defenseGain := &nilDefenseGainPtr
-	agilityGain := &nilAgilityGainPtr
-	experienceGain := &nilExperienceGainPtr
-
-	if session.StrengthGain != nil {
-		strengthGain = session.StrengthGain
-	}
-	if session.DefenseGain != nil {
-		defenseGain = session.DefenseGain
-	}
-	if session.AgilityGain != nil {
-		agilityGain = session.AgilityGain
-	}
-	if session.ExperienceGain != nil {
-		experienceGain = session.ExperienceGain
+	var scheduledEventID *int
+	if session.ScheduledEventID != nil {
+		scheduledEventID = session.ScheduledEventID
 	}
 
-	_, err := db.Exec(query, session.BoxerID, session.SessionType, session.DurationMinutes,
-		*strengthGain, *defenseGain, *agilityGain, *experienceGain)
+	_, err := db.Exec(query, session.BoxerID, session.TrainingTypeID, scheduledEventID,
+		session.DurationHours, now, now)
 	if err != nil {
 		return fmt.Errorf("failed to create training session: %w", err)
 	}

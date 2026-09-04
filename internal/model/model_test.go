@@ -246,46 +246,66 @@ func TestScheduledEvent(t *testing.T) {
 }
 
 func TestTrainingSession(t *testing.T) {
-	t.Run("SessionType constants", func(t *testing.T) {
-		assert.Equal(t, SessionTypeStrength, SessionType("strength"))
-		assert.Equal(t, SessionTypeDefense, SessionType("defense"))
-		assert.Equal(t, SessionTypeAgility, SessionType("agility"))
-		assert.Equal(t, SessionTypeMixed, SessionType("mixed"))
-		assert.Equal(t, SessionTypeOther, SessionType("other"))
+	t.Run("TrainingSessionStatus constants", func(t *testing.T) {
+		assert.Equal(t, TrainingSessionPending, TrainingSessionStatus("pending"))
+		assert.Equal(t, TrainingSessionCompleted, TrainingSessionStatus("completed"))
+		assert.Equal(t, TrainingSessionCancelled, TrainingSessionStatus("cancelled"))
+	})
+
+	t.Run("TrainingType struct creation", func(t *testing.T) {
+		now := time.Now()
+		trainingType := &TrainingType{
+			ID:                 1,
+			Name:               "strength_training",
+			Description:        stringPtr("Build raw power"),
+			StrengthGainFactor: 1.0,
+			DefenseGainFactor:  0.1,
+			AgilityGainFactor:  0.05,
+			EnergyCost:         15,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+
+		assert.NotNil(t, trainingType)
+		assert.Equal(t, "strength_training", trainingType.Name)
+		assert.Equal(t, 1.0, trainingType.StrengthGainFactor)
+		assert.Equal(t, 15, trainingType.EnergyCost)
 	})
 
 	t.Run("TrainingSession struct creation", func(t *testing.T) {
 		now := time.Now()
 		session := &TrainingSession{
-			ID:              1,
-			BoxerID:         1,
-			SessionType:     SessionTypeStrength,
-			DurationMinutes: 60,
-			StrengthGain:    5.0,
-			DefenseGain:     2.0,
-			AgilityGain:     3.0,
-			ExperienceGain:  10,
-			CreatedAt:       now,
+			ID:                  1,
+			BoxerID:             1,
+			TrainingTypeID:      1,
+			DurationHours:       1.0,
+			PlannedStrengthGain: 5.0,
+			PlannedDefenseGain:  2.0,
+			PlannedAgilityGain:  3.0,
+			Status:              TrainingSessionPending,
+			CreatedAt:           now,
+			UpdatedAt:           now,
 		}
 
 		assert.NotNil(t, session)
-		assert.Equal(t, SessionTypeStrength, session.SessionType)
-		assert.Equal(t, 60, session.DurationMinutes)
-		assert.Equal(t, 5.0, session.StrengthGain)
+		assert.Equal(t, 1, session.TrainingTypeID)
+		assert.Equal(t, 1.0, session.DurationHours)
+		assert.Equal(t, 5.0, session.PlannedStrengthGain)
 	})
 
 	t.Run("TrainingSession JSON marshaling", func(t *testing.T) {
 		now := time.Now()
 		session := &TrainingSession{
-			ID:              1,
-			BoxerID:         1,
-			SessionType:     SessionTypeStrength,
-			DurationMinutes: 60,
-			StrengthGain:    5.0,
-			DefenseGain:     2.0,
-			AgilityGain:     3.0,
-			ExperienceGain:  10,
-			CreatedAt:       now,
+			ID:                  1,
+			BoxerID:             1,
+			TrainingTypeID:      1,
+			DurationHours:       1.0,
+			PlannedStrengthGain: 5.0,
+			PlannedDefenseGain:  2.0,
+			PlannedAgilityGain:  3.0,
+			Status:              TrainingSessionPending,
+			CreatedAt:           now,
+			UpdatedAt:           now,
 		}
 
 		data, err := json.Marshal(session)
@@ -294,8 +314,8 @@ func TestTrainingSession(t *testing.T) {
 
 		// Check that the JSON contains expected fields
 		jsonStr := string(data)
-		assert.Contains(t, jsonStr, "strength")
-		assert.Contains(t, jsonStr, "60")
+		assert.Contains(t, jsonStr, "pending")
+		assert.Contains(t, jsonStr, "1")
 		assert.Contains(t, jsonStr, "5")
 	})
 }
