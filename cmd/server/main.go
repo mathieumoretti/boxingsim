@@ -75,9 +75,15 @@ func main() {
 
 	// Setup repositories only if DB is connected
 	var boxerStore *store.BoxerStore
+	var trainingTypeStore *store.TrainingTypeStore
+	var trainingSessionStore *store.TrainingSessionStore
+	var scheduledEventStore *store.ScheduledEventStore
 	var fightService *service.FightService
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
+		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
+		trainingSessionStore = store.NewTrainingSessionStore(dbConn.DB)
+		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
 	}
 
@@ -86,6 +92,12 @@ func main() {
 
 	// Setup handlers
 	boxerHandler := handler.NewBoxerHandler(boxerStore)
+	trainingHandler := handler.NewTrainingHandler(
+		boxerStore,
+		trainingTypeStore,
+		trainingSessionStore,
+		scheduledEventStore,
+	)
 	fightHandler := handler.NewFightHandler(fightService)
 	authHandler := handler.NewAuthHandler(dbConn)
 	dashboardHandler := handler.NewDashboardHandler()
@@ -227,6 +239,41 @@ func main() {
 			return
 		}
 		fightHandler.GetFightByID(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	// Training types endpoint - public (reference data)
+	router.HandleFunc("/training-types", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		trainingHandler.GetAllTrainingTypes(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	// Training endpoints - protected with authentication middleware
+	protectedRouter.HandleFunc("/boxers/{id}/train", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		trainingHandler.ScheduleTraining(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	protectedRouter.HandleFunc("/boxers/{id}/training-sessions", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		trainingHandler.GetTrainingSessionsForBoxer(w, r)
 	}).Methods(optionsMethod, "GET")
 
 	// Serve static files for the UI (React app)
