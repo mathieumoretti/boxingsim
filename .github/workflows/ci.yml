@@ -39,8 +39,9 @@ jobs:
 
     - name: Run unit tests with gotestsum
       run: |
-        # Run unit tests only (exclude integration tests)
-        go run gotest.tools/gotestsum@latest --format=short-verbose $(go list ./... | grep -v 'internal/integration$')
+        # Run unit tests only (exclude integration tests via build tags)
+        # Integration tests are excluded by default since they have //go:build integration tag
+        go run gotest.tools/gotestsum@latest --format=short-verbose ./...
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
