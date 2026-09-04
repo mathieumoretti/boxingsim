@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import BoxerCard from './BoxerCard.jsx';
+import TrainingScheduler from './TrainingScheduler.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -9,6 +10,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -81,11 +83,33 @@ const Dashboard = ({ user, onLogout }) => {
           ) : (
             <div className="boxers-grid">
               {boxers.map((boxer) => (
-                <BoxerCard key={boxer.id} boxer={boxer} />
+                <BoxerCard
+                  key={boxer.id}
+                  boxer={boxer}
+                  onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
+                />
               ))}
             </div>
           )}
         </section>
+
+        {/* Centralized Training Modal */}
+        {selectedBoxerForTraining && (
+          <div className="training-modal-overlay" onClick={() => setSelectedBoxerForTraining(null)}>
+            <div className="training-modal" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="modal-close"
+                onClick={() => setSelectedBoxerForTraining(null)}
+                aria-label="Close modal"
+              >×</button>
+              <TrainingScheduler
+                boxerId={selectedBoxerForTraining.id}
+                boxer={selectedBoxerForTraining}
+                onClose={() => setSelectedBoxerForTraining(null)}
+              />
+            </div>
+          </div>
+        )}
 
         <section className="fight-section">
           <h2>Fight Arena</h2>

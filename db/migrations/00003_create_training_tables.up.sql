@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS training_sessions (
 
 -- Seed reference data for training types
 INSERT INTO training_types (name, description, strength_gain_factor, defense_gain_factor, agility_gain_factor, energy_cost) VALUES
+    ('normal_training', 'Balanced general workout covering all aspects of boxing fitness', 0.5, 0.5, 0.5, 12),
     ('strength_training', 'Intense weightlifting and resistance training to build raw power', 1.0, 0.1, 0.05, 15),
     ('defense_drill', 'Technical drills focusing on blocking, parrying, and defensive positioning', 0.1, 1.0, 0.1, 12),
     ('agility_workout', 'Speed and footwork exercises including ladder drills and sprints', 0.05, 0.1, 1.0, 14),
