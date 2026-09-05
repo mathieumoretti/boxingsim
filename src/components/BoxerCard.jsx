@@ -2,7 +2,7 @@ import React from 'react';
 
 import './BoxerCard.css';
 
-const BoxerCard = ({ boxer }) => {
+const BoxerCard = ({ boxer, onOpenTraining }) => {
   // Generate a consistent avatar based on boxer name (hash to emoji)
   const getAvatarEmoji = (name) => {
     const avatars = ['🥊', '💪', '🏆', '⚡', '🔥', '🛡️', '🎯', '😤'];
@@ -104,6 +104,17 @@ const BoxerCard = ({ boxer }) => {
             <span className="stat-value-sm">{Math.round(boxer.defense)}</span>
           </div>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="card-actions">
+        <button
+          className="train-btn"
+          onClick={onOpenTraining}
+          disabled={boxer.health < 50 || boxer.energy < 15}
+        >
+          Schedule Training
+        </button>
       </div>
 
       {/* Position coordinates (optional - can be removed) */}

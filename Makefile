@@ -1,4 +1,4 @@
-.PHONY: help build run dev test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load
+.PHONY: help build run dev worker test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load
 
 .DEFAULT_GOAL := help
 
@@ -7,6 +7,7 @@ help:
 	@echo "====================================="
 	@echo "make build     - Build the application"
 	@echo "make run       - Run the application directly with Go"
+	@echo "make worker    - Run the world clock worker (event processor)"
 	@echo "make dev       - Run with hot reload using air (requires air to be installed)"
 	@echo "make docker-up - Start all services using Docker Compose"
 	@echo "make docker-down - Stop all Docker services"
@@ -108,3 +109,6 @@ snapshot-save:
 snapshot-load:
 	# This would be implemented for loading simulation state
 	echo "Snapshot load command - placeholder"
+
+worker:
+	go run cmd/worker/main.go
