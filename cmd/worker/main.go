@@ -75,13 +75,20 @@ func main() {
 	// Create world clock model for time-derived game calculations
 	worldClock := model.NewWorldClockModel(lg)
 
-	// Initialize stores and event processor
+	// Initialize stores
 	eventStore := store.NewScheduledEventStore(db.DB)
 	boxerStore := store.NewBoxerStore(db.DB)
+	trainingTypeStore := store.NewTrainingTypeStore(db.DB)
+	trainingSessionStore := store.NewTrainingSessionStore(db.DB)
+
+	// Initialize event processor (for scheduled events)
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, *lg)
 
+	// Initialize training service (for training session completion - MAT-74)
+	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, lg)
+
 	// Start the worker loop with actual event processing
-	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, lg)
+	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg)
 
 	lg.Info("World worker shutdown complete")
 }
@@ -93,6 +100,7 @@ func startWorkerLoop(
 	worldClock *model.WorldClockModel,
 	eventStore *store.ScheduledEventStore,
 	eventProcessor *service.EventProcessor,
+	trainingService *service.TrainingService,
 	lg *logger.Logger,
 ) {
 	quit := make(chan os.Signal, 1)
@@ -124,6 +132,16 @@ func startWorkerLoop(
 					if err := eventProcessor.ProcessScheduledEvent(ctx, event); err != nil {
 						lg.Error("Failed to process event ID=%d: %v", event.ID, err)
 					}
+				}
+			}
+
+			// Process training sessions (MAT-74)
+			if trainingService != nil {
+				completed, failed, err := trainingService.CompleteAllDueTrainingSessions(ctx)
+				if err != nil {
+					lg.Error("Failed to process training sessions: " + err.Error())
+				} else if completed > 0 {
+					lg.Info("Completed %d training sessions, %d failed", completed, failed)
 				}
 			}
 

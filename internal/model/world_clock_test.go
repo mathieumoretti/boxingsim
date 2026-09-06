@@ -8,10 +8,10 @@ import (
 // TestCalculateGameTime_Running tests game time calculation when clock is running at various speeds.
 func TestCalculateGameTime_Running(t *testing.T) {
 	tests := []struct {
-		name         string
-		speedFactor  float64
-		realNow      time.Time
-		expectAfter  bool // Expect game time to be after anchor
+		name        string
+		speedFactor float64
+		realNow     time.Time
+		expectAfter bool // Expect game time to be after anchor
 	}{
 		{
 			name:        "60x speed advances game time faster",
