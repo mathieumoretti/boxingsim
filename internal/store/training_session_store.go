@@ -343,6 +343,50 @@ func (s *TrainingSessionStore) MarkAsCompleted(ctx context.Context, id int) erro
 	return s.UpdateStatus(ctx, id, model.TrainingSessionCompleted)
 }
 
+// GetAllPending retrieves all training sessions with pending status
+func (s *TrainingSessionStore) GetAllPending(ctx context.Context) ([]*model.TrainingSession, error) {
+	query := `SELECT id, boxer_id, training_type_id, scheduled_event_id,
+			duration_hours, planned_strength_gain, planned_defense_gain,
+			planned_agility_gain, status, completed_at, created_at, updated_at
+		FROM training_sessions
+		WHERE status = $1
+		ORDER BY created_at ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, model.TrainingSessionPending)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sessions []*model.TrainingSession
+	for rows.Next() {
+		var session model.TrainingSession
+		if err := rows.Scan(
+			&session.ID,
+			&session.BoxerID,
+			&session.TrainingTypeID,
+			&session.ScheduledEventID,
+			&session.DurationHours,
+			&session.PlannedStrengthGain,
+			&session.PlannedDefenseGain,
+			&session.PlannedAgilityGain,
+			&session.Status,
+			&session.CompletedAt,
+			&session.CreatedAt,
+			&session.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, &session)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
+}
+
 // MarkAsCancelled marks a training session as cancelled
 func (s *TrainingSessionStore) MarkAsCancelled(ctx context.Context, id int) error {
 	return s.UpdateStatus(ctx, id, model.TrainingSessionCancelled)

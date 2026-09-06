@@ -21,7 +21,7 @@ const (
 // Default constants for world clock initialization.
 const (
 	DefaultGameStart   = "2030-01-01 08:00:00" // Boxing simulation year
-	DefaultSpeedFactor = 60.0                   // 1 real minute = 1 game hour (60x speed)
+	DefaultSpeedFactor = 60.0                  // 1 real minute = 1 game hour (60x speed)
 )
 
 // WorldClock represents a single-row table tracking simulation time anchors and global clock state.

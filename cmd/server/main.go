@@ -79,12 +79,14 @@ func main() {
 	var trainingSessionStore *store.TrainingSessionStore
 	var scheduledEventStore *store.ScheduledEventStore
 	var fightService *service.FightService
+	var trainingService *service.TrainingService
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
 		trainingSessionStore = store.NewTrainingSessionStore(dbConn.DB)
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
+		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, logger)
 	}
 
 	// Setup auth service for middleware
@@ -97,6 +99,7 @@ func main() {
 		trainingTypeStore,
 		trainingSessionStore,
 		scheduledEventStore,
+		trainingService,
 	)
 	fightHandler := handler.NewFightHandler(fightService)
 	authHandler := handler.NewAuthHandler(dbConn)
@@ -275,6 +278,18 @@ func main() {
 		}
 		trainingHandler.GetTrainingSessionsForBoxer(w, r)
 	}).Methods(optionsMethod, "GET")
+
+	// Training completion endpoint - protected with authentication middleware
+	protectedRouter.HandleFunc("/training/{id}/complete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		trainingHandler.CompleteTraining(w, r)
+	}).Methods(optionsMethod, "POST")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists

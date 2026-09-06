@@ -8,15 +8,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
+	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
 )
 
 // TrainingHandler handles training-related HTTP requests
 type TrainingHandler struct {
-	boxerStore         *store.BoxerStore
-	trainingTypeStore  *store.TrainingTypeStore
+	boxerStore           *store.BoxerStore
+	trainingTypeStore    *store.TrainingTypeStore
 	trainingSessionStore *store.TrainingSessionStore
 	scheduledEventStore  *store.ScheduledEventStore
+	trainingService      *service.TrainingService
 }
 
 // NewTrainingHandler creates a new TrainingHandler instance
@@ -25,12 +27,14 @@ func NewTrainingHandler(
 	trainingTypeStore *store.TrainingTypeStore,
 	trainingSessionStore *store.TrainingSessionStore,
 	scheduledEventStore *store.ScheduledEventStore,
+	trainingService *service.TrainingService,
 ) *TrainingHandler {
 	return &TrainingHandler{
-		boxerStore:         boxerStore,
-		trainingTypeStore:  trainingTypeStore,
+		boxerStore:           boxerStore,
+		trainingTypeStore:    trainingTypeStore,
 		trainingSessionStore: trainingSessionStore,
 		scheduledEventStore:  scheduledEventStore,
+		trainingService:      trainingService,
 	}
 }
 
@@ -132,9 +136,9 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error":       "Insufficient energy",
-			"required":    strconv.Itoa(energyCost),
-			"available":   strconv.Itoa(int(boxer.Energy)),
+			"error":     "Insufficient energy",
+			"required":  strconv.Itoa(energyCost),
+			"available": strconv.Itoa(int(boxer.Energy)),
 		})
 		return
 	}
@@ -217,10 +221,10 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Training scheduled successfully",
 		"session": map[string]interface{}{
-			"id":                  trainingSession.ID,
-			"boxer_id":            trainingSession.BoxerID,
-			"training_type_id":    trainingSession.TrainingTypeID,
-			"duration_hours":      trainingSession.DurationHours,
+			"id":               trainingSession.ID,
+			"boxer_id":         trainingSession.BoxerID,
+			"training_type_id": trainingSession.TrainingTypeID,
+			"duration_hours":   trainingSession.DurationHours,
 			"planned_gains": map[string]float64{
 				"strength": plannedStrengthGain,
 				"defense":  plannedDefenseGain,
@@ -230,8 +234,8 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 			"status":      trainingSession.Status,
 		},
 		"training_type": map[string]interface{}{
-			"name":           trainingType.Name,
-			"description":    trainingType.Description,
+			"name":                 trainingType.Name,
+			"description":          trainingType.Description,
 			"energy_cost_per_hour": trainingType.EnergyCost,
 		},
 	})
@@ -265,4 +269,35 @@ func (h *TrainingHandler) GetTrainingSessionsForBoxer(w http.ResponseWriter, r *
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(sessions)
+}
+
+// CompleteTraining handles completing a training session manually
+// POST /training/{id}/complete
+func (h *TrainingHandler) CompleteTraining(w http.ResponseWriter, r *http.Request) {
+	if h.trainingService == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Training service not available"})
+		return
+	}
+
+	idStr := mux.Vars(r)["id"]
+	sessionID, parseErr := strconv.Atoi(idStr)
+	if parseErr != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid training session ID"})
+		return
+	}
+
+	if err := h.trainingService.CompleteTrainingSession(r.Context(), sessionID); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{"message": "Training session completed successfully"})
 }
