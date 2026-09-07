@@ -79,6 +79,18 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
         <span className="stat-value">{Math.floor(boxer.energy)}<small>/ 100</small></span>
       </div>
 
+      {/* XP Progress Bar */}
+      <div className="stat-bar-container stat-bar-xp">
+        <span className="stat-label">XP</span>
+        <div className="bar-wrapper bar-xp">
+          <div
+            className={`progress-bar bg-xp`}
+            style={{ width: `${((boxer.experience || 0) / ((boxer.level || 1) * 100)) * 100}%` }}
+          ></div>
+        </div>
+        <span className="stat-value">{Math.floor(boxer.experience || 0)}<small>/ {(boxer.level || 1) * 100}</small></span>
+      </div>
+
       {/* Combat Stats */}
       <div className="combat-stats">
         <div className="stat-item stat-strength">
