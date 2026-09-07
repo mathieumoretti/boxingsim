@@ -24,6 +24,7 @@ type TrainingService struct {
 	trainingTypeStore    *store.TrainingTypeStore
 	trainingSessionStore *store.TrainingSessionStore
 	fatigueService       *FatigueService
+	progressionService   *ProgressionService
 	logger               *logger.Logger
 }
 
@@ -33,6 +34,7 @@ func NewTrainingService(
 	trainingTypeStore *store.TrainingTypeStore,
 	trainingSessionStore *store.TrainingSessionStore,
 	fatigueService *FatigueService,
+	progressionService *ProgressionService,
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
@@ -40,6 +42,7 @@ func NewTrainingService(
 		trainingTypeStore:    trainingTypeStore,
 		trainingSessionStore: trainingSessionStore,
 		fatigueService:       fatigueService,
+		progressionService:   progressionService,
 		logger:               lg,
 	}
 }
@@ -92,11 +95,50 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 			ErrInsufficientEnergy, boxer.Energy, energyCost)
 	}
 
-	// Step 5: Apply changes to boxer
-	boxer.Energy -= energyCost                    // Deduct energy cost
-	boxer.Strength += session.PlannedStrengthGain // Apply planned gains
-	boxer.Defense += session.PlannedDefenseGain
-	boxer.Agility += session.PlannedAgilityGain
+	// Step 5: Apply progression-aware stat gains (MAT-22)
+	boxer.Energy -= energyCost // Deduct energy cost
+
+	if s.progressionService != nil {
+		// Calculate effective gains with diminishing returns and fatigue modifier
+		effectiveGains := s.progressionService.CalculateEffectiveGains(
+			boxer,
+			session.PlannedStrengthGain,
+			session.PlannedDefenseGain,
+			session.PlannedAgilityGain,
+			session.DurationHours,
+		)
+
+		// Apply effective stat gains
+		boxer.Strength += effectiveGains.Strength
+		boxer.Defense += effectiveGains.Defense
+		boxer.Agility += effectiveGains.Agility
+
+		// Add experience points
+		boxer.Experience += effectiveGains.XP
+
+		// Check for level up
+		levelsGained := s.progressionService.ApplyLevelUp(boxer)
+		if levelsGained > 0 {
+			s.logger.Info("Boxer ID=%d gained %d level(s) after training session %d",
+				boxer.ID, levelsGained, session.ID)
+		}
+
+		s.logger.Info("Training completed: session_id=%d boxer_id=%d energy_cost=%.1f str_gain=%.2f(.3f) def_gain=%.2f(/.3f) agi_gain=%.2f(/.3f) xp_gained=%.0f fatigue_mult=%.2f",
+			session.ID, boxer.ID, energyCost,
+			effectiveGains.Strength, session.PlannedStrengthGain,
+			effectiveGains.Defense, session.PlannedDefenseGain,
+			effectiveGains.Agility, session.PlannedAgilityGain,
+			effectiveGains.XP, effectiveGains.FatigueMultiplier)
+	} else {
+		// Fallback to linear gains if progression service not available
+		boxer.Strength += session.PlannedStrengthGain
+		boxer.Defense += session.PlannedDefenseGain
+		boxer.Agility += session.PlannedAgilityGain
+
+		s.logger.Info("Training completed (no progression): session_id=%d boxer_id=%d energy_cost=%.1f str_gain=%.2f def_gain=%.2f agi_gain=%.2f",
+			session.ID, boxer.ID, energyCost,
+			session.PlannedStrengthGain, session.PlannedDefenseGain, session.PlannedAgilityGain)
+	}
 
 	// Ensure energy doesn't go negative (safety check)
 	if boxer.Energy < 0 {

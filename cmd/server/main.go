@@ -80,6 +80,7 @@ func main() {
 	var scheduledEventStore *store.ScheduledEventStore
 	var fightService *service.FightService
 	var fatigueService *service.FatigueService
+	var progressionService *service.ProgressionService
 	var trainingService *service.TrainingService
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
@@ -88,7 +89,8 @@ func main() {
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
 		fatigueService = service.NewFatigueService(boxerStore, logger)
-		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, logger)
+		progressionService = service.NewProgressionService(logger)
+		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, logger)
 	}
 
 	// Setup auth service for middleware
@@ -102,6 +104,7 @@ func main() {
 		trainingSessionStore,
 		scheduledEventStore,
 		fatigueService,
+		progressionService,
 		trainingService,
 	)
 	fightHandler := handler.NewFightHandler(fightService)

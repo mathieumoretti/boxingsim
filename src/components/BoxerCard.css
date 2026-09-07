@@ -380,3 +380,19 @@
     padding: 16px;
   }
 }
+
+/* ========================================
+   XP PROGRESS BAR
+   ======================================== */
+.stat-bar-xp {
+  margin-top: 8px;
+}
+
+.bar-xp {
+  background: linear-gradient(90deg, #2c3e50, #34495e);
+}
+
+.bg-xp {
+  background: linear-gradient(90deg, #ffd700, #ff6b9d);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}

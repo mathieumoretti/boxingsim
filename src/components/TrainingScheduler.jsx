@@ -41,15 +41,54 @@ const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
     return type ? Math.round(type.energy_cost * durationHours) : 0;
   };
 
-  const calculateGains = () => {
-    if (!selectedType) return { strength: 0, defense: 0, agility: 0 };
+  const calculateEffectiveGains = () => {
+    if (!selectedType || !boxer) return {
+      strength: 0, defense: 0, agility: 0, xp: 0,
+      fatigueMultiplier: 1,
+      diminishingReturns: { strength: 1, defense: 1, agility: 1 }
+    };
+
     const type = trainingTypes.find(t => t.id === parseInt(selectedType));
-    if (!type) return { strength: 0, defense: 0, agility: 0 };
+    if (!type) return {
+      strength: 0, defense: 0, agility: 0, xp: 0,
+      fatigueMultiplier: 1,
+      diminishingReturns: { strength: 1, defense: 1, agility: 1 }
+    };
+
+    // Base gains
+    const baseStrength = type.strength_gain_factor * durationHours;
+    const baseDefense = type.defense_gain_factor * durationHours;
+    const baseAgility = type.agility_gain_factor * durationHours;
+
+    // Diminishing returns multiplier per stat: 1 / (1 + current_stat / 100)
+    const diminishingSTR = 1 / (1 + (boxer.strength || 0) / 100);
+    const diminishingDEF = 1 / (1 + (boxer.defense || 0) / 100);
+    const diminishingAGI = 1 / (1 + (boxer.agility || 0) / 100);
+
+    // Fatigue effectiveness multiplier: max(0.5, 1 - fatigue_score / 200)
+    const fatigueScore = boxer.fatigue_score || 0;
+    const fatigueMultiplier = Math.max(0.5, 1 - fatigueScore / 200);
+
+    // Effective gains with all modifiers
+    const effSTR = baseStrength * diminishingSTR * fatigueMultiplier;
+    const effDEF = baseDefense * diminishingDEF * fatigueMultiplier;
+    const effAGI = baseAgility * diminishingAGI * fatigueMultiplier;
+
+    // XP calculation: (eff_str + eff_def + eff_agi) × duration_hours × 10
+    const totalEffectiveGains = effSTR + effDEF + effAGI;
+    const xpGained = totalEffectiveGains * durationHours * 10;
 
     return {
-      strength: Math.round(type.strength_gain_factor * durationHours * 100) / 100,
-      defense: Math.round(type.defense_gain_factor * durationHours * 100) / 100,
-      agility: Math.round(type.agility_gain_factor * durationHours * 100) / 100
+      strength: Math.round(effSTR * 100) / 100,
+      defense: Math.round(effDEF * 100) / 100,
+      agility: Math.round(effAGI * 100) / 100,
+      xp: Math.round(xpGained),
+      fatigueMultiplier: Math.round(fatigueMultiplier * 100) / 100,
+      diminishingReturns: {
+        strength: Math.round(diminishingSTR * 100) / 100,
+        defense: Math.round(diminishingDEF * 100) / 100,
+        agility: Math.round(diminishingAGI * 100) / 100,
+      }
     };
   };
 
@@ -108,7 +147,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
   };
 
   const energyCost = calculateEnergyCost();
-  const gains = calculateGains();
+  const effectiveGains = calculateEffectiveGains();
   const trainingType = getSelectedTrainingType();
 
   if (isLoading) {
@@ -201,32 +240,63 @@ const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
 
         {/* Planned Gains Preview */}
         {selectedType && (
-          <div className="gains-preview">
-            <h4>Planned Stat Gains</h4>
-            <div className="gain-bars">
-              <div className="gain-bar strength">
-                <span className="gain-label">💪 STR +{gains.strength}</span>
-                <div
-                  className="gain-progress"
-                  style={{ width: `${(gains.strength / 10) * 100}%` }}
-                ></div>
+          <>
+            {/* Fatigue Effectiveness Warning */}
+            {effectiveGains.fatigueMultiplier < 0.8 && (
+              <div className="fatigue-warning">
+                <span className="warning-icon">⚠️</span>
+                <span>High fatigue reduces training effectiveness by {Math.round((1 - effectiveGains.fatigueMultiplier) * 100)}%</span>
               </div>
-              <div className="gain-bar defense">
-                <span className="gain-label">🛡️ DEF +{gains.defense}</span>
-                <div
-                  className="gain-progress"
-                  style={{ width: `${(gains.defense / 10) * 100}%` }}
-                ></div>
+            )}
+
+            <div className="gains-preview">
+              <h4>Effective Stat Gains</h4>
+              <div className="gain-bars">
+                <div className={`gain-bar strength ${effectiveGains.diminishingReturns.strength < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label">💪 STR +{effectiveGains.strength}</span>
+                  <div
+                    className="gain-progress"
+                    style={{ width: `${Math.min((effectiveGains.strength / 5) * 100, 100)}%` }}
+                  ></div>
+                  {effectiveGains.diminishingReturns.strength < 0.6 && (
+                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.strength) * 100)}%</span>
+                  )}
+                </div>
+                <div className={`gain-bar defense ${effectiveGains.diminishingReturns.defense < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label">🛡️ DEF +{effectiveGains.defense}</span>
+                  <div
+                    className="gain-progress"
+                    style={{ width: `${Math.min((effectiveGains.defense / 5) * 100, 100)}%` }}
+                  ></div>
+                  {effectiveGains.diminishingReturns.defense < 0.6 && (
+                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.defense) * 100)}%</span>
+                  )}
+                </div>
+                <div className={`gain-bar agility ${effectiveGains.diminishingReturns.agility < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label">⚡ AGI +{effectiveGains.agility}</span>
+                  <div
+                    className="gain-progress"
+                    style={{ width: `${Math.min((effectiveGains.agility / 5) * 100, 100)}%` }}
+                  ></div>
+                  {effectiveGains.diminishingReturns.agility < 0.6 && (
+                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.agility) * 100)}%</span>
+                  )}
+                </div>
               </div>
-              <div className="gain-bar agility">
-                <span className="gain-label">⚡ AGI +{gains.agility}</span>
-                <div
-                  className="gain-progress"
-                  style={{ width: `${(gains.agility / 10) * 100}%` }}
-                ></div>
+
+              {/* XP Preview */}
+              <div className="xp-preview">
+                <span className="xp-label">📊 Experience: +{effectiveGains.xp} XP</span>
+                <div className="xp-bar-wrapper">
+                  <div
+                    className="xp-progress"
+                    style={{ width: `${Math.min(((boxer?.experience || 0) + effectiveGains.xp) / ((boxer?.level || 1) * 100) * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="xp-text">Level {boxer?.level || 1}</span>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Submit Button */}

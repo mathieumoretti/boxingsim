@@ -19,6 +19,7 @@ type TrainingHandler struct {
 	trainingSessionStore *store.TrainingSessionStore
 	scheduledEventStore  *store.ScheduledEventStore
 	fatigueService       *service.FatigueService
+	progressionService   *service.ProgressionService
 	trainingService      *service.TrainingService
 }
 
@@ -29,6 +30,7 @@ func NewTrainingHandler(
 	trainingSessionStore *store.TrainingSessionStore,
 	scheduledEventStore *store.ScheduledEventStore,
 	fatigueService *service.FatigueService,
+	progressionService *service.ProgressionService,
 	trainingService *service.TrainingService,
 ) *TrainingHandler {
 	return &TrainingHandler{
@@ -37,6 +39,7 @@ func NewTrainingHandler(
 		trainingSessionStore: trainingSessionStore,
 		scheduledEventStore:  scheduledEventStore,
 		fatigueService:       fatigueService,
+		progressionService:   progressionService,
 		trainingService:      trainingService,
 	}
 }
@@ -229,6 +232,30 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		_ = scheduledEvent // Placeholder for future implementation
 	}
 
+	// Calculate effective gains with progression modifiers (MAT-22)
+	var effectiveGains map[string]interface{}
+	var fatigueMultiplier float64
+	if h.progressionService != nil {
+		eff := h.progressionService.CalculateEffectiveGains(
+			boxer,
+			plannedStrengthGain,
+			plannedDefenseGain,
+			plannedAgilityGain,
+			req.DurationHours,
+		)
+		fatigueMultiplier = eff.FatigueMultiplier
+		effectiveGains = map[string]interface{}{
+			"strength":             eff.Strength,
+			"defense":              eff.Defense,
+			"agility":              eff.Agility,
+			"experience":           eff.XP,
+			"fatigue_multiplier":   fatigueMultiplier,
+			"diminishing_strength": eff.DiminishingReturnsStrength,
+			"diminishing_defense":  eff.DiminishingReturnsDefense,
+			"diminishing_agility":  eff.DiminishingReturnsAgility,
+		}
+	}
+
 	// Return success response with training session details
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -244,8 +271,9 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 				"defense":  plannedDefenseGain,
 				"agility":  plannedAgilityGain,
 			},
-			"energy_cost": energyCost,
-			"status":      trainingSession.Status,
+			"effective_gains": effectiveGains,
+			"energy_cost":     energyCost,
+			"status":          trainingSession.Status,
 		},
 		"training_type": map[string]interface{}{
 			"name":                 trainingType.Name,

@@ -372,3 +372,79 @@
     font-size: 0.85rem;
   }
 }
+
+/* Fatigue warning */
+.fatigue-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid #ffc107;
+  color: #ffc107;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.fatigue-warning .warning-icon {
+  font-size: 1.2rem;
+  margin-right: 8px;
+}
+
+/* Diminished returns badge */
+.gain-bar .diminish-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 71, 87, 0.9);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Reduced gain bar styling */
+.gain-bar.reduced {
+  opacity: 0.7;
+}
+
+.gain-bar.reduced .gain-progress {
+  filter: grayscale(0.3);
+}
+
+/* XP preview section */
+.xp-preview {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.xp-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffd700;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.xp-bar-wrapper {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.xp-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #ff6b9d);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.xp-text {
+  display: block;
+  text-align: right;
+  margin-top: 4px;
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
