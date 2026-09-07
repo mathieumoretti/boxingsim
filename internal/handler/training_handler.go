@@ -18,6 +18,7 @@ type TrainingHandler struct {
 	trainingTypeStore    *store.TrainingTypeStore
 	trainingSessionStore *store.TrainingSessionStore
 	scheduledEventStore  *store.ScheduledEventStore
+	fatigueService       *service.FatigueService
 	trainingService      *service.TrainingService
 }
 
@@ -27,6 +28,7 @@ func NewTrainingHandler(
 	trainingTypeStore *store.TrainingTypeStore,
 	trainingSessionStore *store.TrainingSessionStore,
 	scheduledEventStore *store.ScheduledEventStore,
+	fatigueService *service.FatigueService,
 	trainingService *service.TrainingService,
 ) *TrainingHandler {
 	return &TrainingHandler{
@@ -34,6 +36,7 @@ func NewTrainingHandler(
 		trainingTypeStore:    trainingTypeStore,
 		trainingSessionStore: trainingSessionStore,
 		scheduledEventStore:  scheduledEventStore,
+		fatigueService:       fatigueService,
 		trainingService:      trainingService,
 	}
 }
@@ -173,6 +176,17 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Boxer already has a pending training session"})
 		return
+	}
+
+	// 7. Check fatigue constraints (MAT-75: Recovery System)
+	if h.fatigueService != nil {
+		canTrain, errMsg := h.fatigueService.CheckCanTrain(boxer)
+		if !canTrain {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": errMsg})
+			return
+		}
 	}
 
 	// Calculate planned gains based on duration and training type factors

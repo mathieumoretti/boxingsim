@@ -40,3 +40,11 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 	}
 	_, _ = l.info.WriteString("[DEBUG] " + msg + "\n")
 }
+
+func (l *Logger) Warn(format string, v ...interface{}) {
+	msg := format
+	if len(v) > 0 {
+		msg += " " + fmt.Sprintf("%v", v...)
+	}
+	_, _ = l.error.WriteString("[WARN] " + msg + "\n")
+}

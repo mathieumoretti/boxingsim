@@ -25,8 +25,9 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 		INSERT INTO boxers (
 			user_id, name, nickname, position_x, position_y,
 			health, energy, strength, defense, agility,
-			experience, level, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			experience, level, fatigue_score, forced_rest_until,
+			created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		RETURNING id`
 
 	now := time.Now()
@@ -36,7 +37,8 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 	err := s.db.QueryRowContext(ctx, query,
 		boxer.UserID, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
-		boxer.Experience, boxer.Level, boxer.CreatedAt, boxer.UpdatedAt,
+		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.CreatedAt, boxer.UpdatedAt,
 	).Scan(&boxer.ID)
 
 	return err
@@ -47,7 +49,8 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
-		       experience, level, created_at, updated_at
+		       experience, level, fatigue_score, forced_rest_until,
+		       created_at, updated_at
 		FROM boxers WHERE id = $1`
 
 	row := s.db.QueryRowContext(ctx, query, id)
@@ -56,7 +59,8 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 	err := row.Scan(
 		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname, &boxer.PositionX, &boxer.PositionY,
 		&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
-		&boxer.Experience, &boxer.Level, &boxer.CreatedAt, &boxer.UpdatedAt,
+		&boxer.Experience, &boxer.Level, &boxer.FatigueScore, &boxer.ForcedRestUntil,
+		&boxer.CreatedAt, &boxer.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -70,7 +74,8 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
-		       experience, level, created_at, updated_at
+		       experience, level, fatigue_score, forced_rest_until,
+		       created_at, updated_at
 		FROM boxers WHERE user_id = $1 ORDER BY created_at DESC`
 
 	rows, err := s.db.QueryContext(ctx, query, userID)
@@ -87,7 +92,8 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 		err := rows.Scan(
 			&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname, &boxer.PositionX, &boxer.PositionY,
 			&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
-			&boxer.Experience, &boxer.Level, &boxer.CreatedAt, &boxer.UpdatedAt,
+			&boxer.Experience, &boxer.Level, &boxer.FatigueScore, &boxer.ForcedRestUntil,
+			&boxer.CreatedAt, &boxer.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -104,8 +110,9 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 		UPDATE boxers SET
 			name = $1, nickname = $2, position_x = $3, position_y = $4,
 			health = $5, energy = $6, strength = $7, defense = $8, agility = $9,
-			experience = $10, level = $11, updated_at = $12
-		WHERE id = $13`
+			experience = $10, level = $11, fatigue_score = $12, forced_rest_until = $13,
+			updated_at = $14
+		WHERE id = $15`
 
 	now := time.Now()
 	boxer.UpdatedAt = now
@@ -113,7 +120,8 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 	_, err := s.db.ExecContext(ctx, query,
 		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
-		boxer.Experience, boxer.Level, boxer.UpdatedAt, boxer.ID,
+		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.UpdatedAt, boxer.ID,
 	)
 
 	return err

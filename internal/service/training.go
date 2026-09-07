@@ -23,6 +23,7 @@ type TrainingService struct {
 	boxerStore           *store.BoxerStore
 	trainingTypeStore    *store.TrainingTypeStore
 	trainingSessionStore *store.TrainingSessionStore
+	fatigueService       *FatigueService
 	logger               *logger.Logger
 }
 
@@ -31,12 +32,14 @@ func NewTrainingService(
 	boxerStore *store.BoxerStore,
 	trainingTypeStore *store.TrainingTypeStore,
 	trainingSessionStore *store.TrainingSessionStore,
+	fatigueService *FatigueService,
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
 		boxerStore:           boxerStore,
 		trainingTypeStore:    trainingTypeStore,
 		trainingSessionStore: trainingSessionStore,
+		fatigueService:       fatigueService,
 		logger:               lg,
 	}
 }
@@ -111,6 +114,15 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		// In production, we might want to rollback or track this for manual recovery
 		s.logger.Error("Training session %d completion failed after boxer update: %v", sessionID, err)
 		return fmt.Errorf("failed to mark training session %d as completed: %w", sessionID, err)
+	}
+
+	// Step 8: Apply fatigue increase from training (duration_hours × 15)
+	if s.fatigueService != nil {
+		fatigueIncrease := s.fatigueService.CalculateFatigueIncrease(session.DurationHours)
+		if err := s.fatigueService.ApplyFatigueIncrease(ctx, boxer.ID, fatigueIncrease); err != nil {
+			s.logger.Error("Failed to apply fatigue after training session %d: %v", sessionID, err)
+			// Note: Training was completed but fatigue not tracked; log and continue
+		}
 	}
 
 	s.logger.Info("Training completed: session_id=%d boxer_id=%d energy_cost=%.1f strength_gain=%.2f defense_gain=%.2f agility_gain=%.2f",
