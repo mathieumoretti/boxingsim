@@ -212,8 +212,9 @@ func FreshDatabase(t *testing.T, dbPrefix string, migrationsDir string) (*sql.DB
 			var dbNames []string
 			for rows.Next() {
 				var name string
-				rows.Scan(&name)
-				dbNames = append(dbNames, name)
+				if err := rows.Scan(&name); err == nil {
+					dbNames = append(dbNames, name)
+				}
 			}
 			rows.Close()
 			debugInfo = fmt.Sprintf("Existing test databases: %v", dbNames)
