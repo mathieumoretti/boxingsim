@@ -18,7 +18,8 @@ A Go-based boxing simulation game with REST API backend and React frontend. The 
 │   └── 008-viper-configuration-management.md
 ├── cmd/
 │   ├── seed/               # Seeding functionality for tournament setup
-│   └── server/             # Main server binary
+│   ├── server/             # Main server binary
+│   └── worker/             # World clock worker (event processing)
 ├── config/                 # Environment-specific YAML configs
 │   ├── development.yaml
 │   ├── test.yaml
@@ -89,6 +90,15 @@ A Go-based boxing simulation game with REST API backend and React frontend. The 
 - **Port**: Configurable via `BOXING_SERVER_PORT` (default: 8080)
 - **Features**: REST API + static file serving for frontend
 
+### Worker Process
+- **Binary**: `cmd/worker/worker`
+- **Purpose**: Processes scheduled events (training completion, world clock operations)
+- **Authority Lock**: PostgreSQL advisory locks ensure only one worker processes events at a time
+- **Event Loop**: Queries and processes events WHERE `event_time <= current_game_time` every 50ms
+- **Dependencies**: Uses boxer service for event processing, world clock model for game time anchors
+- **When to Run**: During development for end-to-end testing of time-based features (training, recovery)
+
+
 ### Database
 - **Type**: PostgreSQL 15
 - **Migrations**: Stored in `db/migrations/`
@@ -127,9 +137,12 @@ make seed-dev    # Development data
 
 | Command | Description |
 |---------|-------------|
-| `make build` | Build the application |
-| `make run` | Run the built application |
-| `make dev` | Run with hot reload (air) |
+| `make build` | Build the server application |
+| `make build-worker` | Build the worker application |
+| `make run` | Run the built server application |
+| `make worker-run` | Run the built worker (processes scheduled events) |
+| `make worker-dev` | Run worker with hot reload using air |
+| `make dev` | Run server with hot reload using air (requires air to be installed) |
 | `make test` | Run all tests (builds + lints first) |
 | `make lint` | Run golangci-lint |
 | `make fmt` | Format code with gofmt |
@@ -140,6 +153,25 @@ make seed-dev    # Development data
 | `make reset-dev` | Reset and reseed for development |
 | `make docker-up` | Start PostgreSQL and Redis containers |
 | `make docker-down` | Stop Docker containers |
+
+### Running the Worker Process
+
+The worker process handles time-based events like training completion and boxer recovery. It uses PostgreSQL advisory locks to ensure only one authoritative worker processes events at a time.
+
+```bash
+# Quick test (runs directly with Go)
+make worker
+
+# Production-like run (requires prior build)
+make build-worker
+make worker-run
+
+# Development with hot reload (recommended)
+make worker-dev
+```
+
+**Note**: The worker should be running alongside the development server for end-to-end testing of training sessions and recovery mechanics. Each runs in its own terminal window.
+
 
 ### Frontend Development
 

@@ -5,10 +5,11 @@
 help:
 	@echo "Boxing Simulator Development Commands"
 	@echo "====================================="
-	@echo "make build     - Build the application"
-	@echo "make run       - Run the application directly with Go"
-	@echo "make worker    - Run the world clock worker (event processor)"
-	@echo "make dev       - Run with hot reload using air (requires air to be installed)"
+	@echo "make build        - Build the application"
+	@echo "make run          - Run the application directly with Go"
+	@echo "make worker-run   - Run the world clock worker (processes scheduled events)"
+	@echo "make worker-dev   - Run worker with hot reload using air"
+	@echo "make dev          - Run server with hot reload using air (requires air to be installed)"
 	@echo "make docker-up - Start all services using Docker Compose"
 	@echo "make docker-down - Stop all Docker services"
 	@echo "make test      - Run all tests"
@@ -33,6 +34,9 @@ help:
 
 build:
 	go build -o bin/boxing cmd/server/main.go
+
+build-worker:
+	go build -o bin/worker cmd/worker/main.go
 
 run: build
 	./bin/boxing
@@ -112,3 +116,9 @@ snapshot-load:
 
 worker:
 	go run cmd/worker/main.go
+
+worker-run:
+	./bin/worker
+
+worker-dev:
+	air -c .air-worker.toml
