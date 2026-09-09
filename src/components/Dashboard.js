@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
+import WorldClock from './WorldClock.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -59,6 +60,7 @@ const Dashboard = ({ user, onLogout }) => {
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Boxing Simulator</h1>
+        <WorldClock />
         <div className="user-info">
           <span>Welcome, {currentUser?.username || 'User'}!</span>
           <button onClick={handleLogout} className="logout-btn">Logout</button>

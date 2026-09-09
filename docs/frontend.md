@@ -14,7 +14,45 @@ The boxing simulation backend provides a REST API that can be consumed by any fr
 - `GET /boxers/{id}` - Get details of a specific boxer
 
 ### World State
-- `GET /world/time` - Get current game time (to be implemented)
+- `GET /world/time` - Get current simulated game time and clock status
+
+#### GET /world/time Response Example
+```json
+{
+  "current_game_time": "2030-03-15T14:30:00Z",
+  "formatted_time": "March 15, 2030 at 2:30 PM",
+  "status": "running",
+  "speed_factor": 60.0,
+  "game_anchor": "2030-01-01T08:00:00Z",
+  "real_anchor": "2024-01-15T10:00:00Z",
+  "updated_at": "2024-01-15T10:30:00Z",
+  "clock_running": true,
+  "seconds_per_game_hour": 60,
+  "time_since_start": "Day 73, 6h"
+}
+```
+
+**Response Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `current_game_time` | string (RFC3339) | Current simulated game timestamp |
+| `formatted_time` | string | Human-readable format (e.g., "March 15, 2030 at 2:30 PM") |
+| `status` | string | Clock status: "running", "paused", or "stopped" |
+| `speed_factor` | float64 | Simulation speed multiplier (default: 60x = 1 real minute per game hour) |
+| `game_anchor` | string (RFC3339) | Game time when simulation started |
+| `real_anchor` | string (RFC3339) | Real time when simulation started |
+| `updated_at` | string (RFC3339) | Last clock update timestamp |
+| `clock_running` | boolean | Whether the clock is currently advancing |
+| `seconds_per_game_hour` | int | Real-world seconds required for one game hour (for UI timing) |
+| `time_since_start` | string | Human-readable elapsed time since simulation start (e.g., "Day 73, 6h") |
+
+**Authentication Required:** Yes (protected endpoint)
+
+**Use Cases:**
+- Display current game time in the UI header/sidebar
+- Calculate when scheduled events will complete
+- Show training session countdown timers
+- Visualize recovery timing for fatigued boxers
 
 ## Frontend Implementation Approaches
 
@@ -100,7 +138,7 @@ Create a desktop client that:
 ## Next Steps for Development
 
 1. **Implement Missing Endpoints**
-   - Add `/world/time` endpoint to get current game time
+   - ✅ Add `/world/time` endpoint (implemented)
    - Implement training queue endpoints
    - Add fight scheduling endpoints
 
