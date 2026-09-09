@@ -42,6 +42,55 @@
 .badge-level-5 { background: linear-gradient(135deg, #d69e2e, #fbbf24); }/* Gold champion - elite */
 
 /* ========================================
+   TRAINING STATUS BADGE - Top-left indicator
+   ======================================== */
+.training-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed); /* Purple-violet gradient for training */
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4);
+  }
+  50% {
+    box-shadow: 0 3px 15px rgba(79, 70, 229, 0.6);
+  }
+}
+
+.training-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.training-status {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.training-timer {
+  display: block;
+  font-size: 9px;
+  opacity: 0.9;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+/* ========================================
    CARD HEADER (Avatar + Name)
    ======================================== */
 .card-header {
@@ -378,6 +427,17 @@
   .training-modal {
     width: 95%;
     padding: 16px;
+  }
+
+  .training-badge {
+    left: -4px;
+    top: -4px;
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .training-icon {
+    font-size: 12px;
   }
 }
 
