@@ -110,6 +110,7 @@ func main() {
 	fightHandler := handler.NewFightHandler(fightService)
 	authHandler := handler.NewAuthHandler(dbConn)
 	dashboardHandler := handler.NewDashboardHandler()
+	worldClockHandler := handler.NewWorldClockHandler(dbConn.DB)
 
 	// Setup router
 	router := mux.NewRouter()
@@ -296,6 +297,18 @@ func main() {
 		}
 		trainingHandler.CompleteTraining(w, r)
 	}).Methods(optionsMethod, "POST")
+
+	// World clock endpoint - protected with authentication middleware
+	protectedRouter.HandleFunc("/world/time", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		worldClockHandler.GetCurrentGameTime(w, r)
+	}).Methods(optionsMethod, "GET")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists

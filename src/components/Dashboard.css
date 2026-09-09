@@ -9,9 +9,11 @@
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px 30px;
   margin-bottom: 0;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .dashboard h1 {
@@ -19,12 +21,19 @@
   font-weight: 700;
   color: #344054; /* Dark slate text for visibility on light background */
   letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* World clock positioned between title and user info */
+.dashboard-header > :where(WorldClock, world-clock) {
+  flex: 0 0 auto;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto; /* Push to the right */
 }
 
 .logout-btn {
@@ -112,18 +121,31 @@
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 14px; /* less than full line-height to keep compact while on mobile */
+    gap: 16px;
     padding: 20px;
   }
 
-  .user-info { justify-content: space-between; width: auto;} /* restore horizontal layout for user + button */
+  .dashboard h1 {
+    text-align: center;
+    flex: none;
+  }
+
+  /* World clock takes full width on mobile */
+  .dashboard-header > :where(WorldClock, world-clock) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .user-info {
+    justify-content: space-between;
+    width: auto;
+  }
 
   .create-boxer-btn { font-size: 13.5px; padding: 9px 20px;}
 
-  .dashboard h1 { text-align: center; flex: none; }
-    .section-header { flex-direction: column; align-items: stretch; gap: 12px; width: auto;} /* full-width items */
-        .boxers-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 305px)); row-gap: 24px; }
+  .section-header { flex-direction: column; align-items: stretch; gap: 12px; width: auto;}
+  .boxers-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 305px)); row-gap: 24px; }
 
-      html { overflow-x: hidden;}
-          body > div .boxers-grid:not(:only-child):not(:last-of-type) { margin-bottom: 20px; } /* extra space if fight arena follows (but it's display:none now) */
+  html { overflow-x: hidden;}
+  body > div .boxers-grid:not(:only-child):not(:last-of-type) { margin-bottom: 20px; }
 }
