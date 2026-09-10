@@ -1,68 +1,21 @@
-/* Dashboard - Main Layout */
-
+/* ========================================
+   DASHBOARD LAYOUT
+   ======================================== */
 .dashboard {
   min-height: 100vh;
   background-color: #f5f7fa; /* light gray-blue page bg */
 }
 
-/* Header with User Info & Logout */
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 20px 30px;
-  margin-bottom: 0;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.dashboard h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #344054; /* Dark slate text for visibility on light background */
-  letter-spacing: -0.5px;
-  margin: 0;
-}
-
-/* World clock positioned between title and user info */
-.dashboard-header > :where(WorldClock, world-clock) {
-  flex: 0 0 auto;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-left: auto; /* Push to the right */
-}
-
-.logout-btn {
-  background-color: rgba(239, 68, 68, 0.9); /* red-500 */
-  color: #ffffff;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: background-color 0.2s ease, transform 0.15s ease;
-}
-
-.logout-btn:hover {
-  background-color: rgba(220, 38, 38, 1); /* red-600 */
-  transform: translateY(-1px);
-}
-
-/* Dashboard Content Grid - Boxer Section & Fight Arena */
+/* ========================================
+   BOXER SECTION
+   ======================================== */
 .dashboard-content {
-  display: grid;
-  gap: 40px;
   padding: 24px 30px calc(80px + env(safe-area-inset-bottom, 0));
-  max-width: 1400px; /* prevent excessive width */
+  max-width: 1400px;
 }
 
 .boxer-section {
-  background-color: rgba(255, 255, 255, 0.7); /* softer card feel without box-shadow/borders that clash with boxer-card */
+  background-color: rgba(255, 255, 255, 0.7); /* softer card feel without box-shadow/borders */
   padding: 28px;
   border-radius: 16px;
 }
@@ -99,53 +52,57 @@
   transform: translateY(-2px);
 }
 
-
-/* Boxers Grid Layout - now with enhanced cards that cast shadows (remove gap overlap) */
+/* ========================================
+   BOXERS GRID LAYOUT
+   ======================================== */
 .boxers-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(315px, 340px)); /* wider minimum for new card width */
   row-gap: 28px; /* increased vertical spacing to account for shadows without overlap */
 }
 
-/* Fight Arena - simplified placeholder (can be replaced with actual fight UI later) */
+/* ========================================
+   LOADING & ERROR STATES
+   ======================================== */
+.loading, .error-message {
+  text-align: center;
+  padding: 40px;
+  color: #374151;
+  font-size: 16px;
+  border-radius: 8px;
+}
 
+.error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+}
 
-.fight-section { display: none; }
-
-
-.loading, .error-message { text-align: center; padding: 40px; color: #374151; font-size: 16px; border-radius: 8px;}
-.error-message { background-color: rgba(239, 68, 68, 0.1); }
-
-/* Mobile-first responsive design */
+/* ========================================
+   RESPONSIVE DESIGN (Mobile)
+   ======================================== */
 @media (max-width: 768px) {
-  .dashboard-header {
+  .dashboard-content {
+    padding-top: calc(64px + 12px); /* Account for fixed top bar */
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .create-boxer-btn {
+    font-size: 13.5px;
+    padding: 9px 20px;
+  }
+
+  .section-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
-    padding: 20px;
-  }
-
-  .dashboard h1 {
-    text-align: center;
-    flex: none;
-  }
-
-  /* World clock takes full width on mobile */
-  .dashboard-header > :where(WorldClock, world-clock) {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .user-info {
-    justify-content: space-between;
+    gap: 12px;
     width: auto;
   }
 
-  .create-boxer-btn { font-size: 13.5px; padding: 9px 20px;}
+  .boxers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 305px));
+    row-gap: 24px;
+  }
 
-  .section-header { flex-direction: column; align-items: stretch; gap: 12px; width: auto;}
-  .boxers-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 305px)); row-gap: 24px; }
-
-  html { overflow-x: hidden;}
+  html { overflow-x: hidden; }
   body > div .boxers-grid:not(:only-child):not(:last-of-type) { margin-bottom: 20px; }
 }
