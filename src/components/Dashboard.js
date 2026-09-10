@@ -4,6 +4,7 @@ import './Dashboard.css';
 import TopBar from './TopBar.jsx';
 import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
+import TrainingControlPanel from './TrainingControlPanel.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -12,6 +13,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
+  const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -64,9 +66,21 @@ const Dashboard = ({ user, onLogout }) => {
         <section className="boxer-section">
           <div className="section-header">
             <h2>Your Boxers</h2>
-            <Link to="/create-boxer">
-              <button className="create-boxer-btn">Create New Boxer</button>
-            </Link>
+            <div className="header-actions">
+              <Link to="/create-boxer">
+                <button className="create-boxer-btn">Create New Boxer</button>
+              </Link>
+              {/* Development-only training control - hidden in production */}
+              {import.meta.env.DEV && (
+                <button
+                  className="dev-control-btn"
+                  onClick={() => setShowTrainingControlPanel(true)}
+                  title="Development-only: Manually complete training sessions"
+                >
+                  ⚙️ Training Control
+                </button>
+              )}
+            </div>
           </div>
 
           {isLoading ? (
@@ -104,6 +118,15 @@ const Dashboard = ({ user, onLogout }) => {
               />
             </div>
           </div>
+        )}
+
+        {/* Training Control Panel - Development Only */}
+        {showTrainingControlPanel && (
+          <TrainingControlPanel
+            boxers={boxers}
+            onClose={() => setShowTrainingControlPanel(false)}
+            onRefreshBoxers={() => loadUserBoxers(currentUser.id)}
+          />
         )}
 
         <section className="fight-section">
