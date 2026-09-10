@@ -1,0 +1,95 @@
+/* ========================================
+   FIXED TOP NAVIGATION BAR
+   ======================================== */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  gap: 24px;
+}
+
+.top-bar-left {
+  flex: 0 0 auto;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.top-bar-center {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.top-bar-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-welcome {
+  font-size: 14px;
+  color: #a0aec0;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background-color: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: rgba(220, 38, 38, 1);
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN (Mobile)
+   ======================================== */
+@media (max-width: 768px) {
+  .top-bar {
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  .app-title {
+    font-size: 16px;
+  }
+
+  .user-welcome {
+    display: none; /* Hide welcome text on small screens */
+  }
+
+  .logout-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  /* Hide mini clock on mobile - saves space, no horizontal scroll needed */
+  .top-bar-center {
+    display: none;
+  }
+}
