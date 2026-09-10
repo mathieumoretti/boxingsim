@@ -209,3 +209,37 @@ func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context) (i
 
 	return completedCount, failedCount, nil
 }
+
+// CompleteTrainingForBoxer completes all pending training sessions for a specific boxer.
+// This is useful for manual control panel (development/testing).
+func (s *TrainingService) CompleteTrainingForBoxer(ctx context.Context, boxerID int) (int, int, error) {
+	// Fetch pending training sessions for the specific boxer
+	sessions, err := s.trainingSessionStore.GetPendingByBoxerID(ctx, boxerID)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to fetch pending training sessions for boxer %d: %w", boxerID, err)
+	}
+
+	if len(sessions) == 0 {
+		return 0, 0, nil
+	}
+
+	s.logger.Info("Processing %d pending training sessions for boxer ID=%d", len(sessions), boxerID)
+
+	var completedCount int
+	var failedCount int
+
+	for _, session := range sessions {
+		if err := s.CompleteTrainingSession(ctx, session.ID); err != nil {
+			s.logger.Error("Failed to complete training session ID=%d for boxer %d: %v", session.ID, boxerID, err)
+			failedCount++
+		} else {
+			completedCount++
+		}
+	}
+
+	if completedCount > 0 {
+		s.logger.Info("Completed %d training sessions for boxer ID=%d, %d failed", completedCount, boxerID, failedCount)
+	}
+
+	return completedCount, failedCount, nil
+}

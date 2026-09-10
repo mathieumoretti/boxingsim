@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -342,4 +343,70 @@ func (h *TrainingHandler) CompleteTraining(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"message": "Training session completed successfully"})
+}
+
+// BulkCompleteRequest represents the request body for bulk training completion
+type BulkCompleteRequest struct {
+	BoxerID *int `json:"boxer_id,omitempty"` // Optional filter to complete only specific boxer's training
+}
+
+// BulkCompleteResponse represents the response for bulk training completion
+type BulkCompleteResponse struct {
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+	Message   string `json:"message"`
+}
+
+// BulkCompleteTraining handles manual completion of multiple training sessions (development feature)
+// POST /training/bulk-complete
+func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Request) {
+	if h.trainingService == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Training service not available"})
+		return
+	}
+
+	var req BulkCompleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// Empty body is valid - means complete all pending sessions
+		if r.ContentLength != 0 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
+			return
+		}
+	}
+
+	ctx := r.Context()
+	var completed, failed int
+	var err error
+
+	if req.BoxerID != nil {
+		// Complete only specific boxer's training sessions
+		completed, failed, err = h.trainingService.CompleteTrainingForBoxer(ctx, *req.BoxerID)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			return
+		}
+	} else {
+		// Complete all pending training sessions
+		completed, failed, err = h.trainingService.CompleteAllDueTrainingSessions(ctx)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(BulkCompleteResponse{
+		Completed: completed,
+		Failed:    failed,
+		Message:   fmt.Sprintf("Completed %d training session(s)", completed),
+	})
 }

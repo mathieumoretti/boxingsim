@@ -298,6 +298,18 @@ func main() {
 		trainingHandler.CompleteTraining(w, r)
 	}).Methods(optionsMethod, "POST")
 
+	// Bulk training completion endpoint (development feature) - protected with authentication middleware
+	protectedRouter.HandleFunc("/training/bulk-complete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		trainingHandler.BulkCompleteTraining(w, r)
+	}).Methods(optionsMethod, "POST")
+
 	// World clock endpoint - protected with authentication middleware
 	protectedRouter.HandleFunc("/world/time", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {

@@ -52,6 +52,32 @@
   transform: translateY(-2px);
 }
 
+/* Header actions container for multiple buttons */
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Development control button for training panel */
+.dev-control-btn {
+  background-color: rgba(107, 114, 128, 0.9); /* slate-500 base */
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.dev-control-btn:hover {
+  background-color: rgba(71, 85, 105, 1); /* slate-600 hover */
+  transform: translateY(-2px);
+}
+
 /* ========================================
    BOXERS GRID LAYOUT
    ======================================== */
@@ -96,6 +122,16 @@
     align-items: stretch;
     gap: 12px;
     width: auto;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .create-boxer-btn,
+  .dev-control-btn {
+    width: 100%;
   }
 
   .boxers-grid {
