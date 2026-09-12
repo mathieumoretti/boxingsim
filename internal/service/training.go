@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/mormm/boxing/internal/model"
@@ -21,14 +23,14 @@ var (
 
 // TrainingService orchestrates training session completion logic
 type TrainingService struct {
-	boxerStore            *store.BoxerStore
-	trainingTypeStore     *store.TrainingTypeStore
-	trainingSessionStore  *store.TrainingSessionStore
-	scheduledEventStore   *store.ScheduledEventStore
-	fatigueService        *FatigueService
-	progressionService    *ProgressionService
-	worldClockModel       *model.WorldClockModel
-	logger                *logger.Logger
+	boxerStore           *store.BoxerStore
+	trainingTypeStore    *store.TrainingTypeStore
+	trainingSessionStore *store.TrainingSessionStore
+	scheduledEventStore  *store.ScheduledEventStore
+	fatigueService       *FatigueService
+	progressionService   *ProgressionService
+	worldClockModel      *model.WorldClockModel
+	logger               *logger.Logger
 }
 
 // NewTrainingService creates a new TrainingService instance
@@ -43,14 +45,14 @@ func NewTrainingService(
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
-		boxerStore:            boxerStore,
-		trainingTypeStore:     trainingTypeStore,
-		trainingSessionStore:  trainingSessionStore,
-		scheduledEventStore:   scheduledEventStore,
-		fatigueService:        fatigueService,
-		progressionService:    progressionService,
-		worldClockModel:       worldClockModel,
-		logger:                lg,
+		boxerStore:           boxerStore,
+		trainingTypeStore:    trainingTypeStore,
+		trainingSessionStore: trainingSessionStore,
+		scheduledEventStore:  scheduledEventStore,
+		fatigueService:       fatigueService,
+		progressionService:   progressionService,
+		worldClockModel:      worldClockModel,
+		logger:               lg,
 	}
 }
 
@@ -174,6 +176,58 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		}
 	}
 
+	// Step 9: Schedule automatic rest period based on fatigue (MAT-86)
+	if s.fatigueService != nil && s.scheduledEventStore != nil {
+		// Get updated boxer state after fatigue increase
+		updatedBoxer, err := s.boxerStore.GetByID(ctx, boxer.ID)
+		if err != nil {
+			s.logger.Error("Failed to fetch boxer for rest scheduling: %v", err)
+			// Don't fail training completion due to rest scheduling
+		} else {
+			// Calculate rest duration in hours: ceil(duration/2) with fatigue multiplier
+			baseRestHours := int(math.Ceil(session.DurationHours / 2.0))
+			fatigueMultiplier := math.Max(1.0, updatedBoxer.FatigueScore/60.0)
+			finalRestHours := int(math.Ceil(float64(baseRestHours) * fatigueMultiplier))
+
+			// Check if forced rest needed (exhaustion threshold = 80)
+			needsForcedRest := updatedBoxer.FatigueScore >= ExhaustionThreshold
+
+			// Calculate rest end time (in hours from now)
+			restEndTime := time.Now().Add(time.Duration(finalRestHours) * time.Hour)
+
+			// Create scheduled rest event data
+			eventData, err := json.Marshal(map[string]interface{}{
+				"rest_hours":  finalRestHours,
+				"forced_rest": needsForcedRest,
+				"training_id": session.ID,
+			})
+			if err != nil {
+				s.logger.Error("Failed to marshal rest event data: %v", err)
+			} else {
+				restEvent := &model.ScheduledEvent{
+					BoxerID:   boxer.ID,
+					EventType: model.EventTypeRest,
+					EventTime: restEndTime,
+					EventData: eventData,
+				}
+
+				if err := s.scheduledEventStore.Create(ctx, restEvent); err != nil {
+					s.logger.Error("Failed to schedule rest event after training session %d: %v", session.ID, err)
+				} else {
+					s.logger.Info("Rest period scheduled for boxer ID=%d: %d hours ending at %v (forced_rest=%v)",
+						boxer.ID, finalRestHours, restEndTime, needsForcedRest)
+
+					// If forced rest needed, update boxer.ForcedRestUntil
+					if needsForcedRest {
+						if err := s.fatigueService.ScheduleForcedRestHours(ctx, boxer.ID, finalRestHours); err != nil {
+							s.logger.Error("Failed to schedule forced rest for boxer ID=%d: %v", boxer.ID, err)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	s.logger.Info("Training completed: session_id=%d boxer_id=%d energy_cost=%.1f strength_gain=%.2f defense_gain=%.2f agility_gain=%.2f",
 		session.ID, boxer.ID, energyCost,
 		session.PlannedStrengthGain, session.PlannedDefenseGain, session.PlannedAgilityGain)
@@ -272,17 +326,17 @@ func (s *TrainingService) CreateTrainingSession(
 	}
 
 	// Calculate scheduled completion time: game_time + duration_hours
-	completionTime := gameTime.Add(time.Duration(durationHours*float64(time.Hour)))
+	completionTime := gameTime.Add(time.Duration(durationHours * float64(time.Hour)))
 
 	session := &model.TrainingSession{
-		BoxerID:                   boxerID,
-		TrainingTypeID:            trainingTypeID,
-		DurationHours:             durationHours,
-		PlannedStrengthGain:       plannedStrengthGain,
-		PlannedDefenseGain:        plannedDefenseGain,
-		PlannedAgilityGain:        plannedAgilityGain,
-		ScheduledCompletionTime:   &completionTime,
-		Status:                    model.TrainingSessionPending,
+		BoxerID:                 boxerID,
+		TrainingTypeID:          trainingTypeID,
+		DurationHours:           durationHours,
+		PlannedStrengthGain:     plannedStrengthGain,
+		PlannedDefenseGain:      plannedDefenseGain,
+		PlannedAgilityGain:      plannedAgilityGain,
+		ScheduledCompletionTime: &completionTime,
+		Status:                  model.TrainingSessionPending,
 	}
 
 	if err := s.trainingSessionStore.Create(ctx, session); err != nil {

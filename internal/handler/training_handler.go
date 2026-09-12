@@ -256,11 +256,11 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Training scheduled successfully",
 		"session": map[string]interface{}{
-			"id":                          trainingSession.ID,
-			"boxer_id":                    trainingSession.BoxerID,
-			"training_type_id":            trainingSession.TrainingTypeID,
-			"duration_hours":              trainingSession.DurationHours,
-			"scheduled_completion_time":   trainingSession.ScheduledCompletionTime,
+			"id":                        trainingSession.ID,
+			"boxer_id":                  trainingSession.BoxerID,
+			"training_type_id":          trainingSession.TrainingTypeID,
+			"duration_hours":            trainingSession.DurationHours,
+			"scheduled_completion_time": trainingSession.ScheduledCompletionTime,
 			"planned_gains": map[string]float64{
 				"strength": plannedStrengthGain,
 				"defense":  plannedDefenseGain,
