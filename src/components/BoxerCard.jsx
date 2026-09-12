@@ -22,7 +22,8 @@ const getTrainingTypeName = (typeId) => {
 };
 
 const formatCountdown = (remainingSeconds) => {
-  if (remainingSeconds <= 0) return 'Ready!';
+  // Don't show "Ready!" on countdown - that's for completed training which shouldn't be here
+  if (remainingSeconds <= 0) return '';
 
   const hours = Math.floor(remainingSeconds / 3600);
   const minutes = Math.floor((remainingSeconds % 3600) / 60);
@@ -116,38 +117,29 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
     }
   }, [activeSession]);
 
-  // Calculate countdown based on world clock time formula
+  // Calculate countdown based on scheduled_completion_time from API and world time
   useEffect(() => {
-    if (!activeSession || !worldTime) {
+    if (!activeSession || !worldTime || !activeSession.scheduled_completion_time) {
       setCountdown('');
       return;
     }
 
     const calculateRemainingTime = () => {
-      // Use the same formula as WorldClock component
-      // Game time advances based on seconds_per_game_hour
-      const now = new Date();
-      const realAnchor = new Date(worldTime.real_anchor);
-      const currentGameTime = new Date(worldTime.current_game_time);
+      // Use the session's scheduled_completion_time (which is in game world time)
+      const scheduledTime = new Date(activeSession.scheduled_completion_time);
+      // Use current game world time, not real-time clock
+      const nowGameTime = new Date(worldTime.current_game_time);
 
-      // Calculate elapsed real time since world clock started
-      const elapsedRealSeconds = (now - realAnchor) / 1000;
-
-      // The session has a duration in game hours
-      // We need to estimate when the session will complete based on world clock speed
-
-      // For now, use a simpler approach: show "In Progress" since we don't have exact completion timestamp
-      // In production, this would be calculated from scheduled_event tables or session start time
-
-      const secondsPerGameHour = worldTime.seconds_per_game_hour || 60;
-      const remainingSeconds = Math.max(0, Math.ceil(activeSession.duration_hours * secondsPerGameHour - elapsedRealSeconds));
+      // Calculate remaining seconds based on game time difference
+      const remainingMs = scheduledTime - nowGameTime;
+      const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
 
       return formatCountdown(remainingSeconds);
     };
 
     setCountdown(calculateRemainingTime());
 
-    // Update countdown every second while session is active
+    // Update countdown when worldTime updates (which refreshes every 5 seconds)
     const countdownInterval = setInterval(() => {
       setCountdown(calculateRemainingTime());
     }, 1000);

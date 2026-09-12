@@ -26,18 +26,19 @@ const (
 
 // TrainingSession represents an individual training session for a boxer
 type TrainingSession struct {
-	ID                  int                   `db:"id" json:"id"`
-	BoxerID             int                   `db:"boxer_id" json:"boxer_id"`
-	TrainingTypeID      int                   `db:"training_type_id" json:"training_type_id"`
-	ScheduledEventID    *int                  `db:"scheduled_event_id" json:"scheduled_event_id,omitempty"`
-	DurationHours       float64               `db:"duration_hours" json:"duration_hours"`
-	PlannedStrengthGain float64               `db:"planned_strength_gain" json:"planned_strength_gain"`
-	PlannedDefenseGain  float64               `db:"planned_defense_gain" json:"planned_defense_gain"`
-	PlannedAgilityGain  float64               `db:"planned_agility_gain" json:"planned_agility_gain"`
-	Status              TrainingSessionStatus `db:"status" json:"status"`
-	CompletedAt         *time.Time            `db:"completed_at" json:"completed_at,omitempty"`
-	CreatedAt           time.Time             `db:"created_at" json:"created_at"`
-	UpdatedAt           time.Time             `db:"updated_at" json:"updated_at"`
+	ID                        int                   `db:"id" json:"id"`
+	BoxerID                   int                   `db:"boxer_id" json:"boxer_id"`
+	TrainingTypeID            int                   `db:"training_type_id" json:"training_type_id"`
+	ScheduledEventID          *int                  `db:"scheduled_event_id" json:"scheduled_event_id,omitempty"`
+	DurationHours             float64               `db:"duration_hours" json:"duration_hours"`
+	PlannedStrengthGain       float64               `db:"planned_strength_gain" json:"planned_strength_gain"`
+	PlannedDefenseGain        float64               `db:"planned_defense_gain" json:"planned_defense_gain"`
+	PlannedAgilityGain        float64               `db:"planned_agility_gain" json:"planned_agility_gain"`
+	Status                    TrainingSessionStatus `db:"status" json:"status"`
+	ScheduledCompletionTime   *time.Time            `db:"scheduled_completion_time" json:"scheduled_completion_time,omitempty"`
+	CompletedAt               *time.Time            `db:"completed_at" json:"completed_at,omitempty"`
+	CreatedAt                 time.Time             `db:"created_at" json:"created_at"`
+	UpdatedAt                 time.Time             `db:"updated_at" json:"updated_at"`
 
 	// Joined data (optional, for query results with JOIN)
 	TrainingType *TrainingType `json:"training_type,omitempty"`

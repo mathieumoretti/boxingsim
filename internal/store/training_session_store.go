@@ -135,7 +135,7 @@ func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.Trai
 	query := `
 		SELECT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
 		       ts.duration_hours, ts.planned_strength_gain, ts.planned_defense_gain,
-		       ts.planned_agility_gain, ts.status, ts.completed_at,
+		       ts.planned_agility_gain, ts.status, ts.scheduled_completion_time, ts.completed_at,
 		       ts.created_at, ts.updated_at
 		FROM training_sessions ts
 		WHERE ts.id = $1`
@@ -144,7 +144,7 @@ func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.Trai
 	err := s.db.QueryRowContext(ctx, query, id).Scan(
 		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
-		&session.PlannedAgilityGain, &session.Status, &session.CompletedAt,
+		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
 		&session.CreatedAt, &session.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, ErrTrainingSessionNotFound
@@ -181,7 +181,7 @@ func (s *TrainingSessionStore) GetPendingByBoxerID(ctx context.Context, boxerID 
 	query := `
 		SELECT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
 		       ts.duration_hours, ts.planned_strength_gain, ts.planned_defense_gain,
-		       ts.planned_agility_gain, ts.status, ts.completed_at,
+		       ts.planned_agility_gain, ts.status, ts.scheduled_completion_time, ts.completed_at,
 		       ts.created_at, ts.updated_at
 		FROM training_sessions ts
 		WHERE ts.boxer_id = $1 AND ts.status = 'pending'
@@ -199,7 +199,7 @@ func (s *TrainingSessionStore) GetPendingByBoxerID(ctx context.Context, boxerID 
 		err := rows.Scan(
 			&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 			&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
-			&session.PlannedAgilityGain, &session.Status, &session.CompletedAt,
+			&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
 			&session.CreatedAt, &session.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -226,9 +226,9 @@ func (s *TrainingSessionStore) GetDueBeforeGameTime(
 	}
 
 	query := `
-		SELECT DISTINCT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
+		SELECT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
 		       ts.duration_hours, ts.planned_strength_gain, ts.planned_defense_gain,
-		       ts.planned_agility_gain, ts.status, ts.completed_at,
+		       ts.planned_agility_gain, ts.status, ts.scheduled_completion_time, ts.completed_at,
 		       ts.created_at, ts.updated_at
 		FROM training_sessions ts
 		JOIN scheduled_events se ON ts.scheduled_event_id = se.id
@@ -250,7 +250,7 @@ func (s *TrainingSessionStore) GetDueBeforeGameTime(
 		err := rows.Scan(
 			&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 			&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
-			&session.PlannedAgilityGain, &session.Status, &session.CompletedAt,
+			&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
 			&session.CreatedAt, &session.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -275,8 +275,8 @@ func (s *TrainingSessionStore) Create(ctx context.Context, session *model.Traini
 		INSERT INTO training_sessions (
 			boxer_id, training_type_id, scheduled_event_id,
 			duration_hours, planned_strength_gain, planned_defense_gain,
-			planned_agility_gain, status, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
+			planned_agility_gain, status, scheduled_completion_time, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
 		RETURNING id`
 
 	now := time.Now()
@@ -287,7 +287,7 @@ func (s *TrainingSessionStore) Create(ctx context.Context, session *model.Traini
 	err := s.db.QueryRowContext(ctx, query,
 		session.BoxerID, session.TrainingTypeID, session.ScheduledEventID,
 		session.DurationHours, session.PlannedStrengthGain, session.PlannedDefenseGain,
-		session.PlannedAgilityGain, now, now).Scan(&session.ID)
+		session.PlannedAgilityGain, session.ScheduledCompletionTime, now, now).Scan(&session.ID)
 
 	return err
 }
@@ -347,7 +347,7 @@ func (s *TrainingSessionStore) MarkAsCompleted(ctx context.Context, id int) erro
 func (s *TrainingSessionStore) GetAllPending(ctx context.Context) ([]*model.TrainingSession, error) {
 	query := `SELECT id, boxer_id, training_type_id, scheduled_event_id,
 			duration_hours, planned_strength_gain, planned_defense_gain,
-			planned_agility_gain, status, completed_at, created_at, updated_at
+			planned_agility_gain, status, scheduled_completion_time, completed_at, created_at, updated_at
 		FROM training_sessions
 		WHERE status = $1
 		ORDER BY created_at ASC`
@@ -371,6 +371,7 @@ func (s *TrainingSessionStore) GetAllPending(ctx context.Context) ([]*model.Trai
 			&session.PlannedDefenseGain,
 			&session.PlannedAgilityGain,
 			&session.Status,
+			&session.ScheduledCompletionTime,
 			&session.CompletedAt,
 			&session.CreatedAt,
 			&session.UpdatedAt,

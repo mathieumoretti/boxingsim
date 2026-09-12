@@ -14,6 +14,7 @@ import (
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/handler"
+	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
@@ -82,6 +83,7 @@ func main() {
 	var fatigueService *service.FatigueService
 	var progressionService *service.ProgressionService
 	var trainingService *service.TrainingService
+	var worldClockModel *model.WorldClockModel
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
@@ -90,7 +92,8 @@ func main() {
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
-		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, logger)
+		worldClockModel = model.NewWorldClockModel(logger)
+		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, worldClockModel, logger)
 	}
 
 	// Setup auth service for middleware
