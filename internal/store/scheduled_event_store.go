@@ -237,3 +237,45 @@ func (s *ScheduledEventStore) DeleteByBoxerID(ctx context.Context, boxerID int) 
 	_, err := s.db.ExecContext(ctx, query, boxerID)
 	return err
 }
+
+// GetPendingByBoxerIDAndType returns pending unprocessed events for a boxer filtered by event type.
+// This is used to check if a boxer has active rest periods before allowing new training sessions.
+func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, boxerID int, eventType model.EventType) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+				SELECT
+					id, boxer_id, event_type, event_time, processed, event_data,
+					error_message, created_at
+				FROM scheduled_events
+				WHERE boxer_id = $1
+				AND event_type = $2
+				AND NOT processed
+				ORDER BY event_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, boxerID, eventType)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var events []*model.ScheduledEvent
+	for rows.Next() {
+		event := &model.ScheduledEvent{}
+		err := rows.Scan(
+			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
+			&event.Processed, &event.EventData, &event.ErrorMessage, &event.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
