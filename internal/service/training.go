@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/mormm/boxing/internal/model"
@@ -171,6 +173,58 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		if err := s.fatigueService.ApplyFatigueIncrease(ctx, boxer.ID, fatigueIncrease); err != nil {
 			s.logger.Error("Failed to apply fatigue after training session %d: %v", sessionID, err)
 			// Note: Training was completed but fatigue not tracked; log and continue
+		}
+	}
+
+	// Step 9: Schedule automatic rest period based on fatigue (MAT-86)
+	if s.fatigueService != nil && s.scheduledEventStore != nil {
+		// Get updated boxer state after fatigue increase
+		updatedBoxer, err := s.boxerStore.GetByID(ctx, boxer.ID)
+		if err != nil {
+			s.logger.Error("Failed to fetch boxer for rest scheduling: %v", err)
+			// Don't fail training completion due to rest scheduling
+		} else {
+			// Calculate rest duration in hours: ceil(duration/2) with fatigue multiplier
+			baseRestHours := int(math.Ceil(session.DurationHours / 2.0))
+			fatigueMultiplier := math.Max(1.0, updatedBoxer.FatigueScore/60.0)
+			finalRestHours := int(math.Ceil(float64(baseRestHours)*fatigueMultiplier))
+
+			// Check if forced rest needed (exhaustion threshold = 80)
+			needsForcedRest := updatedBoxer.FatigueScore >= ExhaustionThreshold
+
+			// Calculate rest end time (in hours from now)
+			restEndTime := time.Now().Add(time.Duration(finalRestHours) * time.Hour)
+
+			// Create scheduled rest event data
+			eventData, err := json.Marshal(map[string]interface{}{
+				"rest_hours":  finalRestHours,
+				"forced_rest": needsForcedRest,
+				"training_id": session.ID,
+			})
+			if err != nil {
+				s.logger.Error("Failed to marshal rest event data: %v", err)
+			} else {
+				restEvent := &model.ScheduledEvent{
+					BoxerID:   boxer.ID,
+					EventType: model.EventTypeRest,
+					EventTime: restEndTime,
+					EventData: eventData,
+				}
+
+				if err := s.scheduledEventStore.Create(ctx, restEvent); err != nil {
+					s.logger.Error("Failed to schedule rest event after training session %d: %v", session.ID, err)
+				} else {
+					s.logger.Info("Rest period scheduled for boxer ID=%d: %d hours ending at %v (forced_rest=%v)",
+						boxer.ID, finalRestHours, restEndTime, needsForcedRest)
+
+					// If forced rest needed, update boxer.ForcedRestUntil
+					if needsForcedRest {
+						if err := s.fatigueService.ScheduleForcedRestHours(ctx, boxer.ID, finalRestHours); err != nil {
+							s.logger.Error("Failed to schedule forced rest for boxer ID=%d: %v", boxer.ID, err)
+						}
+					}
+				}
+			}
 		}
 	}
 

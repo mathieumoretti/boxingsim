@@ -153,7 +153,7 @@ func (s *FatigueService) ApplyFatigueDecay(ctx context.Context, boxerID int) err
 	return s.ReduceFatigue(ctx, boxerID, DailyFatigueDecay)
 }
 
-// ScheduleForcedRest sets a forced rest period for an exhausted boxer
+// ScheduleForcedRest sets a forced rest period for an exhausted boxer (in days)
 func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID int, durationDays int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
@@ -172,6 +172,28 @@ func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID int, du
 	}
 
 	s.logger.Info("Forced rest scheduled for boxer ID=%d: until %s (%d days)", boxerID, forcedRestUntil.Format(time.RFC3339), durationDays)
+	return nil
+}
+
+// ScheduleForcedRestHours sets a forced rest period for an exhausted boxer (in hours)
+func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID int, durationHours int) error {
+	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("boxer not found: ID=%d", boxerID)
+		}
+		return fmt.Errorf("failed to fetch boxer %d: %w", boxerID, err)
+	}
+
+	// Calculate forced rest end time in hours
+	forcedRestUntil := time.Now().Add(time.Duration(durationHours) * time.Hour)
+	boxer.ForcedRestUntil = &forcedRestUntil
+
+	if err := s.boxerStore.Update(ctx, boxer); err != nil {
+		return fmt.Errorf("failed to schedule forced rest for boxer %d: %w", boxerID, err)
+	}
+
+	s.logger.Info("Forced rest scheduled for boxer ID=%d: until %s (%d hours)", boxerID, forcedRestUntil.Format(time.RFC3339), durationHours)
 	return nil
 }
 
