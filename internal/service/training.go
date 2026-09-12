@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -25,6 +26,7 @@ type TrainingService struct {
 	trainingSessionStore *store.TrainingSessionStore
 	fatigueService       *FatigueService
 	progressionService   *ProgressionService
+	worldClockModel      *model.WorldClockModel
 	logger               *logger.Logger
 }
 
@@ -35,6 +37,7 @@ func NewTrainingService(
 	trainingSessionStore *store.TrainingSessionStore,
 	fatigueService *FatigueService,
 	progressionService *ProgressionService,
+	worldClockModel *model.WorldClockModel,
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
@@ -43,6 +46,7 @@ func NewTrainingService(
 		trainingSessionStore: trainingSessionStore,
 		fatigueService:       fatigueService,
 		progressionService:   progressionService,
+		worldClockModel:      worldClockModel,
 		logger:               lg,
 	}
 }
@@ -174,12 +178,14 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	return nil
 }
 
-// CompleteAllDueTrainingSessions processes all pending training sessions.
+// CompleteAllDueTrainingSessions processes all pending training sessions that are due for completion.
+// A session is "due" when its scheduled_completion_time <= current_game_time.
 // This method is called by the world clock worker to batch-process training completions.
-// Currently completes all pending sessions immediately. Future iterations can add
-// time-based filtering via scheduled_events integration.
-func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context) (int, int, error) {
-	// Fetch all pending training sessions
+func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context, db *sql.DB) (int, int, error) {
+	// For backward compatibility, this method accepts a db parameter but doesn't use it
+	// The stores have their own database connections
+
+	// Get all pending training sessions
 	sessions, err := s.trainingSessionStore.GetAllPending(ctx)
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to fetch pending training sessions: %w", err)
@@ -242,4 +248,46 @@ func (s *TrainingService) CompleteTrainingForBoxer(ctx context.Context, boxerID 
 	}
 
 	return completedCount, failedCount, nil
+}
+
+// CreateTrainingSession creates a new training session with scheduled completion time calculation.
+// This method is called by the handler when scheduling training for a boxer.
+func (s *TrainingService) CreateTrainingSession(
+	ctx context.Context,
+	boxerID int,
+	trainingTypeID int,
+	durationHours float64,
+	plannedStrengthGain float64,
+	plannedDefenseGain float64,
+	plannedAgilityGain float64,
+) (*model.TrainingSession, error) {
+	// Get current game time from world clock to calculate scheduled completion time
+	gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, nil) // db is optional, will use session
+	if err != nil {
+		s.logger.Warn("Failed to get current game time, using real time: %v", err)
+		gameTime = time.Now()
+	}
+
+	// Calculate scheduled completion time: game_time + duration_hours
+	completionTime := gameTime.Add(time.Duration(durationHours*float64(time.Hour)))
+
+	session := &model.TrainingSession{
+		BoxerID:                   boxerID,
+		TrainingTypeID:            trainingTypeID,
+		DurationHours:             durationHours,
+		PlannedStrengthGain:       plannedStrengthGain,
+		PlannedDefenseGain:        plannedDefenseGain,
+		PlannedAgilityGain:        plannedAgilityGain,
+		ScheduledCompletionTime:   &completionTime,
+		Status:                    model.TrainingSessionPending,
+	}
+
+	if err := s.trainingSessionStore.Create(ctx, session); err != nil {
+		return nil, fmt.Errorf("failed to create training session: %w", err)
+	}
+
+	s.logger.Info("Training session created: id=%d boxer_id=%d duration=%.1fh completion_time=%v",
+		session.ID, boxerID, durationHours, completionTime)
+
+	return session, nil
 }

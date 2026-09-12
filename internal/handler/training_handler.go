@@ -103,7 +103,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check if stores are available
-	if h.boxerStore == nil || h.trainingTypeStore == nil || h.trainingSessionStore == nil {
+	if h.boxerStore == nil || h.trainingTypeStore == nil || h.trainingService == nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Database connection not available"})
@@ -193,23 +193,16 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	// Calculate planned gains based on duration and training type factors
+	// 8. Calculate planned gains based on duration and training type factors
 	plannedStrengthGain := trainingType.StrengthGainFactor * req.DurationHours
 	plannedDefenseGain := trainingType.DefenseGainFactor * req.DurationHours
 	plannedAgilityGain := trainingType.AgilityGainFactor * req.DurationHours
 
-	// 7. Create training session
-	trainingSession := &model.TrainingSession{
-		BoxerID:             boxerID,
-		TrainingTypeID:      req.TrainingTypeID,
-		DurationHours:       req.DurationHours,
-		PlannedStrengthGain: plannedStrengthGain,
-		PlannedDefenseGain:  plannedDefenseGain,
-		PlannedAgilityGain:  plannedAgilityGain,
-		Status:              model.TrainingSessionPending,
-	}
-
-	err = h.trainingSessionStore.Create(ctx, trainingSession)
+	// 9. Create training session via service (handles scheduled completion time calculation)
+	trainingSession, err := h.trainingService.CreateTrainingSession(
+		ctx, boxerID, req.TrainingTypeID, req.DurationHours,
+		plannedStrengthGain, plannedDefenseGain, plannedAgilityGain,
+	)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -217,7 +210,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 8. Create scheduled event for training completion (if scheduled_at is provided in future)
+	// 10. Create scheduled event for training completion (if scheduled_at is provided in future)
 	// For now, we'll schedule it to complete after the duration (instant + duration hours)
 	// In a full implementation, this would use the World Clock worker
 	if h.scheduledEventStore != nil && req.ScheduledAt != "" {
@@ -263,10 +256,11 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Training scheduled successfully",
 		"session": map[string]interface{}{
-			"id":               trainingSession.ID,
-			"boxer_id":         trainingSession.BoxerID,
-			"training_type_id": trainingSession.TrainingTypeID,
-			"duration_hours":   trainingSession.DurationHours,
+			"id":                          trainingSession.ID,
+			"boxer_id":                    trainingSession.BoxerID,
+			"training_type_id":            trainingSession.TrainingTypeID,
+			"duration_hours":              trainingSession.DurationHours,
+			"scheduled_completion_time":   trainingSession.ScheduledCompletionTime,
 			"planned_gains": map[string]float64{
 				"strength": plannedStrengthGain,
 				"defense":  plannedDefenseGain,
@@ -393,7 +387,7 @@ func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Re
 		}
 	} else {
 		// Complete all pending training sessions
-		completed, failed, err = h.trainingService.CompleteAllDueTrainingSessions(ctx)
+		completed, failed, err = h.trainingService.CompleteAllDueTrainingSessions(ctx, nil)
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)

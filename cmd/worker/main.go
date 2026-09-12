@@ -91,7 +91,7 @@ func main() {
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fatigueService, *lg)
 
 	// Initialize training service (for training session completion - MAT-74)
-	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, lg)
+	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, worldClock, lg)
 
 	// Start the worker loop with actual event processing
 	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg)
@@ -143,7 +143,7 @@ func startWorkerLoop(
 
 			// Process training sessions (MAT-74)
 			if trainingService != nil {
-				completed, failed, err := trainingService.CompleteAllDueTrainingSessions(ctx)
+				completed, failed, err := trainingService.CompleteAllDueTrainingSessions(ctx, db.DB)
 				if err != nil {
 					lg.Error("Failed to process training sessions: " + err.Error())
 				} else if completed > 0 {
