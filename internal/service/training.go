@@ -23,14 +23,14 @@ var (
 
 // TrainingService orchestrates training session completion logic
 type TrainingService struct {
-	boxerStore            *store.BoxerStore
-	trainingTypeStore     *store.TrainingTypeStore
-	trainingSessionStore  *store.TrainingSessionStore
-	scheduledEventStore   *store.ScheduledEventStore
-	fatigueService        *FatigueService
-	progressionService    *ProgressionService
-	worldClockModel       *model.WorldClockModel
-	logger                *logger.Logger
+	boxerStore           *store.BoxerStore
+	trainingTypeStore    *store.TrainingTypeStore
+	trainingSessionStore *store.TrainingSessionStore
+	scheduledEventStore  *store.ScheduledEventStore
+	fatigueService       *FatigueService
+	progressionService   *ProgressionService
+	worldClockModel      *model.WorldClockModel
+	logger               *logger.Logger
 }
 
 // NewTrainingService creates a new TrainingService instance
@@ -45,14 +45,14 @@ func NewTrainingService(
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
-		boxerStore:            boxerStore,
-		trainingTypeStore:     trainingTypeStore,
-		trainingSessionStore:  trainingSessionStore,
-		scheduledEventStore:   scheduledEventStore,
-		fatigueService:        fatigueService,
-		progressionService:    progressionService,
-		worldClockModel:       worldClockModel,
-		logger:                lg,
+		boxerStore:           boxerStore,
+		trainingTypeStore:    trainingTypeStore,
+		trainingSessionStore: trainingSessionStore,
+		scheduledEventStore:  scheduledEventStore,
+		fatigueService:       fatigueService,
+		progressionService:   progressionService,
+		worldClockModel:      worldClockModel,
+		logger:               lg,
 	}
 }
 
@@ -187,7 +187,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 			// Calculate rest duration in hours: ceil(duration/2) with fatigue multiplier
 			baseRestHours := int(math.Ceil(session.DurationHours / 2.0))
 			fatigueMultiplier := math.Max(1.0, updatedBoxer.FatigueScore/60.0)
-			finalRestHours := int(math.Ceil(float64(baseRestHours)*fatigueMultiplier))
+			finalRestHours := int(math.Ceil(float64(baseRestHours) * fatigueMultiplier))
 
 			// Check if forced rest needed (exhaustion threshold = 80)
 			needsForcedRest := updatedBoxer.FatigueScore >= ExhaustionThreshold
@@ -326,17 +326,17 @@ func (s *TrainingService) CreateTrainingSession(
 	}
 
 	// Calculate scheduled completion time: game_time + duration_hours
-	completionTime := gameTime.Add(time.Duration(durationHours*float64(time.Hour)))
+	completionTime := gameTime.Add(time.Duration(durationHours * float64(time.Hour)))
 
 	session := &model.TrainingSession{
-		BoxerID:                   boxerID,
-		TrainingTypeID:            trainingTypeID,
-		DurationHours:             durationHours,
-		PlannedStrengthGain:       plannedStrengthGain,
-		PlannedDefenseGain:        plannedDefenseGain,
-		PlannedAgilityGain:        plannedAgilityGain,
-		ScheduledCompletionTime:   &completionTime,
-		Status:                    model.TrainingSessionPending,
+		BoxerID:                 boxerID,
+		TrainingTypeID:          trainingTypeID,
+		DurationHours:           durationHours,
+		PlannedStrengthGain:     plannedStrengthGain,
+		PlannedDefenseGain:      plannedDefenseGain,
+		PlannedAgilityGain:      plannedAgilityGain,
+		ScheduledCompletionTime: &completionTime,
+		Status:                  model.TrainingSessionPending,
 	}
 
 	if err := s.trainingSessionStore.Create(ctx, session); err != nil {
