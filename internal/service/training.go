@@ -21,13 +21,14 @@ var (
 
 // TrainingService orchestrates training session completion logic
 type TrainingService struct {
-	boxerStore           *store.BoxerStore
-	trainingTypeStore    *store.TrainingTypeStore
-	trainingSessionStore *store.TrainingSessionStore
-	fatigueService       *FatigueService
-	progressionService   *ProgressionService
-	worldClockModel      *model.WorldClockModel
-	logger               *logger.Logger
+	boxerStore            *store.BoxerStore
+	trainingTypeStore     *store.TrainingTypeStore
+	trainingSessionStore  *store.TrainingSessionStore
+	scheduledEventStore   *store.ScheduledEventStore
+	fatigueService        *FatigueService
+	progressionService    *ProgressionService
+	worldClockModel       *model.WorldClockModel
+	logger                *logger.Logger
 }
 
 // NewTrainingService creates a new TrainingService instance
@@ -35,19 +36,21 @@ func NewTrainingService(
 	boxerStore *store.BoxerStore,
 	trainingTypeStore *store.TrainingTypeStore,
 	trainingSessionStore *store.TrainingSessionStore,
+	scheduledEventStore *store.ScheduledEventStore,
 	fatigueService *FatigueService,
 	progressionService *ProgressionService,
 	worldClockModel *model.WorldClockModel,
 	lg *logger.Logger,
 ) *TrainingService {
 	return &TrainingService{
-		boxerStore:           boxerStore,
-		trainingTypeStore:    trainingTypeStore,
-		trainingSessionStore: trainingSessionStore,
-		fatigueService:       fatigueService,
-		progressionService:   progressionService,
-		worldClockModel:      worldClockModel,
-		logger:               lg,
+		boxerStore:            boxerStore,
+		trainingTypeStore:     trainingTypeStore,
+		trainingSessionStore:  trainingSessionStore,
+		scheduledEventStore:   scheduledEventStore,
+		fatigueService:        fatigueService,
+		progressionService:    progressionService,
+		worldClockModel:       worldClockModel,
+		logger:                lg,
 	}
 }
 

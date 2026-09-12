@@ -93,7 +93,7 @@ func main() {
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
 		worldClockModel = model.NewWorldClockModel(logger)
-		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, worldClockModel, logger)
+		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, scheduledEventStore, fatigueService, progressionService, worldClockModel, logger)
 	}
 
 	// Setup auth service for middleware

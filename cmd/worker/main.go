@@ -91,7 +91,7 @@ func main() {
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fatigueService, *lg)
 
 	// Initialize training service (for training session completion - MAT-74)
-	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, fatigueService, progressionService, worldClock, lg)
+	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg)
 
 	// Start the worker loop with actual event processing
 	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg)
