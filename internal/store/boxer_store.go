@@ -101,6 +101,10 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 		boxers = append(boxers, boxer)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return boxers, nil
 }
 
