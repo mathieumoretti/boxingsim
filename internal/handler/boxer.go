@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
@@ -12,13 +14,77 @@ import (
 
 // BoxerHandler handles boxer-related HTTP requests
 type BoxerHandler struct {
-	boxerStore *store.BoxerStore
+	boxerStore          *store.BoxerStore
+	scheduledEventStore *store.ScheduledEventStore
 }
 
-func NewBoxerHandler(boxerStore *store.BoxerStore) *BoxerHandler {
+func NewBoxerHandler(boxerStore *store.BoxerStore, scheduledEventStore *store.ScheduledEventStore) *BoxerHandler {
 	return &BoxerHandler{
-		boxerStore: boxerStore,
+		boxerStore:          boxerStore,
+		scheduledEventStore: scheduledEventStore,
 	}
+}
+
+// enrichBoxerResponse converts a Boxer entity to BoxerResponse and adds rest status fields (MAT-89)
+func (h *BoxerHandler) enrichBoxerResponse(ctx context.Context, boxer *model.Boxer) (*model.BoxerResponse, error) {
+	response := &model.BoxerResponse{
+		ID:                    boxer.ID,
+		UserID:                boxer.UserID,
+		Name:                  boxer.Name,
+		Nickname:              boxer.Nickname,
+		PositionX:             boxer.PositionX,
+		PositionY:             boxer.PositionY,
+		Health:                boxer.Health,
+		Energy:                boxer.Energy,
+		Strength:              boxer.Strength,
+		Defense:               boxer.Defense,
+		Agility:               boxer.Agility,
+		Experience:            boxer.Experience,
+		Level:                 boxer.Level,
+		FatigueScore:          boxer.FatigueScore,
+		ForcedRestUntil:       boxer.ForcedRestUntil,
+		HasActiveRest:         false,
+		NextAvailableTraining: nil,
+		CreatedAt:             boxer.CreatedAt,
+		UpdatedAt:             boxer.UpdatedAt,
+	}
+
+	now := time.Now()
+
+	// Check for active rest events (MAT-89)
+	if h.scheduledEventStore != nil {
+		pendingRest, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxer.ID, model.EventTypeRest)
+		if err == nil && len(pendingRest) > 0 {
+			for _, event := range pendingRest {
+				if !event.Processed && event.EventTime.After(now) {
+					response.HasActiveRest = true
+					response.NextAvailableTraining = &event.EventTime
+					break
+				}
+			}
+		}
+	}
+
+	// Override with forced rest if applicable (more restrictive)
+	if boxer.ForcedRestUntil != nil && now.Before(*boxer.ForcedRestUntil) {
+		response.HasActiveRest = true
+		response.NextAvailableTraining = boxer.ForcedRestUntil
+	}
+
+	return response, nil
+}
+
+// enrichBoxersResponse enriches a slice of Boxer entities with rest status fields (MAT-89)
+func (h *BoxerHandler) enrichBoxersResponse(ctx context.Context, boxers []*model.Boxer) ([]*model.BoxerResponse, error) {
+	responses := make([]*model.BoxerResponse, 0, len(boxers))
+	for _, boxer := range boxers {
+		response, err := h.enrichBoxerResponse(ctx, boxer)
+		if err != nil {
+			return nil, err
+		}
+		responses = append(responses, response)
+	}
+	return responses, nil
 }
 
 // CreateBoxer handles creating a new boxer
@@ -109,9 +175,16 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enrich boxer response with rest status (MAT-89)
+	enrichedResponse, err := h.enrichBoxerResponse(r.Context(), boxer)
+	if err != nil {
+		http.Error(w, "Failed to enrich boxer response", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(boxer)
+	_ = json.NewEncoder(w).Encode(enrichedResponse)
 }
 
 // UpdateBoxer handles updating a boxer
@@ -210,7 +283,14 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Enrich boxer responses with rest status (MAT-89)
+	enrichedBoxers, err := h.enrichBoxersResponse(r.Context(), boxers)
+	if err != nil {
+		http.Error(w, "Failed to enrich boxer responses", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(boxers)
+	_ = json.NewEncoder(w).Encode(enrichedBoxers)
 }
