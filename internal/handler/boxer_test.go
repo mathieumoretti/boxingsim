@@ -14,7 +14,7 @@ import (
 
 func TestBoxerHandler_CreateBoxer(t *testing.T) {
 	// Test with a valid boxer creation request
-	handler := NewBoxerHandler(nil) // Using nil store for this test - we're just testing request parsing
+	handler := NewBoxerHandler(nil, nil) // Using nil stores for this test - we're just testing request parsing
 
 	boxerCreate := map[string]interface{}{
 		"name":       "Test Boxer",
@@ -44,7 +44,7 @@ func TestBoxerHandler_CreateBoxer(t *testing.T) {
 
 func TestBoxerHandler_GetBoxer(t *testing.T) {
 	// Test with valid ID
-	handler := NewBoxerHandler(nil) // Using nil store for this test - we're just testing request parsing
+	handler := NewBoxerHandler(nil, nil) // Using nil stores for this test - we're just testing request parsing
 
 	req := httptest.NewRequest("GET", "/boxers/1", nil)
 	w := httptest.NewRecorder()
@@ -57,7 +57,7 @@ func TestBoxerHandler_GetBoxer(t *testing.T) {
 
 func TestBoxerHandler_UpdateBoxer(t *testing.T) {
 	// Test with a valid boxer update request
-	handler := NewBoxerHandler(nil) // Using nil store for this test - we're just testing request parsing
+	handler := NewBoxerHandler(nil, nil) // Using nil stores for this test - we're just testing request parsing
 
 	boxerUpdate := map[string]interface{}{
 		"name":     "Updated Boxer",
@@ -80,7 +80,7 @@ func TestBoxerHandler_UpdateBoxer(t *testing.T) {
 
 func TestBoxerHandler_GetBoxersByUserID(t *testing.T) {
 	// Test with valid user ID
-	handler := NewBoxerHandler(nil) // Using nil store for this test
+	handler := NewBoxerHandler(nil, nil) // Using nil stores for this test
 
 	req := httptest.NewRequest("GET", "/users/1/boxers", nil)
 

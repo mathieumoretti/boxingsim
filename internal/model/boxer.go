@@ -47,23 +47,25 @@ type BoxerUpdate struct {
 
 // BoxerResponse represents a boxer for API responses
 type BoxerResponse struct {
-	ID              int        `json:"id"`
-	UserID          int        `json:"user_id"`
-	Name            string     `json:"name"`
-	Nickname        *string    `json:"nickname"`
-	PositionX       float64    `json:"position_x"`
-	PositionY       float64    `json:"position_y"`
-	Health          float64    `json:"health"`
-	Energy          float64    `json:"energy"`
-	Strength        float64    `json:"strength"`
-	Defense         float64    `json:"defense"`
-	Agility         float64    `json:"agility"`
-	Experience      float64    `json:"experience"`
-	Level           int        `json:"level"`
-	FatigueScore    float64    `json:"fatigue_score"`
-	ForcedRestUntil *time.Time `json:"forced_rest_until"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
+	ID                    int        `json:"id"`
+	UserID                int        `json:"user_id"`
+	Name                  string     `json:"name"`
+	Nickname              *string    `json:"nickname"`
+	PositionX             float64    `json:"position_x"`
+	PositionY             float64    `json:"position_y"`
+	Health                float64    `json:"health"`
+	Energy                float64    `json:"energy"`
+	Strength              float64    `json:"strength"`
+	Defense               float64    `json:"defense"`
+	Agility               float64    `json:"agility"`
+	Experience            float64    `json:"experience"`
+	Level                 int        `json:"level"`
+	FatigueScore          float64    `json:"fatigue_score"`
+	ForcedRestUntil       *time.Time `json:"forced_rest_until"`
+	HasActiveRest         bool       `json:"has_active_rest"`
+	NextAvailableTraining *time.Time `json:"next_available_training,omitempty"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 // StatsAdd represents stats to add to a boxer

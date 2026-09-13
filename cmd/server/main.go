@@ -100,7 +100,7 @@ func main() {
 	authService := auth.NewAuthService(cfg)
 
 	// Setup handlers
-	boxerHandler := handler.NewBoxerHandler(boxerStore)
+	boxerHandler := handler.NewBoxerHandler(boxerStore, scheduledEventStore)
 	trainingHandler := handler.NewTrainingHandler(
 		boxerStore,
 		trainingTypeStore,

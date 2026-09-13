@@ -557,7 +557,7 @@ func setupTestRouter(dbWrapper *database.PostgresDB, boxerStore *store.BoxerStor
 	// Override authService with one using the test config
 	authService = auth.NewAuthService(cfg)
 
-	boxerHandler := handler.NewBoxerHandler(boxerStore)
+	boxerHandler := handler.NewBoxerHandler(boxerStore, nil)
 	authHandler := handler.NewAuthHandler(dbWrapper)
 
 	router := mux.NewRouter()
