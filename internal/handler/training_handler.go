@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mormm/boxing/internal/auth"
@@ -158,7 +159,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 5. Validate duration constraints (1-8 hours, already enforced by binding tag)
+	// 6. Validate duration constraints (1-8 hours, already enforced by binding tag)
 	if req.DurationHours < 1 || req.DurationHours > 8 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -166,7 +167,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 6. Check for pending training sessions (boxer can only do one training at a time)
+	// 7. Check for pending training sessions (boxer can only do one training at a time)
 	pendingSessions, err := h.trainingSessionStore.GetPendingByBoxerID(ctx, boxerID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -182,7 +183,31 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 7. Check fatigue constraints (MAT-75: Recovery System)
+	// 8. Check if boxer has active rest period (MAT-88: Rest Period Validation)
+	if h.scheduledEventStore != nil {
+		pendingRestEvents, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxerID, model.EventTypeRest)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to check rest events"})
+			return
+		}
+
+		now := time.Now()
+		for _, restEvent := range pendingRestEvents {
+			if !restEvent.Processed && restEvent.EventTime.After(now) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				_ = json.NewEncoder(w).Encode(map[string]string{
+					"error":        "Boxer is currently resting",
+					"rest_ends_at": restEvent.EventTime.Format(time.RFC3339),
+				})
+				return
+			}
+		}
+	}
+
+	// 9. Check fatigue constraints (MAT-75: Recovery System)
 	if h.fatigueService != nil {
 		canTrain, errMsg := h.fatigueService.CheckCanTrain(boxer)
 		if !canTrain {
@@ -193,12 +218,12 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	// 8. Calculate planned gains based on duration and training type factors
+	// 10. Calculate planned gains based on duration and training type factors
 	plannedStrengthGain := trainingType.StrengthGainFactor * req.DurationHours
 	plannedDefenseGain := trainingType.DefenseGainFactor * req.DurationHours
 	plannedAgilityGain := trainingType.AgilityGainFactor * req.DurationHours
 
-	// 9. Create training session via service (handles scheduled completion time calculation)
+	// 11. Create training session via service (handles scheduled completion time calculation)
 	trainingSession, err := h.trainingService.CreateTrainingSession(
 		ctx, boxerID, req.TrainingTypeID, req.DurationHours,
 		plannedStrengthGain, plannedDefenseGain, plannedAgilityGain,
@@ -210,7 +235,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 10. Create scheduled event for training completion (if scheduled_at is provided in future)
+	// 12. Create scheduled event for training completion (if scheduled_at is provided in future)
 	// For now, we'll schedule it to complete after the duration (instant + duration hours)
 	// In a full implementation, this would use the World Clock worker
 	if h.scheduledEventStore != nil && req.ScheduledAt != "" {
