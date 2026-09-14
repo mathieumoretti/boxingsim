@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './TrainingScheduler.css';
 import { API_BASE_URL } from '../utils/auth';
 
-const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
+const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [durationHours, setDurationHours] = useState(2);
@@ -125,6 +125,10 @@ const TrainingScheduler = ({ boxerId, boxer, onClose }) => {
         // Reset form after success
         setSelectedType('');
         setDurationHours(2);
+        // Call the refresh callback to reload boxer list in parent component
+        if (onTrainingScheduled) {
+          onTrainingScheduled();
+        }
         // Close modal after a brief delay to show success message
         setTimeout(() => {
           setSuccess('');

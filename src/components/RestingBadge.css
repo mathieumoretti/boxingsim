@@ -1,0 +1,115 @@
+/* ========================================
+   RESTING BADGE - Top-left status indicator
+   ======================================== */
+.resting-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: restingPulse 2s ease-in-out infinite;
+  max-width: 140px;
+  justify-content: center;
+}
+
+/* ========================================
+   VOLUNTARY REST - Yellow/Orange healing theme
+   ======================================== */
+.resting-voluntary {
+  background: linear-gradient(135deg, #f6e05e 0%, #dd6b20 100%);
+  box-shadow: 0 3px 10px rgba(221, 107, 32, 0.4);
+}
+
+.resting-voluntary .resting-status {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ========================================
+   FORCED REST - Red critical theme
+   ======================================== */
+.resting-forced {
+  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+  box-shadow: 0 3px 10px rgba(229, 62, 62, 0.5);
+  animation: forcedRestPulse 1.5s ease-in-out infinite;
+}
+
+.resting-forced .resting-status {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+
+/* ========================================
+   BADGE ICONS & TEXT
+   ======================================== */
+.resting-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.resting-status {
+  white-space: nowrap;
+}
+
+.resting-timer {
+  display: block;
+  font-size: 9px;
+  opacity: 0.95;
+  font-weight: 600;
+  margin-top: 1px;
+  text-align: center;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes restingPulse {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(221, 107, 32, 0.4);
+  }
+  50% {
+    box-shadow: 0 3px 15px rgba(221, 107, 32, 0.6);
+  }
+}
+
+@keyframes forcedRestPulse {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(229, 62, 62, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(229, 62, 62, 0.7);
+    transform: scale(1.03);
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Mobile adjustments
+   ======================================== */
+@media (max-width: 768px) {
+  .resting-badge {
+    left: -4px;
+    top: -4px;
+    padding: 5px 8px;
+    font-size: 10px;
+    max-width: 120px;
+  }
+
+  .resting-icon {
+    font-size: 12px;
+  }
+
+  .resting-timer {
+    font-size: 8px;
+  }
+}

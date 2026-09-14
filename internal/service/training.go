@@ -31,6 +31,7 @@ type TrainingService struct {
 	progressionService   *ProgressionService
 	worldClockModel      *model.WorldClockModel
 	logger               *logger.Logger
+	db                   *sql.DB
 }
 
 // NewTrainingService creates a new TrainingService instance
@@ -43,6 +44,7 @@ func NewTrainingService(
 	progressionService *ProgressionService,
 	worldClockModel *model.WorldClockModel,
 	lg *logger.Logger,
+	db *sql.DB,
 ) *TrainingService {
 	return &TrainingService{
 		boxerStore:           boxerStore,
@@ -53,6 +55,7 @@ func NewTrainingService(
 		progressionService:   progressionService,
 		worldClockModel:      worldClockModel,
 		logger:               lg,
+		db:                   db,
 	}
 }
 
@@ -242,6 +245,13 @@ func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context, db
 	// For backward compatibility, this method accepts a db parameter but doesn't use it
 	// The stores have their own database connections
 
+	// Get current game time to check which sessions are due
+	gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, db)
+	if err != nil {
+		s.logger.Warn("Failed to get current game time, using real time: %v", err)
+		gameTime = time.Now()
+	}
+
 	// Get all pending training sessions
 	sessions, err := s.trainingSessionStore.GetAllPending(ctx)
 	if err != nil {
@@ -252,22 +262,30 @@ func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context, db
 		return 0, 0, nil
 	}
 
-	s.logger.Info("Processing %d pending training sessions", len(sessions))
+	s.logger.Info("Checking %d pending training sessions (game_time=%v)", len(sessions), gameTime.Format("2006-01-02 15:04:05"))
 
 	var completedCount int
 	var failedCount int
+	var notDueCount int
 
 	for _, session := range sessions {
-		if err := s.CompleteTrainingSession(ctx, session.ID); err != nil {
-			s.logger.Error("Failed to complete training session ID=%d: %v", session.ID, err)
-			failedCount++
+		// Check if session is due for completion (scheduled_completion_time <= game_time)
+		if session.ScheduledCompletionTime == nil || session.ScheduledCompletionTime.Before(gameTime) || session.ScheduledCompletionTime.Equal(gameTime) {
+			// Session is due - complete it
+			if err := s.CompleteTrainingSession(ctx, session.ID); err != nil {
+				s.logger.Error("Failed to complete training session ID=%d: %v", session.ID, err)
+				failedCount++
+			} else {
+				completedCount++
+			}
 		} else {
-			completedCount++
+			// Session is not due yet - skip it
+			notDueCount++
 		}
 	}
 
 	if completedCount > 0 {
-		s.logger.Info("Completed %d training sessions, %d failed", completedCount, failedCount)
+		s.logger.Info("Completed %d training sessions, %d failed, %d not due yet", completedCount, failedCount, notDueCount)
 	}
 
 	return completedCount, failedCount, nil
@@ -319,7 +337,7 @@ func (s *TrainingService) CreateTrainingSession(
 	plannedAgilityGain float64,
 ) (*model.TrainingSession, error) {
 	// Get current game time from world clock to calculate scheduled completion time
-	gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, nil) // db is optional, will use session
+	gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, s.db)
 	if err != nil {
 		s.logger.Warn("Failed to get current game time, using real time: %v", err)
 		gameTime = time.Now()
