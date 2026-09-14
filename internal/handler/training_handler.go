@@ -328,6 +328,11 @@ func (h *TrainingHandler) GetTrainingSessionsForBoxer(w http.ResponseWriter, r *
 		return
 	}
 
+	// Ensure we return empty array [] instead of null when no sessions found
+	if sessions == nil {
+		sessions = []*model.TrainingSession{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(sessions)

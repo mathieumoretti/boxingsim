@@ -115,6 +115,10 @@ const Dashboard = ({ user, onLogout }) => {
                 boxerId={selectedBoxerForTraining.id}
                 boxer={selectedBoxerForTraining}
                 onClose={() => setSelectedBoxerForTraining(null)}
+                onTrainingScheduled={() => {
+                  loadUserBoxers(currentUser.id);
+                  setSelectedBoxerForTraining(null);
+                }}
               />
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './BoxerCard.css';
 import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import RestingBadge from './RestingBadge';
 
 const trainingTypeIcons = {
   strength_training: '💪',
@@ -47,6 +48,7 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
   useEffect(() => {
     const loadActiveTraining = async () => {
       try {
+        console.log('[BoxerCard] Loading training sessions for boxer:', boxer.name, '(ID:', boxer.id + ')');
         const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/training-sessions`, {
           method: 'GET',
         });
@@ -55,7 +57,7 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
 
         if (response.ok) {
           const sessions = await response.json();
-          console.log('[BoxerCard] Training sessions for boxer', boxer.name, ':', sessions);
+          console.log('[BoxerCard] Training sessions response for boxer', boxer.name, ':', sessions);
 
           // Handle null/undefined - treat as empty array
           const sessionsArray = Array.isArray(sessions) ? sessions : [];
@@ -64,7 +66,7 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
           // Find the most recent pending session
           const pendingSession = sessionsArray.find(s => s.status === 'pending');
 
-          console.log('[BoxerCard] Pending session found:', pendingSession);
+          console.log('[BoxerCard] Pending session found for', boxer.name, ':', pendingSession);
           setActiveSession(pendingSession);
         } else {
           console.warn('[BoxerCard] Failed to load training sessions, status:', response.status);
@@ -112,10 +114,11 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
       }
     };
 
-    if (activeSession) {
+    // Load world time if there's active training OR active rest period
+    if (activeSession || boxer.has_active_rest) {
       loadWorldTime();
     }
-  }, [activeSession]);
+  }, [activeSession, boxer.has_active_rest]);
 
   // Calculate countdown based on scheduled_completion_time from API and world time
   useEffect(() => {
@@ -199,6 +202,14 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
     <div className="boxer-card">
       {/* Level Badge */}
       <div className={`level-badge ${levelBadgeClass}`}>LVL {boxer.level || 1}</div>
+
+      {/* Rest Status Badge - Shows when boxer has active rest period */}
+      <RestingBadge
+        hasActiveRest={boxer.has_active_rest}
+        restEndsAt={boxer.next_available_training}
+        forcedRestUntil={boxer.forced_rest_until}
+        currentGameTime={worldTime?.current_game_time}
+      />
 
       {/* Training Status Badge - Shows when boxer has pending training */}
       {activeSession && (
