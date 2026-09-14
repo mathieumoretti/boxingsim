@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TrainingScheduler.css';
-import { API_BASE_URL } from '../utils/auth';
+import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
 
 const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
@@ -10,10 +10,49 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [worldTime, setWorldTime] = useState(null);
 
   useEffect(() => {
     loadTrainingTypes();
   }, []);
+
+  // Fetch world time for rest countdown (only when boxer has active rest)
+  useEffect(() => {
+    const loadWorldTime = async () => {
+      try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/world/time`, {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWorldTime(data);
+
+          // Set up periodic refresh for countdown updates
+          const interval = setInterval(async () => {
+            try {
+              const resp = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
+              if (resp.ok) {
+                const data = await resp.json();
+                setWorldTime(data);
+              }
+            } catch (err) {
+              // Silently fail - countdown will just be stale
+            }
+          }, 5000);
+
+          return () => clearInterval(interval);
+        }
+      } catch (err) {
+        console.warn('Failed to load world time:', err);
+      }
+    };
+
+    // Load world time if boxer has active rest period
+    if (boxer?.has_active_rest) {
+      loadWorldTime();
+    }
+  }, [boxer?.has_active_rest]);
 
   const loadTrainingTypes = async () => {
     try {
@@ -96,6 +135,43 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
     return trainingTypes.find(t => t.id === parseInt(selectedType));
   };
 
+  // Calculate remaining seconds until rest ends (same logic as RestingBadge)
+  const calculateRemainingRestSeconds = () => {
+    if (!boxer?.has_active_rest || !worldTime?.current_game_time) return null;
+
+    // Use forcedRestUntil if available (forced rest takes priority), otherwise use next_available_training
+    const restEndTime = boxer.forced_rest_until || boxer.next_available_training;
+
+    if (!restEndTime) return null;
+
+    const endTime = new Date(restEndTime);
+    const gameTime = new Date(worldTime.current_game_time);
+    const remainingMs = endTime - gameTime;
+    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+
+    return remainingSeconds;
+  };
+
+  // Format countdown display (same logic as RestingBadge)
+  const formatRestCountdown = (seconds) => {
+    if (seconds === null || seconds <= 0) return '';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    } else {
+      return `${minutes}m remaining`;
+    }
+  };
+
+  // Determine rest type for display
+  const isForcedRest = boxer?.forced_rest_until !== null && boxer?.forced_rest_until !== undefined;
+
+  const remainingRestSeconds = calculateRemainingRestSeconds();
+  const restCountdownDisplay = formatRestCountdown(remainingRestSeconds);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -171,11 +247,25 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
   }
 
   return (
-    <div className="training-scheduler">
+    <div className={`training-scheduler ${boxer?.has_active_rest ? 'has-rest' : ''}`}>
       <h2>Schedule Training</h2>
 
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
+
+      {/* Rest Period Warning */}
+      {boxer?.has_active_rest && (
+        <div className={`rest-warning ${isForcedRest ? 'rest-forced' : 'rest-voluntary'}`}>
+          <span className="warning-icon">{isForcedRest ? '🚑' : '🏥'}</span>
+          <div className="warning-content">
+            <strong>{isForcedRest ? 'Forced Rest Period Active' : 'Boxer is Currently Resting'}</strong>
+            {restCountdownDisplay && (
+              <p className="countdown-text">{restCountdownDisplay}</p>
+            )}
+            <p className="warning-text">Training cannot be scheduled during rest periods</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="training-form">
         {/* Training Type Selection */}
@@ -186,7 +276,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
             required
-            disabled={isSubmitting}
+            disabled={isSubmitting || boxer?.has_active_rest}
             className="training-select"
           >
             <option value="">Select a training type...</option>
@@ -220,7 +310,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
             value={durationHours}
             onChange={(e) => setDurationHours(parseFloat(e.target.value))}
             required
-            disabled={isSubmitting}
+            disabled={isSubmitting || boxer?.has_active_rest}
             className="duration-slider"
           />
           <div className="range-markers">
@@ -307,7 +397,8 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
         <button
           type="submit"
           className="schedule-btn"
-          disabled={!selectedType || isSubmitting}
+          disabled={!selectedType || isSubmitting || boxer?.has_active_rest}
+          title={boxer?.has_active_rest ? (isForcedRest ? 'Cannot schedule training during forced rest period' : 'Cannot schedule training during rest period') : 'Schedule Training'}
         >
           {isSubmitting ? 'Scheduling...' : 'Schedule Training Session'}
         </button>
