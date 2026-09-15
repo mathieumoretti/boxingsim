@@ -29,8 +29,10 @@ This document maps out the backend architecture and game mechanics for an event-
 *   **Rules & Model**: Explicit rule constraints dictate weight classes, mandatory title defenses, rankings, and medical suspensions.
 *   **Accelerated World Clock**: Virtual time progresses continuously ($1\text{ real minute} = 1\text{ game hour}$; $24\text{ real minutes} = 1\text{ game day}$). 
 *   **Action Queuing System**: Player actions are saved as future events with an `end_game_time`. A central tick worker processes events once `current_game_time \geq end_game_time`.
+*   **Fatigue & Rest System**: Training accumulates fatigue points (15 per hour). When fatigue exceeds 80, boxers enter forced rest. Rest duration formula: `ceil(duration/2) × max(1.0, fatigue/60)` hours. Recovery benefits scale with rest length (see [Game Mechanics](game-mechanics.md)).
 *   **Character Actions**: 
     *   *Training*: Strategic allocation of stats (Strength, Speed, Stamina, Agility) against diminishing returns and fatigue accumulation.
+    *   *Rest Periods*: Automatic recovery scheduling after training based on duration and fatigue levels (see [[Game Mechanics](game-mechanics.md)]).
     *   *Matchmaking*: Contract bidding, choosing venue locations, and accepting or declining fight proposals.
     *   *Combat*: Asynchronous execution of a round-by-round engine utilizing fighter attributes, strategy sliders, and procedural RNG.
 
