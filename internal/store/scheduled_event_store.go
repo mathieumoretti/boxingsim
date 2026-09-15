@@ -35,12 +35,12 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 
 	query := `
 			INSERT INTO scheduled_events (
-				boxer_id, event_type, event_time, processed, created_at
-			) VALUES ($1, $2, $3, FALSE, CURRENT_TIMESTAMP)
+				boxer_id, event_type, event_time, processed, event_data, created_at
+			) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
 			RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
-		event.BoxerID, event.EventType, event.EventTime).Scan(&event.ID)
+		event.BoxerID, event.EventType, event.EventTime, event.Processed, event.EventData).Scan(&event.ID)
 	if err != nil {
 		return ErrFailedToInsert
 	}
