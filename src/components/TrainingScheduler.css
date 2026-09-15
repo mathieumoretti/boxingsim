@@ -390,6 +390,105 @@
   margin-right: 8px;
 }
 
+/* Rest period warning */
+.rest-warning {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid #ffc107;
+  color: #ffc107;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.rest-warning .warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.rest-warning .warning-content {
+  flex: 1;
+}
+
+.rest-warning strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #ffc107;
+}
+
+.rest-warning .countdown-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 4px 0;
+  color: #ffd54f;
+}
+
+.rest-warning .warning-text {
+  font-size: 0.85rem;
+  margin: 4px 0 0 0;
+  color: #e0a800;
+  opacity: 0.9;
+}
+
+/* Forced rest styling (red theme) */
+.rest-warning.rest-forced {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.rest-warning.rest-forced strong {
+  color: #ff4757;
+}
+
+.rest-warning.rest-forced .countdown-text {
+  color: #ff6b81;
+}
+
+.rest-warning.rest-forced .warning-text {
+  color: #c43d4a;
+  opacity: 0.9;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Disabled state styling for training form when boxer is resting */
+.training-scheduler.has-rest .training-select:not(:disabled),
+.training-scheduler.has-rest .duration-slider:not(:disabled) {
+  opacity: 0.5;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+.training-scheduler.has-rest .training-select:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: none;
+}
+
+.training-scheduler.has-rest .duration-slider::-webkit-slider-thumb:not(:disabled) {
+  background: #808080;
+  cursor: not-allowed;
+}
+
+.training-scheduler.has-rest .duration-slider::-moz-range-thumb:not(:disabled) {
+  background: #808080;
+  cursor: not-allowed;
+}
+
 /* Diminished returns badge */
 .gain-bar .diminish-badge {
   position: absolute;
