@@ -193,7 +193,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		now := time.Now()
+		now := time.Now().UTC()
 		for _, restEvent := range pendingRestEvents {
 			if !restEvent.Processed && restEvent.EventTime.After(now) {
 				w.Header().Set("Content-Type", "application/json")
