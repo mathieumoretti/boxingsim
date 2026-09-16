@@ -27,4 +27,4 @@ logging:
 worker:
   poll_interval_ms: 500       # Poll every 500ms for events
   startup_jitter_max_ms: 5000 # Max 5 second jitter on startup
-  game_speed_factor: 600.0    # 1 real second = 10 game minutes (for fast testing)
+  game_speed_factor: 60.0     # 1 real second = 10 game minutes (for fast testing)

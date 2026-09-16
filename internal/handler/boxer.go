@@ -51,16 +51,14 @@ func (h *BoxerHandler) enrichBoxerResponse(ctx context.Context, boxer *model.Box
 
 	now := time.Now()
 
-	// Check for active rest events (MAT-89)
+	// Check for active rest events (MAT-89, MAT-96)
+	// If there's any unprocessed rest event, the boxer is currently resting
 	if h.scheduledEventStore != nil {
 		pendingRest, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxer.ID, model.EventTypeRest)
 		if err == nil && len(pendingRest) > 0 {
-			for _, event := range pendingRest {
-				if !event.Processed && event.EventTime.After(now) {
-					response.HasActiveRest = true
-					response.NextAvailableTraining = &event.EventTime
-					break
-				}
+			response.HasActiveRest = true
+			if len(pendingRest) > 0 {
+				response.NextAvailableTraining = &pendingRest[0].EventTime
 			}
 		}
 	}

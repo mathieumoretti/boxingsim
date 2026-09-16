@@ -175,7 +175,10 @@ func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID int, du
 	return nil
 }
 
-// ScheduleForcedRestHours sets a forced rest period for an exhausted boxer (in hours)
+// ScheduleForcedRestHours sets a forced rest period for an exhausted boxer (in hours).
+// Note: Uses real time, not game time. This is intentional because forced rest is checked
+// directly by the handler against real time, not processed by the worker. For consistency
+// with the rest event system, consider passing gameTime as a parameter in future refactoring.
 func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID int, durationHours int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
@@ -185,7 +188,8 @@ func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID in
 		return fmt.Errorf("failed to fetch boxer %d: %w", boxerID, err)
 	}
 
-	// Calculate forced rest end time in hours
+	// Calculate forced rest end time in hours (using real time - MAT-96)
+	// TODO: Consider using game time for consistency with scheduled events system
 	forcedRestUntil := time.Now().Add(time.Duration(durationHours) * time.Hour)
 	boxer.ForcedRestUntil = &forcedRestUntil
 
@@ -235,34 +239,34 @@ func (s *FatigueService) IsOnForcedRest(boxer *model.Boxer) bool {
 	return time.Now().Before(*boxer.ForcedRestUntil)
 }
 
-// GetRecoveryBenefits returns the energy recovery, fatigue reduction, and stat decay risk for a given rest duration
+// GetRecoveryBenefits returns the energy recovery, fatigue reduction, and stat decay risk for a given rest duration in hours.
 type RecoveryBenefits struct {
 	EnergyRecoveryPercent float64 `json:"energy_recovery_percent"` // Percentage of max energy restored (50-100)
 	FatigueReduction      float64 `json:"fatigue_reduction"`       // Fatigue points reduced
 	StatDecayRisk         float64 `json:"stat_decay_risk"`         // Percentage stat decay if any (0 for short rests)
 }
 
-func (s *FatigueService) GetRecoveryBenefits(restDays int) RecoveryBenefits {
+func (s *FatigueService) GetRecoveryBenefits(restHours int) RecoveryBenefits {
 	switch {
-	case restDays == 1:
+	case restHours == 1:
 		return RecoveryBenefits{
 			EnergyRecoveryPercent: 50.0,
 			FatigueReduction:      20.0,
 			StatDecayRisk:         0.0,
 		}
-	case restDays == 2:
+	case restHours == 2:
 		return RecoveryBenefits{
 			EnergyRecoveryPercent: 80.0,
 			FatigueReduction:      40.0,
 			StatDecayRisk:         0.0,
 		}
-	case restDays >= 3 && restDays < 7:
+	case restHours >= 3 && restHours < 7:
 		return RecoveryBenefits{
 			EnergyRecoveryPercent: 100.0,
 			FatigueReduction:      60.0,
 			StatDecayRisk:         0.0,
 		}
-	case restDays >= 7:
+	case restHours >= 7:
 		return RecoveryBenefits{
 			EnergyRecoveryPercent: 100.0,
 			FatigueReduction:      100.0,
@@ -277,8 +281,8 @@ func (s *FatigueService) GetRecoveryBenefits(restDays int) RecoveryBenefits {
 	}
 }
 
-// ApplyRecovery applies recovery benefits based on rest duration to a boxer
-func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restDays int) error {
+// ApplyRecovery applies recovery benefits based on rest duration in hours to a boxer.
+func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restHours int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -287,7 +291,7 @@ func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restDay
 		return fmt.Errorf("failed to fetch boxer %d: %w", boxerID, err)
 	}
 
-	benefits := s.GetRecoveryBenefits(restDays)
+	benefits := s.GetRecoveryBenefits(restHours)
 
 	// Store old values for logging
 	oldEnergy := boxer.Energy
@@ -310,15 +314,15 @@ func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restDay
 		return fmt.Errorf("failed to refresh boxer %d: %w", boxerID, err)
 	}
 
-	// Apply stat decay for long rests (7+ days)
+	// Apply stat decay for long rests (7+ hours)
 	if benefits.StatDecayRisk > 0 {
 		decayFactor := 1.0 - (benefits.StatDecayRisk / 100.0)
 		boxer.Strength *= decayFactor
 		boxer.Defense *= decayFactor
 		boxer.Agility *= decayFactor
 
-		s.logger.Info("Stat decay applied for boxer ID=%d after %d day rest: strength %.2f→%.2f, defense %.2f→%.2f, agility %.2f→%.2f",
-			boxerID, restDays, oldStrength, boxer.Strength, oldDefense, boxer.Defense, oldAgility, boxer.Agility)
+		s.logger.Info("Stat decay applied for boxer ID=%d after %d hour rest: strength %.2f→%.2f, defense %.2f→%.2f, agility %.2f→%.2f",
+			boxerID, restHours, oldStrength, boxer.Strength, oldDefense, boxer.Defense, oldAgility, boxer.Agility)
 	}
 
 	// Update boxer (energy and stats)
@@ -326,8 +330,8 @@ func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restDay
 		return fmt.Errorf("failed to update boxer %d after recovery: %w", boxerID, err)
 	}
 
-	s.logger.Info("Recovery applied for boxer ID=%d (%d days): energy %.1f→%.1f, fatigue %.2f (old) with -%.1f reduction, stat_decay=%.1f%%",
-		boxerID, restDays, oldEnergy, boxer.Energy, oldFatigue, benefits.FatigueReduction, benefits.StatDecayRisk)
+	s.logger.Info("Recovery applied for boxer ID=%d (%d hours): energy %.1f→%.1f, fatigue %.2f (old) with -%.1f reduction, stat_decay=%.1f%%",
+		boxerID, restHours, oldEnergy, boxer.Energy, oldFatigue, benefits.FatigueReduction, benefits.StatDecayRisk)
 
 	// Check if forced rest period should be cleared
 	if s.IsOnForcedRest(boxer) && boxer.FatigueScore < ExhaustionThreshold {
