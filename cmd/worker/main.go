@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,6 +28,15 @@ func main() {
 	lg := logger.New("WORKER")
 
 	lg.Info("Starting Boxing World Worker")
+	lg.Info("Configuration: PollInterval=%dms, StartupJitterMax=%dms, GameSpeedFactor=%.1f",
+		cfg.Worker.PollIntervalMS, cfg.Worker.StartupJitterMaxMS, cfg.Worker.GameSpeedFactor)
+
+	// Apply startup jitter to prevent thundering herd (random 0-max delay)
+	if cfg.Worker.StartupJitterMaxMS > 0 {
+		jitterMs := rand.Intn(cfg.Worker.StartupJitterMaxMS)
+		lg.Info("Applying startup jitter: %dms", jitterMs)
+		time.Sleep(time.Duration(jitterMs) * time.Millisecond)
+	}
 
 	// Initialize database
 	db, err := database.NewPostgresDB(cfg)
@@ -75,6 +85,23 @@ func main() {
 	// Create world clock model for time-derived game calculations
 	worldClock := model.NewWorldClockModel(lg)
 
+	// Apply configurable game speed factor from config (for faster testing)
+	if cfg.Worker.GameSpeedFactor > 0 {
+		currentSpeed, err := getCurrentWorldClockSpeed(ctx, db)
+		if err == nil {
+			lg.Info("Current world clock speed factor: %.1f", currentSpeed)
+			if currentSpeed != cfg.Worker.GameSpeedFactor {
+				if err := worldClock.SetSpeedFactor(ctx, db.DB, cfg.Worker.GameSpeedFactor); err != nil {
+					lg.Error("Failed to set game speed factor: %v", err)
+				} else {
+					lg.Info("Set game speed factor to %.1f", cfg.Worker.GameSpeedFactor)
+				}
+			}
+		} else {
+			lg.Warn("Could not read current world clock speed: %v", err)
+		}
+	}
+
 	// Initialize stores
 	eventStore := store.NewScheduledEventStore(db.DB)
 	boxerStore := store.NewBoxerStore(db.DB)
@@ -94,12 +121,20 @@ func main() {
 	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg, db.DB)
 
 	// Start the worker loop with actual event processing
-	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg)
+	pollInterval := time.Duration(cfg.Worker.PollIntervalMS) * time.Millisecond
+	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg, pollInterval)
 
 	lg.Info("World worker shutdown complete")
 }
 
-// startWorkerLoop implements the core simulation loop
+// getCurrentWorldClockSpeed retrieves the current speed factor from the world_clock table
+func getCurrentWorldClockSpeed(ctx context.Context, db *database.PostgresDB) (float64, error) {
+	var speedFactor float64
+	err := db.DB.QueryRowContext(ctx, "SELECT speed_factor FROM world_clock WHERE id = 1").Scan(&speedFactor)
+	return speedFactor, err
+}
+
+// startWorkerLoop implements the core simulation loop with configurable poll interval
 func startWorkerLoop(
 	ctx context.Context,
 	db *database.PostgresDB,
@@ -108,6 +143,7 @@ func startWorkerLoop(
 	eventProcessor *service.EventProcessor,
 	trainingService *service.TrainingService,
 	lg *logger.Logger,
+	pollInterval time.Duration,
 ) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -136,7 +172,11 @@ func startWorkerLoop(
 				lg.Info("Found %d pending events to process", len(events))
 				for _, event := range events {
 					if err := eventProcessor.ProcessScheduledEvent(ctx, event); err != nil {
-						lg.Error("Failed to process event ID=%d: %v", event.ID, err)
+						lg.Error("Failed to process event ID=%d Type=%s BoxerID=%d: %v",
+							event.ID, event.EventType, event.BoxerID, err)
+					} else {
+						lg.Info("Processed event ID=%d Type=%s BoxerID=%d",
+							event.ID, event.EventType, event.BoxerID)
 					}
 				}
 			}
@@ -151,9 +191,9 @@ func startWorkerLoop(
 				}
 			}
 
-			// Sleep before next iteration (50ms for rapid processing)
+			// Sleep before next iteration (configurable poll interval)
 			select {
-			case <-time.After(50 * time.Millisecond):
+			case <-time.After(pollInterval):
 			case <-ctx.Done():
 				return
 			case <-quit:
