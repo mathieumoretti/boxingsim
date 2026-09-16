@@ -130,15 +130,15 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 		}
 	}
 
-	// Extract rest duration from event data (default to 1 day if not specified)
-	restDays := getIntField(data, "rest_days", 1)
+	// Extract rest duration from event data (default to 1 hour if not specified)
+	restHours := getIntField(data, "rest_hours", 1)
 
 	// Delegate to FatigueService for comprehensive recovery handling
 	if p.fatigueService == nil {
 		return fmt.Errorf("fatigueService is nil, cannot apply recovery")
 	}
 
-	if err := p.fatigueService.ApplyRecovery(ctx, event.BoxerID, restDays); err != nil {
+	if err := p.fatigueService.ApplyRecovery(ctx, event.BoxerID, restHours); err != nil {
 		return fmt.Errorf("failed to apply recovery: %w", err)
 	}
 

@@ -195,8 +195,17 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 			// Check if forced rest needed (exhaustion threshold = 80)
 			needsForcedRest := updatedBoxer.FatigueScore >= ExhaustionThreshold
 
-			// Calculate rest end time (in hours from now)
-			restEndTime := time.Now().Add(time.Duration(finalRestHours) * time.Hour)
+			// Get current game time for scheduling rest event (MAT-96)
+			// Using game time ensures rest events are scheduled in the game timeline,
+			// not real time - this allows the worker to find and process them correctly
+			gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, s.db)
+			if err != nil {
+				s.logger.Warn("Failed to get current game time for rest scheduling, using real time: %v", err)
+				gameTime = time.Now()
+			}
+
+			// Calculate rest end time in game time (hours from game_time)
+			restEndTime := gameTime.Add(time.Duration(finalRestHours) * time.Hour)
 
 			// Create scheduled rest event data
 			eventData, err := json.Marshal(map[string]interface{}{

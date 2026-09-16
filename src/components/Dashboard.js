@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import TopBar from './TopBar.jsx';
@@ -25,9 +25,26 @@ const Dashboard = ({ user, onLogout }) => {
     } else {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, loadUserBoxers]);
 
-  const loadUserBoxers = async (userId) => {
+  // Separate effect for polling when boxers have active rest
+  useEffect(() => {
+    const currentUser = getUser();
+    if (!currentUser || !boxers.length) return;
+
+    // Check if any boxer has active rest
+    const hasAnyResting = boxers.some(b => b.has_active_rest);
+
+    if (hasAnyResting) {
+      const pollInterval = setInterval(() => {
+        loadUserBoxers(currentUser.id);
+      }, 5000); // Refresh every 5 seconds when boxers are resting
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [boxers, loadUserBoxers]);
+
+  const loadUserBoxers = useCallback(async (userId) => {
     setIsLoading(true);
     setError('');
 
@@ -52,11 +69,11 @@ const Dashboard = ({ user, onLogout }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     onLogout();
-  };
+  }, [onLogout]);
 
   return (
     <div className="dashboard">
