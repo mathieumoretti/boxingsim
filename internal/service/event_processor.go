@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -121,7 +120,7 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 }
 
 // processRecovery handles rest/recovery events.
-// It restores energy and health based on recovery rates in the event data.
+// It delegates to FatigueService.ApplyRecovery for comprehensive recovery handling.
 func (p *EventProcessor) processRecovery(ctx context.Context, event *model.ScheduledEvent) error {
 	// Unmarshal recovery data
 	var data map[string]any
@@ -134,41 +133,15 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 	// Extract rest duration from event data (default to 1 day if not specified)
 	restDays := getIntField(data, "rest_days", 1)
 
-	// Fetch boxer
-	boxer, err := p.boxerStore.GetByID(ctx, event.BoxerID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("%w: ID=%d", ErrBoxerNotFound, event.BoxerID)
-		}
-		return fmt.Errorf("failed to fetch boxer %d: %w", event.BoxerID, err)
+	// Delegate to FatigueService for comprehensive recovery handling
+	if p.fatigueService == nil {
+		return fmt.Errorf("fatigueService is nil, cannot apply recovery")
 	}
 
-	// Apply fatigue decay for each day of rest (5 points per day)
-	if p.fatigueService != nil {
-		fatigueReduction := float64(restDays) * FatigueDailyDecay
-		oldFatigue := boxer.FatigueScore
-		newFatigue := math.Max(0, oldFatigue-fatigueReduction)
-		boxer.FatigueScore = newFatigue
-
-		p.logger.Info("Fatigue decay applied to boxer ID=%d: %.2f → %.2f (%d days × 5.0)",
-			boxer.ID, oldFatigue, newFatigue, restDays)
+	if err := p.fatigueService.ApplyRecovery(ctx, event.BoxerID, restDays); err != nil {
+		return fmt.Errorf("failed to apply recovery: %w", err)
 	}
 
-	// Apply energy recovery based on rest duration (capped at 100)
-	energyGain := getFloatField(data, "energy_gain", 100.0) // Full energy by default
-	boxer.Energy = math.Min(boxer.Energy+energyGain, 100.0)
-
-	// Apply health recovery based on rest duration (capped at 100)
-	healthGain := getFloatField(data, "health_gain", 100.0) // Full health by default
-	boxer.Health = math.Min(boxer.Health+healthGain, 100.0)
-
-	// Update boxer in database
-	if err := p.boxerStore.Update(ctx, boxer); err != nil {
-		return fmt.Errorf("failed to update boxer %d after recovery: %w", boxer.ID, err)
-	}
-
-	p.logger.Info("Recovery applied to boxer ID=%d energy_gain=%.2f health_gain=%.2f new_energy=%.2f new_health=%.2f new_fatigue=%.2f",
-		boxer.ID, energyGain, healthGain, boxer.Energy, boxer.Health, boxer.FatigueScore)
 	return nil
 }
 
@@ -222,6 +195,3 @@ func getIntField(data map[string]any, key string, defaultValue int) int {
 		return defaultValue
 	}
 }
-
-// FatigueDailyDecay is the amount of fatigue reduced per day of rest (5.0 points/day).
-const FatigueDailyDecay = 5.0
