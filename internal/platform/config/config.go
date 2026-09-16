@@ -14,6 +14,7 @@ type Config struct {
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	Server   ServerConfig   `mapstructure:"server"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
+	Worker   WorkerConfig   `mapstructure:"worker"`
 }
 
 // DatabaseConfig holds PostgreSQL connection settings.
@@ -45,6 +46,13 @@ type ServerConfig struct {
 // LoggingConfig holds logging settings.
 type LoggingConfig struct {
 	Level string `mapstructure:"level"`
+}
+
+// WorkerConfig holds worker process settings.
+type WorkerConfig struct {
+	PollIntervalMS     int     `mapstructure:"poll_interval_ms"`
+	StartupJitterMaxMS int     `mapstructure:"startup_jitter_max_ms"`
+	GameSpeedFactor    float64 `mapstructure:"game_speed_factor"`
 }
 
 // TestDBConfig represents test database configuration for integration tests.
@@ -108,6 +116,17 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.JWT.Secret == "" {
 		cfg.JWT.Secret = "default-jwt-secret-change-in-production"
+	}
+
+	// Worker defaults
+	if cfg.Worker.PollIntervalMS == 0 {
+		cfg.Worker.PollIntervalMS = 500 // 500ms default poll interval
+	}
+	if cfg.Worker.StartupJitterMaxMS == 0 {
+		cfg.Worker.StartupJitterMaxMS = 5000 // 5 second max jitter
+	}
+	if cfg.Worker.GameSpeedFactor == 0 {
+		cfg.Worker.GameSpeedFactor = 600.0 // 1 real second = 10 game minutes (600x speed) for faster testing
 	}
 }
 
