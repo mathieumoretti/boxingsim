@@ -14,6 +14,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
   const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
+  const [worldTime, setWorldTime] = useState(null);
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -27,22 +28,36 @@ const Dashboard = ({ user, onLogout }) => {
     }
   }, [user, loadUserBoxers]);
 
-  // Separate effect for polling when boxers have active rest
+  // Fetch and refresh world time every 5 seconds for countdown displays
   useEffect(() => {
-    const currentUser = getUser();
-    if (!currentUser || !boxers.length) return;
+    const fetchWorldTime = async () => {
+      try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
+        if (response.ok) {
+          const data = await response.json();
+          setWorldTime(data);
+        }
+      } catch (err) {
+        // Silently fail - countdowns will just not update
+      }
+    };
 
-    // Check if any boxer has active rest
-    const hasAnyResting = boxers.some(b => b.has_active_rest);
+    // Initial fetch
+    fetchWorldTime();
 
-    if (hasAnyResting) {
-      const pollInterval = setInterval(() => {
-        loadUserBoxers(currentUser.id);
-      }, 5000); // Refresh every 5 seconds when boxers are resting
+    // Refresh every 5 seconds for real-time countdown updates
+    const interval = setInterval(fetchWorldTime, 5000);
 
-      return () => clearInterval(pollInterval);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handler called by BoxerCard when a boxer's state changes (training completed, rest ended)
+  const handleBoxerStateChanged = useCallback((boxerId) => {
+    // Refresh all boxer data to get updated has_active_rest and forced_rest_until values
+    if (currentUser) {
+      loadUserBoxers(currentUser.id);
     }
-  }, [boxers, loadUserBoxers]);
+  }, [currentUser, loadUserBoxers]);
 
   const loadUserBoxers = useCallback(async (userId) => {
     setIsLoading(true);
@@ -112,7 +127,9 @@ const Dashboard = ({ user, onLogout }) => {
                 <BoxerCard
                   key={boxer.id}
                   boxer={boxer}
+                  worldTime={worldTime}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
+                  onBoxerStateChanged={handleBoxerStateChanged}
                 />
               ))}
             </div>

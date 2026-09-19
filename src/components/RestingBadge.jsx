@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './RestingBadge.css';
 
 /**
@@ -11,24 +11,47 @@ import './RestingBadge.css';
  * @param {string|null} currentGameTime - Current game world time in ISO format
  */
 const RestingBadge = ({ hasActiveRest, restEndsAt, forcedRestUntil, currentGameTime }) => {
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
+
   if (!hasActiveRest) return null;
 
+  // Determine if this is forced rest or voluntary rest (MAT-96)
+  const isForcedRest = !!forcedRestUntil;
+
   // Calculate remaining rest time
+  // Forced rest uses real-time (stored as time.Now()), voluntary rest uses game time (stored as gameTime.Add())
   const calculateRemainingSeconds = () => {
-    // Use forcedRestUntil if available (forced rest takes priority), otherwise use restEndsAt
-    const restEndTime = forcedRestUntil || restEndsAt;
-
-    if (!restEndTime || !currentGameTime) return null;
-
-    const endTime = new Date(restEndTime);
-    const gameTime = new Date(currentGameTime);
-    const remainingMs = endTime - gameTime;
-    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-
-    return remainingSeconds;
+    if (isForcedRest && forcedRestUntil) {
+      // Forced rest: use real-time for countdown
+      const endTime = new Date(forcedRestUntil);
+      const now = new Date();
+      const remainingMs = endTime - now;
+      return Math.max(0, Math.ceil(remainingMs / 1000));
+    } else if (restEndsAt && currentGameTime) {
+      // Voluntary rest: use game time for countdown
+      const endTime = new Date(restEndsAt);
+      const gameTime = new Date(currentGameTime);
+      const remainingMs = endTime - gameTime;
+      return Math.max(0, Math.ceil(remainingMs / 1000));
+    }
+    return null;
   };
 
-  const remainingSeconds = calculateRemainingSeconds();
+  // Initialize countdown
+  useEffect(() => {
+    setRemainingSeconds(calculateRemainingSeconds());
+  }, [restEndsAt, forcedRestUntil, currentGameTime, isForcedRest]);
+
+  // Update countdown every second for forced rest (real-time) or when game time updates
+  useEffect(() => {
+    if (!hasActiveRest) return;
+
+    const interval = setInterval(() => {
+      setRemainingSeconds(calculateRemainingSeconds());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [hasActiveRest, restEndsAt, forcedRestUntil, currentGameTime, isForcedRest]);
 
   // Format countdown display
   const formatRemainingTime = (seconds) => {
@@ -45,9 +68,6 @@ const RestingBadge = ({ hasActiveRest, restEndsAt, forcedRestUntil, currentGameT
   };
 
   const countdownDisplay = formatRemainingTime(remainingSeconds);
-
-  // Determine if this is forced rest or voluntary rest
-  const isForcedRest = !!forcedRestUntil;
 
   return (
     <div className={`resting-badge ${isForcedRest ? 'resting-forced' : 'resting-voluntary'}`}>
