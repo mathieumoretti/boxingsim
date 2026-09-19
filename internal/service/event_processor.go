@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/store"
@@ -17,6 +18,7 @@ var (
 	ErrBoxerNotFound     = errors.New("boxer not found")
 	ErrInvalidEventData  = errors.New("invalid event data")
 	ErrUnknownEventType  = errors.New("unknown event type")
+	ErrFightNotFound     = errors.New("fight not found")
 )
 
 // EventProcessor handles the processing of scheduled events for boxers.
@@ -24,6 +26,7 @@ var (
 type EventProcessor struct {
 	eventStore     *store.ScheduledEventStore
 	boxerStore     *store.BoxerStore
+	fightService   *fight.FightService
 	fatigueService *FatigueService
 	logger         logger.Logger
 }
@@ -32,12 +35,14 @@ type EventProcessor struct {
 func NewEventProcessor(
 	eventStore *store.ScheduledEventStore,
 	boxerStore *store.BoxerStore,
+	fightService *fight.FightService,
 	fatigueService *FatigueService,
 	lg logger.Logger,
 ) *EventProcessor {
 	return &EventProcessor{
 		eventStore:     eventStore,
 		boxerStore:     boxerStore,
+		fightService:   fightService,
 		fatigueService: fatigueService,
 		logger:         lg,
 	}
@@ -54,6 +59,8 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 		processErr = p.processTrainingComplete(ctx, event)
 	case model.EventTypeRest:
 		processErr = p.processRecovery(ctx, event)
+	case model.EventTypeFightSimulate:
+		processErr = p.processFightSimulate(ctx, event)
 	case model.EventTypeCompetition:
 		processErr = p.processCompetition(ctx, event)
 	default:
@@ -151,6 +158,39 @@ func (p *EventProcessor) processCompetition(ctx context.Context, event *model.Sc
 	_ = ctx // Unused for now, will be used when competition logic is implemented
 	// TODO: Implement competition processing logic
 	p.logger.Info("Competition event received for boxer ID=%d (not yet implemented)", event.BoxerID)
+	return nil
+}
+
+// processFightSimulate handles fight simulation events.
+// It extracts the fight_id from event data and delegates to FightService.SimulateFight.
+func (p *EventProcessor) processFightSimulate(ctx context.Context, event *model.ScheduledEvent) error {
+	_ = ctx // Reserved for future use (e.g., cancellation, timeouts)
+
+	// Unmarshal fight event data
+	var data map[string]any
+	if len(event.EventData) > 0 {
+		if err := json.Unmarshal(event.EventData, &data); err != nil {
+			return fmt.Errorf("%w: failed to unmarshal fight event data: %w", ErrInvalidEventData, err)
+		}
+	}
+
+	// Extract fight_id from data
+	fightID := getIntField(data, "fight_id", 0)
+	if fightID <= 0 {
+		return fmt.Errorf("%w: invalid fight_id in event data", ErrFightNotFound)
+	}
+
+	// Check if fight service is initialized
+	if p.fightService == nil {
+		return fmt.Errorf("fightService is nil, cannot simulate fight")
+	}
+
+	// Simulate the fight (handles status check internally - won't re-simulate completed fights)
+	if err := p.fightService.SimulateFight(fightID); err != nil {
+		return fmt.Errorf("failed to simulate fight %d: %w", fightID, err)
+	}
+
+	p.logger.Info("Fight simulation completed ID=%d", fightID)
 	return nil
 }
 

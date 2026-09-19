@@ -11,6 +11,7 @@ import (
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/logger"
+	"github.com/mormm/boxing/internal/store"
 )
 
 type Fight struct {
@@ -29,18 +30,20 @@ type Fight struct {
 }
 
 type FightService struct {
-	db       *sql.DB
-	cfg      *config.Config
-	logger   *logger.Logger
-	boxerSvc *boxer.BoxerService
+	db         *sql.DB
+	cfg        *config.Config
+	logger     *logger.Logger
+	boxerSvc   *boxer.BoxerService
+	eventStore *store.ScheduledEventStore
 }
 
-func NewFightService(db *sql.DB, cfg *config.Config, boxerSvc *boxer.BoxerService) *FightService {
+func NewFightService(db *sql.DB, cfg *config.Config, boxerSvc *boxer.BoxerService, eventStore *store.ScheduledEventStore) *FightService {
 	return &FightService{
-		db:       db,
-		cfg:      cfg,
-		logger:   logger.New("FightService"),
-		boxerSvc: boxerSvc,
+		db:         db,
+		cfg:        cfg,
+		logger:     logger.New("FightService"),
+		boxerSvc:   boxerSvc,
+		eventStore: eventStore,
 	}
 }
 
@@ -85,6 +88,30 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 	fight.Boxer2ID = &boxer2ID
 
 	s.logger.Info("Fight scheduled", "id", fight.ID)
+
+	// Create a scheduled event for the fight simulation (MAT-99)
+	if s.eventStore != nil {
+		ctx := context.Background()
+		eventData, _ := json.Marshal(map[string]any{
+			"fight_id": id,
+		})
+
+		event := &model.ScheduledEvent{
+			BoxerID:   boxer1ID, // Associate with first boxer
+			EventType: model.EventTypeFightSimulate,
+			EventTime: scheduledTime,
+			Processed: false,
+			EventData: model.EventData(eventData),
+		}
+
+		if err := s.eventStore.Create(ctx, event); err != nil {
+			// Log the error but don't fail the fight scheduling
+			s.logger.Error("Failed to create scheduled event for fight %d: %v", id, err)
+		} else {
+			s.logger.Info("Created scheduled event for fight", "fight_id", id, "event_time", scheduledTime)
+		}
+	}
+
 	return fight, nil
 }
 

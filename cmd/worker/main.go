@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/database"
@@ -114,13 +116,21 @@ func main() {
 	// Initialize progression service (MAT-22)
 	progressionService := service.NewProgressionService(lg)
 
-	// Initialize event processor (for scheduled events)
-	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fatigueService, *lg)
+	// Initialize boxer service (needed for fight service and training service)
+	boxerSvc := boxer.NewBoxerService(boxerStore)
 
-	// Initialize training service (for training session completion - MAT-74)
+	// Initialize training service (for MAT-74)
 	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg, db.DB)
 
-	// Start the worker loop with actual event processing
+	// Initialize fight service (for MAT-99)
+	fightSvc := fight.NewFightService(db.DB, cfg, boxerSvc, eventStore)
+
+	// Initialize event processor (for scheduled events)
+	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, *lg)
+
+	lg.Info("Starting worker event loop...")
+
+	// Start the worker loop with configurable poll interval
 	pollInterval := time.Duration(cfg.Worker.PollIntervalMS) * time.Millisecond
 	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg, pollInterval)
 

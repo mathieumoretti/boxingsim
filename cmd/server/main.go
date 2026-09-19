@@ -89,7 +89,7 @@ func main() {
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
 		trainingSessionStore = store.NewTrainingSessionStore(dbConn.DB)
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
-		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB})
+		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB}, scheduledEventStore)
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
 		worldClockModel = model.NewWorldClockModel(logger)

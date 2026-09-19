@@ -48,11 +48,15 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 	return fight, nil
 }
 
-// CreateFight creates a new fight
-func CreateFight(db *sql.DB, fight *model.FightCreate) error {
-	query := `INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round) VALUES ($1, $2, $3, $4)`
-	_, err := db.Exec(query, fight.Boxer1ID, fight.Boxer2ID, fight.ScheduledTime, fight.Round)
-	return err
+// CreateFight creates a new fight and returns the generated ID
+func CreateFight(db *sql.DB, fight *model.FightCreate) (int, error) {
+	query := `INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round) VALUES ($1, $2, $3, $4) RETURNING id`
+	var id int
+	err := db.QueryRow(query, fight.Boxer1ID, fight.Boxer2ID, fight.ScheduledTime, fight.Round).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 // BoxerInFight checks if a boxer is currently in a fight
