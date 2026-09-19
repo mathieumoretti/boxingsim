@@ -10,10 +10,11 @@ import (
 type EventType string
 
 const (
-	EventTypeTraining    EventType = "training"
-	EventTypeRest        EventType = "rest"
-	EventTypeCompetition EventType = "competition"
-	EventTypeOther       EventType = "other"
+	EventTypeTraining      EventType = "training"
+	EventTypeRest          EventType = "rest"
+	EventTypeCompetition   EventType = "competition"
+	EventTypeFightSimulate EventType = "fight_simulate"
+	EventTypeOther         EventType = "other"
 )
 
 // EventData wraps json.RawMessage for proper null handling from JSONB.

@@ -3,21 +3,27 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/model"
+	"github.com/mormm/boxing/internal/store"
 )
 
 type FightService struct {
-	db *sql.DB
+	db         *sql.DB
+	eventStore *store.ScheduledEventStore
 }
 
-func NewFightService(db interface{}) *FightService {
+func NewFightService(db interface{}, eventStore *store.ScheduledEventStore) *FightService {
 	pdb := db.(*PostgresDBWrapper)
-	return &FightService{db: pdb.Conn}
+	return &FightService{
+		db:         pdb.Conn,
+		eventStore: eventStore,
+	}
 }
 
 type PostgresDBWrapper struct {
@@ -58,7 +64,35 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 		ScheduledTime: &st,
 		Round:         round,
 	}
-	return boxerdb.CreateFight(s.db, fight)
+
+	// Create the fight and get the ID
+	fightID, err := boxerdb.CreateFight(s.db, fight)
+	if err != nil {
+		return fmt.Errorf("failed to create fight: %w", err)
+	}
+
+	// Create a scheduled event for the fight simulation (MAT-99)
+	if s.eventStore != nil && scheduledTime.After(time.Now()) {
+		eventData, _ := json.Marshal(map[string]interface{}{
+			"fight_id": fightID,
+		})
+
+		event := &model.ScheduledEvent{
+			BoxerID:   boxer1ID, // Associate with first boxer
+			EventType: model.EventTypeFightSimulate,
+			EventTime: scheduledTime,
+			Processed: false,
+			EventData: model.EventData(eventData),
+		}
+
+		if err := s.eventStore.Create(ctx, event); err != nil {
+			// Log the error but don't fail the fight creation
+			// The fight exists and can be simulated manually if needed
+			fmt.Printf("Warning: failed to create scheduled event for fight %d: %v\n", fightID, err)
+		}
+	}
+
+	return nil
 }
 
 func (s *FightService) GetActiveFights(ctx context.Context, statuses []string) ([]*model.Fight, error) {
