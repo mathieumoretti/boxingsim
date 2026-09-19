@@ -207,6 +207,26 @@
   background: linear-gradient(90deg, #fefcbf 0%, #faf089 100%);
 }
 
+/* Fatigue bar colors based on exhaustion threshold */
+.bg-fatigue-ok {
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.bg-fatigue-warning {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.bg-fatigue-critical {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.bar-wrapper.bar-fatigue {
+  background: linear-gradient(90deg, #f0fdf4, #dcfce7);
+}
+
 .stat-value {
   font-size: 13px;
   font-weight: 600;

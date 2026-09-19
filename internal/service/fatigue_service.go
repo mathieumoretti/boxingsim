@@ -46,8 +46,10 @@ type boxerRepository interface {
 
 // FatigueService manages boxer fatigue and recovery mechanics
 type FatigueService struct {
-	boxerStore boxerRepository
-	logger     *logger.Logger
+	boxerStore      boxerRepository
+	worldClockModel *model.WorldClockModel
+	logger          *logger.Logger
+	db              *sql.DB
 }
 
 // NewFatigueService creates a new FatigueService instance
@@ -58,6 +60,21 @@ func NewFatigueService(
 	return &FatigueService{
 		boxerStore: boxerStore,
 		logger:     lg,
+	}
+}
+
+// NewFatigueServiceWithWorldClock creates a new FatigueService instance with world clock support (MAT-96)
+func NewFatigueServiceWithWorldClock(
+	boxerStore boxerRepository,
+	worldClockModel *model.WorldClockModel,
+	lg *logger.Logger,
+	db *sql.DB,
+) *FatigueService {
+	return &FatigueService{
+		boxerStore:      boxerStore,
+		worldClockModel: worldClockModel,
+		logger:          lg,
+		db:              db,
 	}
 }
 
@@ -301,37 +318,44 @@ func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restHou
 	oldAgility := boxer.Agility
 
 	// Apply energy recovery (cap at 100)
-	boxer.Energy = math.Min(boxer.Energy+benefits.EnergyRecoveryPercent, 100.0)
+	newEnergy := math.Min(boxer.Energy+benefits.EnergyRecoveryPercent, 100.0)
 
-	// Apply fatigue reduction
-	if err := s.ReduceFatigue(ctx, boxerID, benefits.FatigueReduction); err != nil {
-		return err
-	}
-
-	// Refresh boxer after fatigue update
-	boxer, err = s.boxerStore.GetByID(ctx, boxerID)
-	if err != nil {
-		return fmt.Errorf("failed to refresh boxer %d: %w", boxerID, err)
+	// Apply fatigue reduction (clamped to minimum)
+	newFatigue := oldFatigue - benefits.FatigueReduction
+	if newFatigue < MinFatigueScore {
+		newFatigue = MinFatigueScore
 	}
 
 	// Apply stat decay for long rests (7+ hours)
+	var newStrength, newDefense, newAgility float64
 	if benefits.StatDecayRisk > 0 {
 		decayFactor := 1.0 - (benefits.StatDecayRisk / 100.0)
-		boxer.Strength *= decayFactor
-		boxer.Defense *= decayFactor
-		boxer.Agility *= decayFactor
+		newStrength = oldStrength * decayFactor
+		newDefense = oldDefense * decayFactor
+		newAgility = oldAgility * decayFactor
 
 		s.logger.Info("Stat decay applied for boxer ID=%d after %d hour rest: strength %.2f→%.2f, defense %.2f→%.2f, agility %.2f→%.2f",
-			boxerID, restHours, oldStrength, boxer.Strength, oldDefense, boxer.Defense, oldAgility, boxer.Agility)
+			boxerID, restHours, oldStrength, newStrength, oldDefense, newDefense, oldAgility, newAgility)
+	} else {
+		newStrength = oldStrength
+		newDefense = oldDefense
+		newAgility = oldAgility
 	}
 
-	// Update boxer (energy and stats)
+	// Apply all changes to boxer in-memory
+	boxer.Energy = newEnergy
+	boxer.FatigueScore = newFatigue
+	boxer.Strength = newStrength
+	boxer.Defense = newDefense
+	boxer.Agility = newAgility
+
+	// Single database update with all fields
 	if err := s.boxerStore.Update(ctx, boxer); err != nil {
 		return fmt.Errorf("failed to update boxer %d after recovery: %w", boxerID, err)
 	}
 
-	s.logger.Info("Recovery applied for boxer ID=%d (%d hours): energy %.1f→%.1f, fatigue %.2f (old) with -%.1f reduction, stat_decay=%.1f%%",
-		boxerID, restHours, oldEnergy, boxer.Energy, oldFatigue, benefits.FatigueReduction, benefits.StatDecayRisk)
+	s.logger.Info("Recovery applied for boxer ID=%d (%d hours): energy %.1f→%.1f, fatigue %.2f→%.2f (-%.1f), stat_decay=%.1f%%",
+		boxerID, restHours, oldEnergy, newEnergy, oldFatigue, newFatigue, benefits.FatigueReduction, benefits.StatDecayRisk)
 
 	// Check if forced rest period should be cleared
 	if s.IsOnForcedRest(boxer) && boxer.FatigueScore < ExhaustionThreshold {

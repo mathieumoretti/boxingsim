@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './BoxerCard.css';
 import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
 import RestingBadge from './RestingBadge';
@@ -39,86 +39,101 @@ const formatCountdown = (remainingSeconds) => {
   }
 };
 
-const BoxerCard = ({ boxer, onOpenTraining }) => {
+const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
-  const [worldTime, setWorldTime] = useState(null);
 
   // Fetch active training session for this boxer
+  const loadActiveTraining = useCallback(async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/training-sessions`, {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const sessions = await response.json();
+        const sessionsArray = Array.isArray(sessions) ? sessions : [];
+
+        // Find the most recent pending session
+        const pendingSession = sessionsArray.find(s => s.status === 'pending');
+        setActiveSession(pendingSession);
+      }
+    } catch (err) {
+      // Silently fail - boxer card still works without training status
+    }
+  }, [boxer.id]);
+
   useEffect(() => {
-    const loadActiveTraining = async () => {
+    if (boxer.id) {
+      loadActiveTraining();
+    }
+  }, [boxer.id, loadActiveTraining]);
+
+  // Poll for training session status when there's active training
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const pollInterval = setInterval(async () => {
       try {
-        console.log('[BoxerCard] Loading training sessions for boxer:', boxer.name, '(ID:', boxer.id + ')');
         const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/training-sessions`, {
           method: 'GET',
         });
 
-        console.log('[BoxerCard] API response status:', response.status);
-
         if (response.ok) {
           const sessions = await response.json();
-          console.log('[BoxerCard] Training sessions response for boxer', boxer.name, ':', sessions);
-
-          // Handle null/undefined - treat as empty array
           const sessionsArray = Array.isArray(sessions) ? sessions : [];
-          console.log('[BoxerCard] Sessions array length:', sessionsArray.length);
-
-          // Find the most recent pending session
           const pendingSession = sessionsArray.find(s => s.status === 'pending');
 
-          console.log('[BoxerCard] Pending session found for', boxer.name, ':', pendingSession);
-          setActiveSession(pendingSession);
-        } else {
-          console.warn('[BoxerCard] Failed to load training sessions, status:', response.status);
+          // If training completed (no longer pending), notify parent to refresh boxer data
+          if (!pendingSession && activeSession) {
+            setActiveSession(null);
+            if (onBoxerStateChanged) {
+              onBoxerStateChanged(boxer.id);
+            }
+          } else {
+            setActiveSession(pendingSession);
+          }
         }
       } catch (err) {
-        // Silently fail - boxer card still works without training status
-        console.warn('[BoxerCard] Failed to load training session:', err);
+        // Silently fail - polling will retry
       }
-    };
+    }, 5000); // Check every 5 seconds
 
-    if (boxer.id) {
-      loadActiveTraining();
-    }
-  }, [boxer.id, boxer.name]);
+    return () => clearInterval(pollInterval);
+  }, [activeSession, boxer.id, onBoxerStateChanged]);
 
-  // Fetch world time for countdown calculation
+  // Poll for rest status changes when boxer has active rest (MAT-96)
   useEffect(() => {
-    const loadWorldTime = async () => {
+    if (!boxer.has_active_rest) return;
+
+    const pollInterval = setInterval(async () => {
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/world/time`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}`, {
           method: 'GET',
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setWorldTime(data);
+          const updatedBoxer = await response.json();
 
-          // Set up periodic refresh for countdown updates
-          const interval = setInterval(async () => {
-            try {
-              const resp = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
-              if (resp.ok) {
-                const data = await resp.json();
-                setWorldTime(data);
-              }
-            } catch (err) {
-              // Silently fail - countdown will just be stale
+          // Check if rest status changed
+          if (!updatedBoxer.has_active_rest && boxer.has_active_rest) {
+            // Rest ended - notify parent to refresh all boxer data
+            if (onBoxerStateChanged) {
+              onBoxerStateChanged(boxer.id);
             }
-          }, 5000);
-
-          return () => clearInterval(interval);
+          } else if (updatedBoxer.has_active_rest) {
+            // Still resting - update local boxer state with new has_active_rest and next_available_training values
+            const parentElement = document.getElementById(`boxer-card-${boxer.id}`);
+            // Parent will refresh via Dashboard's world time polling for countdown updates
+          }
         }
       } catch (err) {
-        console.warn('Failed to load world time:', err);
+        // Silently fail - polling will retry
       }
-    };
+    }, 5000); // Check every 5 seconds
 
-    // Load world time if there's active training OR active rest period
-    if (activeSession || boxer.has_active_rest) {
-      loadWorldTime();
-    }
-  }, [activeSession, boxer.has_active_rest]);
+    return () => clearInterval(pollInterval);
+  }, [boxer.has_active_rest, boxer.id, onBoxerStateChanged]);
 
   // Calculate countdown based on scheduled_completion_time from API and world time
   useEffect(() => {
@@ -170,6 +185,13 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
     return 'bg-health-low';
   };
 
+  // Get fatigue color based on exhaustion threshold
+  const getFatigueColorClass = (fatigueScore) => {
+    if (fatigueScore >= 80) return 'bg-fatigue-critical';   // Red - exhausted, cannot train
+    if (fatigueScore >= 50) return 'bg-fatigue-warning';    // Yellow - approaching exhaustion
+    return 'bg-fatigue-ok';                                   // Green - healthy
+  };
+
   // Get level badge styling
   const getLevelBadgeClass = (level) => {
     if (!level || level < 1) return '';
@@ -189,14 +211,9 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
   // Get training icon based on session type
   const trainingIcon = activeSession ? (trainingTypeIcons[getTrainingTypeName(activeSession.training_type_id)] || '🏋️') : null;
 
-  // Debug: Log boxer stats for disabled button check
-  console.log('[BoxerCard] Button disabled check for', boxer.name, '- health:', boxer.health, 'energy:', boxer.energy, 'activeSession:', activeSession);
-
-  // Button disabled state: health < 50, energy < 15, or already has pending training
+  // Button disabled state: health < 50, energy < 15, fatigue >= 80 (exhaustion), or already has pending training
   // Use !activeSession to handle both null and undefined (falsy values mean no active session)
-  const isButtonDisabled = boxer.health < 50 || boxer.energy < 15 || !!activeSession;
-
-  console.log('[BoxerCard] isButtonDisabled:', isButtonDisabled, '(hasActiveSession:', !!activeSession, ')');
+  const isButtonDisabled = boxer.health < 50 || boxer.energy < 15 || boxer.fatigue_score >= 80 || !!activeSession;
 
   return (
     <div className="boxer-card">
@@ -259,6 +276,18 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
         <span className="stat-value">{Math.floor(boxer.energy)}<small>/ 100</small></span>
       </div>
 
+      {/* Fatigue Bar */}
+      <div className="stat-bar-container stat-bar-fatigue">
+        <span className="stat-label">Fatigue</span>
+        <div className="bar-wrapper bar-fatigue">
+          <div
+            className={`progress-bar ${getFatigueColorClass(boxer.fatigue_score)}`}
+            style={{ width: `${boxer.fatigue_score}%` }}
+          ></div>
+        </div>
+        <span className="stat-value">{Math.round(boxer.fatigue_score)}<small>/ 100</small></span>
+      </div>
+
       {/* XP Progress Bar */}
       <div className="stat-bar-container stat-bar-xp">
         <span className="stat-label">XP</span>
@@ -304,7 +333,7 @@ const BoxerCard = ({ boxer, onOpenTraining }) => {
           className="train-btn"
           onClick={onOpenTraining}
           disabled={isButtonDisabled}
-          title={activeSession ? 'Boxer is currently training' : boxer.health < 50 ? 'Boxer needs recovery (health < 50%)' : boxer.energy < 15 ? 'Insufficient energy (need 15+)' : 'Schedule Training'}
+          title={activeSession ? 'Boxer is currently training' : boxer.fatigue_score >= 80 ? `Boxer is exhausted (fatigue ${Math.round(boxer.fatigue_score)}/100). Rest required.` : boxer.health < 50 ? 'Boxer needs recovery (health < 50%)' : boxer.energy < 15 ? 'Insufficient energy (need 15+)' : 'Schedule Training'}
         >
           {activeSession ? 'Training In Progress...' : 'Schedule Training'}
         </button>
