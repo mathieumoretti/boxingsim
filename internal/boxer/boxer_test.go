@@ -42,6 +42,11 @@ func (m *MockBoxerRepository) Delete(ctx context.Context, id int) error {
 	return args.Error(0)
 }
 
+func (m *MockBoxerRepository) UpdateFightResult(ctx context.Context, boxer1ID, boxer2ID int, result FightResult) error {
+	args := m.Called(ctx, boxer1ID, boxer2ID, result)
+	return args.Error(0)
+}
+
 func TestNewBoxerService(t *testing.T) {
 	t.Run("Creates service with repository", func(t *testing.T) {
 		mockRepo := new(MockBoxerRepository)
@@ -362,4 +367,86 @@ func stringPtr(s string) *string {
 
 func float64Ptr(f float64) *float64 {
 	return &f
+}
+
+func TestBoxerServiceUpdateFightResult(t *testing.T) {
+	t.Run("Successfully updates stats for boxer 1 win by KO", func(t *testing.T) {
+		mockRepo := new(MockBoxerRepository)
+		service := NewBoxerService(mockRepo)
+
+		result := FightResult{
+			Boxer1Wins:        true,
+			IsDraw:            false,
+			IsKnockout:        true,
+			Boxer1Knockdowned: false,
+			Boxer2Knockdowned: true,
+		}
+
+		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+
+		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Successfully updates stats for boxer 2 win by decision", func(t *testing.T) {
+		mockRepo := new(MockBoxerRepository)
+		service := NewBoxerService(mockRepo)
+
+		result := FightResult{
+			Boxer1Wins:        false,
+			IsDraw:            false,
+			IsKnockout:        false,
+			Boxer1Knockdowned: false,
+			Boxer2Knockdowned: false,
+		}
+
+		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+
+		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Successfully updates stats for draw", func(t *testing.T) {
+		mockRepo := new(MockBoxerRepository)
+		service := NewBoxerService(mockRepo)
+
+		result := FightResult{
+			Boxer1Wins:        false,
+			IsDraw:            true,
+			IsKnockout:        false,
+			Boxer1Knockdowned: false,
+			Boxer2Knockdowned: false,
+		}
+
+		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+
+		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Returns error when repository fails", func(t *testing.T) {
+		mockRepo := new(MockBoxerRepository)
+		service := NewBoxerService(mockRepo)
+
+		result := FightResult{
+			Boxer1Wins: true,
+			IsDraw:     false,
+			IsKnockout: false,
+		}
+
+		expectedError := errors.New("database error")
+		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(expectedError)
+
+		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+
+		assert.Error(t, err)
+		assert.Equal(t, expectedError, err)
+		mockRepo.AssertExpectations(t)
+	})
 }

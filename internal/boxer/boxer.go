@@ -14,6 +14,16 @@ type BoxerRepository interface {
 	GetByUserID(ctx context.Context, userID int) ([]*model.Boxer, error)
 	Update(ctx context.Context, boxer *model.Boxer) error
 	Delete(ctx context.Context, id int) error
+	UpdateFightResult(ctx context.Context, boxer1ID, boxer2ID int, result FightResult) error
+}
+
+// FightResult represents the outcome of a fight between two boxers
+type FightResult struct {
+	Boxer1Wins        bool // true if boxer 1 wins, false if boxer 2 wins
+	IsDraw            bool // true if it's a draw
+	IsKnockout        bool // true if won by KO/TKO
+	Boxer1Knockdowned bool // true if boxer 1 suffered a knockdown
+	Boxer2Knockdowned bool // true if boxer 2 suffered a knockdown
 }
 
 // BoxerService handles boxer business logic
@@ -125,4 +135,13 @@ func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.Boxe
 	}
 
 	return nil
+}
+
+// UpdateFightResult atomically updates fight statistics for two boxers
+func (s *BoxerService) UpdateFightResult(
+	ctx context.Context,
+	boxer1ID, boxer2ID int,
+	result FightResult,
+) error {
+	return s.repo.UpdateFightResult(ctx, boxer1ID, boxer2ID, result)
 }
