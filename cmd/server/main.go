@@ -79,21 +79,25 @@ func main() {
 	var trainingTypeStore *store.TrainingTypeStore
 	var trainingSessionStore *store.TrainingSessionStore
 	var scheduledEventStore *store.ScheduledEventStore
+	var rankingsStore *store.RankingsStore
 	var fightService *service.FightService
 	var fatigueService *service.FatigueService
 	var progressionService *service.ProgressionService
 	var trainingService *service.TrainingService
+	var rankingsService *service.RankingsService
 	var worldClockModel *model.WorldClockModel
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
 		trainingSessionStore = store.NewTrainingSessionStore(dbConn.DB)
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
+		rankingsStore = store.NewRankingsStore(dbConn.DB)
 		fightService = service.NewFightService(&service.PostgresDBWrapper{Conn: dbConn.DB}, scheduledEventStore)
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
 		worldClockModel = model.NewWorldClockModel(logger)
 		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, scheduledEventStore, fatigueService, progressionService, worldClockModel, logger, dbConn.DB)
+		rankingsService = service.NewRankingsService(rankingsStore, redisClient.Client, logger)
 	}
 
 	// Setup auth service for middleware
@@ -110,6 +114,7 @@ func main() {
 		progressionService,
 		trainingService,
 	)
+	rankingsHandler := handler.NewRankingsHandler(rankingsService)
 	fightHandler := handler.NewFightHandler(fightService)
 	authHandler := handler.NewAuthHandler(dbConn)
 	dashboardHandler := handler.NewDashboardHandler()
@@ -324,6 +329,51 @@ func main() {
 		}
 		worldClockHandler.GetCurrentGameTime(w, r)
 	}).Methods(optionsMethod, "GET")
+
+	// Rankings endpoints - protected with authentication middleware
+	protectedRouter.HandleFunc("/rankings", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		rankingsHandler.GetRankings(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	protectedRouter.HandleFunc("/rankings/{boxer_id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		rankingsHandler.GetRankingForBoxer(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		rankingsHandler.GetNearbyRankings(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	protectedRouter.HandleFunc("/rankings/invalidate", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		rankingsHandler.InvalidateRankings(w, r)
+	}).Methods(optionsMethod, "POST")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists
