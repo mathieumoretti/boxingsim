@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -31,6 +32,9 @@ func main() {
 		mode = "reference"
 	}
 
+	// Get count for population mode (only used for population seeding)
+	count := getPopulationCountFromArgs(os.Args[1:])
+
 	// Initialize database connection
 	pgDB, err := database.NewPostgresDB(cfg)
 	if err != nil {
@@ -50,7 +54,7 @@ func main() {
 	fmt.Println("Connected to database successfully")
 
 	// Seed the database with mode parameter
-	if err := db.SeedDatabase(pgDB.DB, mode); err != nil {
+	if err := db.SeedDatabase(pgDB.DB, mode, count); err != nil {
 		log.Fatalf("Failed to seed database: %v", err)
 	}
 
@@ -71,6 +75,32 @@ func isValidMode(mode string) bool {
 		"reference":   true,
 		"development": true,
 		"dev":         true, // alias for development
+		"population":  true, // AI boxer population generation
 	}
 	return validModes[mode]
+}
+
+// getPopulationCountFromArgs extracts the --count parameter from arguments.
+// Supports both "--count 50" and "--count=50" formats.
+func getPopulationCountFromArgs(args []string) int {
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--count" && i+1 < len(args) {
+			// Format: --count 50
+			count, err := strconv.Atoi(args[i+1])
+			if err != nil {
+				return 100 // default count
+			}
+			return count
+		}
+		// Handle format: --count=50
+		if len(args[i]) > 8 && args[i][:7] == "--count" {
+			countStr := args[i][8:] // Remove "--count=" prefix
+			count, err := strconv.Atoi(countStr)
+			if err != nil {
+				return 100 // default count
+			}
+			return count
+		}
+	}
+	return 100 // default count
 }
