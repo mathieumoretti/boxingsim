@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
@@ -55,6 +56,13 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 	inUse2, _ := boxerdb.BoxerInFight(s.db, boxer2ID)
 	if inUse2 {
 		return fmt.Errorf("%w: boxer %d is currently involved in another fight", boxerdb.ErrBoxerInUse, boxer2ID)
+	}
+
+	// Validate opponent match quality (MAT-102)
+	validation := s.ValidateOpponentMatch(boxer1ID, boxer2ID)
+	if !validation.Valid {
+		warningsStr := strings.Join(validation.Warnings, ", ")
+		return fmt.Errorf("invalid matchup: status=%s, warnings=[%s]", validation.Status, warningsStr)
 	}
 
 	st := scheduledTime
@@ -107,4 +115,113 @@ func (s *FightService) GetFightByID(ctx context.Context, id int) (*model.Fight, 
 		return nil, errors.New("invalid fight id")
 	}
 	return boxerdb.GetFightByID(s.db, id)
+}
+
+// ValidateOpponentMatch validates a potential matchup between two boxers (MAT-102).
+func (s *FightService) ValidateOpponentMatch(boxer1ID, boxer2ID int) MatchValidation {
+	validation := MatchValidation{
+		Valid:       false,
+		Status:      "unknown",
+		Warnings:    []string{},
+		Suggestions: []string{},
+	}
+
+	// Retrieve both boxers
+	boxer1, err := boxerdb.GetBoxerByID(s.db, boxer1ID)
+	if err != nil {
+		validation.Warnings = append(validation.Warnings, "Boxer 1 not found")
+		return validation
+	}
+
+	boxer2, err := boxerdb.GetBoxerByID(s.db, boxer2ID)
+	if err != nil {
+		validation.Warnings = append(validation.Warnings, "Boxer 2 not found")
+		return validation
+	}
+
+	validation.Boxer1 = boxer1
+	validation.Boxer2 = boxer2
+
+	// Check if boxers are the same
+	if boxer1ID == boxer2ID {
+		validation.Warnings = append(validation.Warnings, "Cannot fight yourself")
+		validation.Status = "invalid"
+		return validation
+	}
+
+	// Check level difference
+	levelDiff := abs(boxer1.Level - boxer2.Level)
+	if levelDiff > MaxLevelDifference {
+		validation.Warnings = append(validation.Warnings, fmt.Sprintf("Level difference exceeds maximum allowed (%d)", levelDiff))
+		validation.Status = "mismatched"
+		return validation
+	}
+
+	// Check health levels
+	if boxer1.Health < MinHealthThreshold {
+		validation.Warnings = append(validation.Warnings, fmt.Sprintf("Boxer 1 health is critically low (%.0f%%)", boxer1.Health))
+	}
+	if boxer2.Health < MinHealthThreshold {
+		validation.Warnings = append(validation.Warnings, fmt.Sprintf("Boxer 2 health is critically low (%.0f%%)", boxer2.Health))
+	}
+
+	// Calculate match score using opponent scoring service
+	score := ScoreOpponent(boxer1, boxer2)
+	validation.MatchScore = score.OverallScore
+
+	// Determine match status based on score and warnings
+	if len(validation.Warnings) == 0 && score.OverallScore >= IdealMatchScore {
+		validation.Status = "perfect"
+		validation.Valid = true
+	} else if len(validation.Warnings) <= 1 && score.OverallScore >= AcceptableMatchScore {
+		validation.Status = "good"
+		validation.Valid = true
+	} else if score.OverallScore >= 0.4 {
+		validation.Status = "challenging"
+		validation.Valid = true
+	} else {
+		validation.Status = "mismatched"
+		validation.Valid = false
+	}
+
+	// Add warnings from scoring
+	validation.Warnings = append(validation.Warnings, score.Warnings...)
+
+	// Generate suggestions
+	if levelDiff > WarnLevelDifference {
+		if boxer1.Level < boxer2.Level {
+			validation.Suggestions = append(validation.Suggestions, "Consider finding a lower-level opponent for fairer matches")
+		} else {
+			validation.Suggestions = append(validation.Suggestions, "This opponent may be too weak - consider a higher-level challenge")
+		}
+	}
+
+	if len(validation.Warnings) > 0 {
+		validation.Suggestions = append(validation.Suggestions, "Address warnings before confirming fight")
+	}
+
+	if score.MatchQuality == "Perfect" {
+		validation.Suggestions = append(validation.Suggestions, "Excellent matchup - both fighters are well-matched!")
+	}
+
+	return validation
+}
+
+// MatchValidation represents the result of opponent matchup validation.
+type MatchValidation struct {
+	Valid       bool         `json:"valid"`
+	Status      string       `json:"status"` // "perfect", "good", "challenging", "mismatched"
+	Warnings    []string     `json:"warnings"`
+	Suggestions []string     `json:"suggestions"`
+	Boxer1      *model.Boxer `json:"boxer1,omitempty"`
+	Boxer2      *model.Boxer `json:"boxer2,omitempty"`
+	MatchScore  float64      `json:"match_score"`
+}
+
+// abs returns the absolute value of an integer.
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
