@@ -9,10 +9,11 @@ import (
 
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/model"
+	"github.com/mormm/boxing/internal/seeding"
 )
 
 // SeedDatabase populates the database with sample data for demonstration purposes.
-func SeedDatabase(db *sql.DB, mode string) error {
+func SeedDatabase(db *sql.DB, mode string, count int) error {
 	fmt.Println("Seeding database with sample data (mode:", mode+")...")
 
 	authService := auth.NewAuthService(nil) // nil config is fine - we just need password hashing functionality
@@ -22,6 +23,8 @@ func SeedDatabase(db *sql.DB, mode string) error {
 		return seedReferenceData(db, authService)
 	case "development", "dev":
 		return seedDevelopmentData(db, authService)
+	case "population":
+		return seedAIPopulationWithCount(db, authService, count)
 	default:
 		fmt.Println("Unknown mode:", mode+", using 'reference' as default")
 		return seedReferenceData(db, authService)
@@ -283,5 +286,67 @@ func updateExistingUserData(db *sql.DB, authService *auth.AuthService, userData 
 
 	allBoxers, _ := ListBoxersByUserID(db, existingUser.ID)
 	fmt.Printf("  Updated user %s to have %d boxers\n", userData.username, len(allBoxers))
+	return nil
+}
+
+// seedAIPopulationWithCount generates AI-controlled boxers for the population.
+func seedAIPopulationWithCount(db *sql.DB, authService *auth.AuthService, count int) error {
+	fmt.Println("Seeding with AI boxer population...")
+
+	// Create or retrieve admin user to own the AI boxers
+	adminUser, err := createAdminUser(db, authService)
+	if err != nil {
+		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+
+	// Use provided count or default
+	if count <= 0 {
+		count = 100
+	}
+	fmt.Printf("Generating %d AI boxers...\n", count)
+
+	// Use the seeding package to generate boxer creation requests
+	boxerCreates, err := seeding.GenerateBoxersForSeeding(count, adminUser.ID)
+	if err != nil {
+		return fmt.Errorf("failed to generate AI population: %w", err)
+	}
+
+	// Create each boxer in the database
+	successCount := 0
+	failCount := 0
+
+	for _, boxerCreate := range boxerCreates {
+		// Check if boxer already exists by name (idempotent seeding)
+		existingBoxers, _ := ListBoxerByName(db, boxerCreate.Name)
+		if len(existingBoxers) > 0 {
+			fmt.Printf("  Skipping %s (already exists)\n", boxerCreate.Name)
+			continue
+		}
+
+		createdBoxer, err := CreateBoxerForUser(db, adminUser.ID, boxerCreate)
+		if err != nil {
+			log.Printf("Warning: Failed to create AI boxer %s: %v", boxerCreate.Name, err)
+			failCount++
+			continue
+		}
+
+		successCount++
+
+		// Print boxer details
+		nicknameDisplay := "N/A"
+		if createdBoxer.Nickname != nil && *createdBoxer.Nickname != "" {
+			nicknameDisplay = *createdBoxer.Nickname
+		}
+		fmt.Printf("  Created: %s (%s) - L%d [STR:%.1f DEF:%.1f AGI:%.1f]\n",
+			createdBoxer.Name, nicknameDisplay, createdBoxer.Level,
+			createdBoxer.Strength, createdBoxer.Defense, createdBoxer.Agility)
+	}
+
+	fmt.Printf("\nAI Population Seeding Complete!\n")
+	fmt.Printf("  Successfully created: %d boxers\n", successCount)
+	if failCount > 0 {
+		fmt.Printf("  Failed: %d boxers\n", failCount)
+	}
+
 	return nil
 }

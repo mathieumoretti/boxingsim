@@ -1,4 +1,4 @@
-.PHONY: help build run dev worker test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load
+.PHONY: help build run dev worker test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load seed-pop
 
 .DEFAULT_GOAL := help
 
@@ -21,8 +21,9 @@ help:
 	@echo "make seed      - Seed the database with sample data"
 	@echo "make db-create - Create database"
 	@echo "make migrate   - Run database migrations"
-	@echo "make seed-ref  - Seed reference data"
-	@echo "make seed-dev  - Seed development data"
+	@echo "make seed-ref  - Seed reference data (championship boxers)"
+	@echo "make seed-dev  - Seed development data (sample users + boxers)"
+	@echo "make seed-pop  - Generate AI boxer population (use --count=N for custom count, default 100)"
 	@echo "make world     - Generate complete world"
 	@echo "make reset-dev - Reset and reseed for development"
 	@echo "make test-db   - Verify isolated test database connectivity"
@@ -87,6 +88,14 @@ seed-dev:
 
 world:
 	go run cmd/seed/main.go world
+
+# seed-pop: Generate AI boxer population (MAT-101)
+# Usage: make seed-pop COUNT=50  # Generates 50 AI boxers
+#        make seed-pop          # Generates default 100 AI boxers
+COUNT ?= 100
+seed-pop:
+	@echo "Generating AI boxer population (count: $(COUNT))..."
+	go run cmd/seed/main.go population --count=$(COUNT)
 
 reset-dev: migrate seed-ref seed-dev
 
