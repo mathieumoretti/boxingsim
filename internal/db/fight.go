@@ -70,6 +70,17 @@ func BoxerInFight(db *sql.DB, boxerID int) (bool, error) {
 }
 
 // GetAvailableOpponents retrieves available opponents for a boxer
+//
+// DEPRECATED: This function is no longer used as of MAT-102.
+// It has been replaced by [FindOpponents] in opponent_discovery.go which provides:
+//   - Level-based filtering (MinLevel, MaxLevel)
+//   - Health checks (HealthyOnly, MinHealth threshold)
+//   - Availability checks (not currently in fights)
+//   - AI vs human classification (IncludeAI, ExcludeOwned)
+//   - Ranking proximity ordering (PreferRankings)
+//   - Proper opponent scoring and sorting via service.OpponentDiscoveryService
+//
+// Use [FindOpponents] with appropriate filters instead.
 func GetAvailableOpponents(db *sql.DB, boxerID int) ([]*model.Boxer, error) {
 	query := `SELECT id, user_id, name, nickname, position_x, position_y, health,
 	energy, strength, defense, agility, experience, level, created_at, updated_at
