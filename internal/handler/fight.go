@@ -170,3 +170,38 @@ func (h *FightHandler) GetFightByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// GetUpcomingFightForBoxer returns the next upcoming fight for a specific boxer (GET /boxers/{id}/upcoming-fight) (MAT-106)
+func (h *FightHandler) GetUpcomingFightForBoxer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		http.Error(w, `{"error": "boxer id required"}`, http.StatusBadRequest)
+		return
+	}
+
+	boxerID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error": "invalid boxer id format"}`, http.StatusBadRequest)
+		return
+	}
+
+	fight, err := h.fightService.GetUpcomingFightForBoxer(r.Context(), boxerID)
+	if err != nil {
+		switch {
+		case errors.Is(err, boxerdb.ErrUpcomingFightNotFound):
+			http.Error(w, `{"error": "no upcoming fight found"}`, http.StatusNotFound)
+		default:
+			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(fight); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+}

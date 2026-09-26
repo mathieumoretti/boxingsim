@@ -7,6 +7,7 @@ import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
 import FightBooking from './FightBooking.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
+import { createFightMap } from '../utils/fights';
 
 const Dashboard = ({ user, onLogout }) => {
   const [boxers, setBoxers] = useState([]);
@@ -17,6 +18,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
   const [selectedBoxerForFight, setSelectedBoxerForFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
+  const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -66,18 +68,62 @@ const Dashboard = ({ user, onLogout }) => {
     setError('');
 
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/users/${userId}/boxers`, {
-        method: 'GET',
-      });
+      // Fetch boxers and active fights in parallel (MAT-106)
+      const [boxersResponse, fightsResponse] = await Promise.all([
+        authenticatedFetch(`${API_BASE_URL}/users/${userId}/boxers`, { method: 'GET' }),
+        authenticatedFetch(`${API_BASE_URL}/fights/active`, { method: 'GET' })
+      ]);
 
-      const data = await response.json();
+      const boxersData = await boxersResponse.json();
+      let boxersArray = [];
 
-      if (response.ok) {
+      if (boxersResponse.ok) {
         // Ensure we always have an array, even if API returns null for empty results
-        setBoxers(Array.isArray(data) ? data : []);
+        boxersArray = Array.isArray(boxersData) ? boxersData : [];
+        setBoxers(boxersArray);
       } else {
-        setError(data.error || 'Failed to load boxers');
+        setError(boxersData.error || 'Failed to load boxers');
       }
+
+      // Fetch active fights and create a mapping (MAT-106)
+      let activeFights = [];
+      if (fightsResponse.ok) {
+        const fightsData = await fightsResponse.json();
+        activeFights = Array.isArray(fightsData) ? fightsData : [];
+
+        // Create fight map for boxers
+        if (boxersArray.length > 0) {
+          const boxerIds = boxersArray.map(b => b.id);
+
+          // Create a mapping of boxerId -> next fight info
+          const fightMapping = {};
+          activeFights.forEach(fight => {
+            // Only include fights involving this user's boxers
+            if (boxerIds.includes(fight.boxer1_id)) {
+              // This user's boxer is boxer1
+              fightMapping[fight.boxer1_id] = {
+                fight_id: fight.id,
+                opponent_id: fight.boxer2_id,
+                scheduled_time: fight.scheduled_time,
+                status: fight.status,
+                rounds: fight.round || 12
+              };
+            } else if (boxerIds.includes(fight.boxer2_id)) {
+              // This user's boxer is boxer2
+              fightMapping[fight.boxer2_id] = {
+                fight_id: fight.id,
+                opponent_id: fight.boxer1_id,
+                scheduled_time: fight.scheduled_time,
+                status: fight.status,
+                rounds: fight.round || 12
+              };
+            }
+          });
+
+          setFightData(fightMapping);
+        }
+      }
+
     } catch (error) {
       // Don't show error if redirected to login (401 handled by authenticatedFetch)
       if (!error.message.includes('Unauthorized')) {
@@ -130,6 +176,7 @@ const Dashboard = ({ user, onLogout }) => {
                   key={boxer.id}
                   boxer={boxer}
                   worldTime={worldTime}
+                  upcomingFight={fightData[boxer.id]}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
                   onOpenFightBooking={() => setSelectedBoxerForFight(boxer)}
                   onBoxerStateChanged={handleBoxerStateChanged}

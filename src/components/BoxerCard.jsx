@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './BoxerCard.css';
 import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
 import RestingBadge from './RestingBadge';
+import FightBadge from './FightBadge';
 
 const trainingTypeIcons = {
   strength_training: '💪',
@@ -39,9 +40,10 @@ const formatCountdown = (remainingSeconds) => {
   }
 };
 
-const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged, onOpenFightBooking }) => {
+const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerStateChanged, onOpenFightBooking }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [fetchedFight, setFetchedFight] = useState(upcomingFight || null);
 
   // Fetch active training session for this boxer
   const loadActiveTraining = useCallback(async () => {
@@ -68,6 +70,37 @@ const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged, onOp
       loadActiveTraining();
     }
   }, [boxer.id, loadActiveTraining]);
+
+  // Fetch upcoming fight for this boxer (MAT-106)
+  useEffect(() => {
+    const fetchUpcomingFight = async () => {
+      // If fight data is already provided via prop, use it
+      if (upcomingFight) {
+        setFetchedFight(upcomingFight);
+        return;
+      }
+
+      try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/upcoming-fight`, {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const fightData = await response.json();
+          setFetchedFight(fightData);
+        } else if (response.status === 404) {
+          // No upcoming fight found - that's fine
+          setFetchedFight(null);
+        }
+      } catch (err) {
+        // Silently fail - boxer card still works without fight data
+      }
+    };
+
+    if (boxer.id) {
+      fetchUpcomingFight();
+    }
+  }, [boxer.id, upcomingFight]);
 
   // Poll for training session status when there's active training
   useEffect(() => {
@@ -216,9 +249,17 @@ const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged, onOp
   const isButtonDisabled = boxer.health < 50 || boxer.energy < 15 || boxer.fatigue_score >= 80 || !!activeSession;
 
   return (
-    <div className="boxer-card">
+    <div className="boxer-card" id={`boxer-card-${boxer.id}`}>
       {/* Level Badge */}
       <div className={`level-badge ${levelBadgeClass}`}>LVL {boxer.level || 1}</div>
+
+      {/* Fight Badge - Shows next scheduled fight (MAT-106) */}
+      {fetchedFight && (
+        <FightBadge
+          fight={fetchedFight}
+          currentGameTime={worldTime?.current_game_time}
+        />
+      )}
 
       {/* Rest Status Badge - Shows when boxer has active rest period */}
       <RestingBadge
