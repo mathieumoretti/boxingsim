@@ -1,0 +1,125 @@
+/* Fight Badge Component - MAT-106 */
+
+.fight-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 50%, #8e0000 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(176, 37, 31, 0.4);
+  z-index: 10;
+  transition: all 0.3s ease;
+  max-width: calc(100% - 80px); /* Leave room for level badge */
+}
+
+.fight-badge:hover {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 50%, #a31515 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(176, 37, 31, 0.6);
+}
+
+.fight-badge:active {
+  transform: translateY(0);
+}
+
+.fight-icon {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fight-info {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.fight-timer {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Countdown color classes */
+.fight-timer.countdown-normal {
+  color: #4caf50; /* Green - more than 24h */
+}
+
+.fight-timer.countdown-urgent {
+  color: #ffeb3b; /* Yellow - less than 24h */
+}
+
+.fight-timer.countdown-critical {
+  color: #f44336; /* Red - less than 1h */
+}
+
+.fight-timer.countdown-immediate {
+  color: #ff5722; /* Orange - starting now */
+  font-weight: bold;
+}
+
+/* Pulse animation for fights within 24 hours */
+.fight-badge.pulse-animation {
+  animation: fight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fight-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(176, 37, 31, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(176, 37, 31, 0.7);
+    transform: scale(1.02);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fight-badge {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .fight-icon {
+    font-size: 0.9rem;
+  }
+
+  .fight-info {
+    max-width: 80px;
+    font-size: 0.75rem;
+  }
+
+  .fight-timer {
+    font-size: 0.7rem;
+  }
+}
+
+/* Hide on very small screens if needed */
+@media (max-width: 480px) {
+  .fight-badge {
+    padding: 4px 8px;
+  }
+
+  .fight-info {
+    display: none; /* Hide opponent name on very small screens */
+  }
+
+  .fight-icon {
+    font-size: 1rem;
+  }
+}
