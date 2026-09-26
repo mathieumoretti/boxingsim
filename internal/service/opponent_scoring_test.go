@@ -306,21 +306,21 @@ func TestDetermineFightingStyle(t *testing.T) {
 func TestGenerateWarnings(t *testing.T) {
 	t.Run("no warnings for well-matched boxers", func(t *testing.T) {
 		boxer1 := &model.Boxer{
-			ID:        1,
-			Name:      "Boxer 1",
-			Level:     10,
-			Health:    90.0,
-			Wins:      5,
-			Losses:    3,
+			ID:     1,
+			Name:   "Boxer 1",
+			Level:  10,
+			Health: 90.0,
+			Wins:   5,
+			Losses: 3,
 		}
 
 		boxer2 := &model.Boxer{
-			ID:        2,
-			Name:      "Boxer 2",
-			Level:     11,
-			Health:    88.0,
-			Wins:      6,
-			Losses:    3,
+			ID:     2,
+			Name:   "Boxer 2",
+			Level:  11,
+			Health: 88.0,
+			Wins:   6,
+			Losses: 3,
 		}
 
 		levelProximity := calculateLevelProximity(boxer1.Level, boxer2.Level)
@@ -331,17 +331,17 @@ func TestGenerateWarnings(t *testing.T) {
 
 	t.Run("warning for large level difference", func(t *testing.T) {
 		boxer1 := &model.Boxer{
-			ID:        1,
-			Name:      "Boxer 1",
-			Level:     5,
-			Health:    90.0,
+			ID:     1,
+			Name:   "Boxer 1",
+			Level:  5,
+			Health: 90.0,
 		}
 
 		boxer2 := &model.Boxer{
-			ID:        2,
-			Name:      "Boxer 2",
-			Level:     20, // Large difference
-			Health:    88.0,
+			ID:     2,
+			Name:   "Boxer 2",
+			Level:  20, // Large difference
+			Health: 88.0,
 		}
 
 		levelProximity := calculateLevelProximity(boxer1.Level, boxer2.Level)
@@ -352,17 +352,17 @@ func TestGenerateWarnings(t *testing.T) {
 
 	t.Run("warning for low health", func(t *testing.T) {
 		boxer1 := &model.Boxer{
-			ID:        1,
-			Name:      "Boxer 1",
-			Level:     10,
-			Health:    90.0,
+			ID:     1,
+			Name:   "Boxer 1",
+			Level:  10,
+			Health: 90.0,
 		}
 
 		boxer2 := &model.Boxer{
-			ID:        2,
-			Name:      "Boxer 2",
-			Level:     10,
-			Health:    25.0, // Below threshold
+			ID:     2,
+			Name:   "Boxer 2",
+			Level:  10,
+			Health: 25.0, // Below threshold
 		}
 
 		levelProximity := calculateLevelProximity(boxer1.Level, boxer2.Level)
@@ -373,21 +373,21 @@ func TestGenerateWarnings(t *testing.T) {
 
 	t.Run("warning for significant skill difference", func(t *testing.T) {
 		boxer1 := &model.Boxer{
-			ID:        1,
-			Name:      "Boxer 1",
-			Level:     10,
-			Health:    90.0,
-			Wins:      18,
-			Losses:    2, // 90% win rate
+			ID:     1,
+			Name:   "Boxer 1",
+			Level:  10,
+			Health: 90.0,
+			Wins:   18,
+			Losses: 2, // 90% win rate
 		}
 
 		boxer2 := &model.Boxer{
-			ID:        2,
-			Name:      "Boxer 2",
-			Level:     10,
-			Health:    88.0,
-			Wins:      2,
-			Losses:    18, // 10% win rate
+			ID:     2,
+			Name:   "Boxer 2",
+			Level:  10,
+			Health: 88.0,
+			Wins:   2,
+			Losses: 18, // 10% win rate
 		}
 
 		levelProximity := calculateLevelProximity(boxer1.Level, boxer2.Level)
@@ -400,19 +400,19 @@ func TestGenerateWarnings(t *testing.T) {
 // TestFindBestMatch tests finding the best match from a list of opponents
 func TestFindBestMatch(t *testing.T) {
 	playerBoxer := &model.Boxer{
-		ID:        1,
-		Name:      "Player",
-		Level:     10,
-		Health:    90.0,
-		Wins:      5,
-		Losses:    3,
+		ID:     1,
+		Name:   "Player",
+		Level:  10,
+		Health: 90.0,
+		Wins:   5,
+		Losses: 3,
 	}
 
 	// Create opponents with different match qualities
 	opponents := []*model.Boxer{
-		{ID: 2, Name: "Perfect Match", Level: 10, Health: 90.0, Wins: 5, Losses: 3},     // Same stats
-		{ID: 3, Name: "Slightly Higher", Level: 12, Health: 85.0, Wins: 6, Losses: 4},  // +2 levels
-		{ID: 4, Name: "Too High", Level: 25, Health: 90.0, Wins: 20, Losses: 5},        // Way too high
+		{ID: 2, Name: "Perfect Match", Level: 10, Health: 90.0, Wins: 5, Losses: 3},   // Same stats
+		{ID: 3, Name: "Slightly Higher", Level: 12, Health: 85.0, Wins: 6, Losses: 4}, // +2 levels
+		{ID: 4, Name: "Too High", Level: 25, Health: 90.0, Wins: 20, Losses: 5},       // Way too high
 	}
 
 	score := ScoreOpponent(playerBoxer, opponents[0])
@@ -423,12 +423,12 @@ func TestFindBestMatch(t *testing.T) {
 // TestScoreRankedOpponents tests scoring and sorting multiple opponents
 func TestScoreRankedOpponents(t *testing.T) {
 	playerBoxer := &model.Boxer{
-		ID:        1,
-		Name:      "Player",
-		Level:     10,
-		Health:    90.0,
-		Wins:      5,
-		Losses:    3,
+		ID:     1,
+		Name:   "Player",
+		Level:  10,
+		Health: 90.0,
+		Wins:   5,
+		Losses: 3,
 	}
 
 	opponents := []*db.RankedOpponent{

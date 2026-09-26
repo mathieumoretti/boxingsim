@@ -10,29 +10,29 @@ import (
 
 // Scoring weights for the matchmaking algorithm
 const (
-	WeightLevelDiff   = 0.40 // 40% - Level proximity is most important
-	WeightRanking     = 0.30 // 30% - Ranking position similarity
-	WeightWinRate     = 0.20 // 20% - Win rate compatibility
+	WeightLevelDiff    = 0.40 // 40% - Level proximity is most important
+	WeightRanking      = 0.30 // 30% - Ranking position similarity
+	WeightWinRate      = 0.20 // 20% - Win rate compatibility
 	WeightStyleVariety = 0.10 // 10% - Fighting style diversity bonus
 
 	// Score thresholds
-	MaxLevelDifference   = 10 // Beyond this, match is considered unfair
-	WarnLevelDifference  = 5  // Warning threshold for level difference
-	MinHealthThreshold   = 30 // Minimum health for safe fighting
+	MaxLevelDifference   = 10   // Beyond this, match is considered unfair
+	WarnLevelDifference  = 5    // Warning threshold for level difference
+	MinHealthThreshold   = 30   // Minimum health for safe fighting
 	IdealMatchScore      = 0.85 // Score above this is considered an ideal match
 	AcceptableMatchScore = 0.60 // Score above this is acceptable
 )
 
 // OpponentScore represents the scoring breakdown for an opponent match.
 type OpponentScore struct {
-	LevelProximity  float64 `json:"level_proximity"`   // Lower is better (0 = same level), normalized 0-1
-	RankingDiff     int     `json:"ranking_diff"`      // Difference in ranking position (0 = same rank)
-	WinRateMatch    float64 `json:"win_rate_match"`    // Similarity in skill (0-1, higher is better match)
-	StyleVariety    string  `json:"style_variety"`     // Fighting style classification
-	OverallScore    float64 `json:"overall_score"`     // Composite matchmaking score (0-1)
-	MatchQuality    string  `json:"match_quality"`     // Human-readable quality assessment
-	Reasoning       string  `json:"reasoning"`         // Explanation of the match recommendation
-	Warnings        []string `json:"warnings"`         // List of concerns about this match
+	LevelProximity float64  `json:"level_proximity"` // Lower is better (0 = same level), normalized 0-1
+	RankingDiff    int      `json:"ranking_diff"`    // Difference in ranking position (0 = same rank)
+	WinRateMatch   float64  `json:"win_rate_match"`  // Similarity in skill (0-1, higher is better match)
+	StyleVariety   string   `json:"style_variety"`   // Fighting style classification
+	OverallScore   float64  `json:"overall_score"`   // Composite matchmaking score (0-1)
+	MatchQuality   string   `json:"match_quality"`   // Human-readable quality assessment
+	Reasoning      string   `json:"reasoning"`       // Explanation of the match recommendation
+	Warnings       []string `json:"warnings"`        // List of concerns about this match
 }
 
 // ScoreOpponent calculates a comprehensive matchmaking score for an opponent.
@@ -224,13 +224,13 @@ func calculateStyleBonus(opponentStyle string, playerBoxer, opponent *model.Boxe
 	// Complementary styles get higher bonuses
 	styleCompatibility := map[string]map[string]float64{
 		"Brawler": {
-			"Tank":       0.9,   // Classic clash
-			"Speedster":  0.7,   // Power vs speed
-			"Technician": 0.8,   // Raw power vs skill
+			"Tank":       0.9, // Classic clash
+			"Speedster":  0.7, // Power vs speed
+			"Technician": 0.8, // Raw power vs skill
 		},
 		"Technician": {
-			"Brawler":    0.8,   // Skill vs power
-			"Speedster":  0.6,   // Technique duel
+			"Brawler":     0.8,  // Skill vs power
+			"Speedster":   0.6,  // Technique duel
 			"All-Rounder": 0.75, // Test all skills
 		},
 	}

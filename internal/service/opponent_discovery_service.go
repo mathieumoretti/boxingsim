@@ -20,8 +20,8 @@ var (
 
 // OpponentDiscoveryService handles opponent discovery and matchmaking business logic.
 type OpponentDiscoveryService struct {
-	db     *sql.DB
-	rand   *rand.Rand
+	db   *sql.DB
+	rand *rand.Rand
 }
 
 // NewOpponentDiscoveryService creates a new OpponentDiscoveryService.
@@ -216,13 +216,13 @@ func (s *OpponentDiscoveryService) GetTopMatches(boxerID int, count int) ([]*Sco
 	}
 
 	filters := db.OpponentFilter{
-		BoxerID:       boxerID,
-		IncludeAI:     true,
-		ExcludeOwned:  true,
-		AvailableOnly: true,
-		HealthyOnly:   true,
-		MinHealth:     30.0,
-		MaxResults:    count * 2, // Get more to score and filter
+		BoxerID:        boxerID,
+		IncludeAI:      true,
+		ExcludeOwned:   true,
+		AvailableOnly:  true,
+		HealthyOnly:    true,
+		MinHealth:      30.0,
+		MaxResults:     count * 2, // Get more to score and filter
 		PreferRankings: true,
 	}
 

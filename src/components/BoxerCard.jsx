@@ -39,7 +39,7 @@ const formatCountdown = (remainingSeconds) => {
   }
 };
 
-const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged }) => {
+const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged, onOpenFightBooking }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
 
@@ -336,6 +336,15 @@ const BoxerCard = ({ boxer, worldTime, onOpenTraining, onBoxerStateChanged }) =>
           title={activeSession ? 'Boxer is currently training' : boxer.fatigue_score >= 80 ? `Boxer is exhausted (fatigue ${Math.round(boxer.fatigue_score)}/100). Rest required.` : boxer.health < 50 ? 'Boxer needs recovery (health < 50%)' : boxer.energy < 15 ? 'Insufficient energy (need 15+)' : 'Schedule Training'}
         >
           {activeSession ? 'Training In Progress...' : 'Schedule Training'}
+        </button>
+
+        <button
+          className="fight-btn"
+          onClick={onOpenFightBooking}
+          disabled={boxer.health < 30 || boxer.has_active_rest}
+          title={boxer.health < 30 ? 'Boxer too injured to fight (need 30+ health)' : boxer.has_active_rest ? 'Boxer is resting' : 'Book a Fight'}
+        >
+          🥊 Book Fight
         </button>
       </div>
 

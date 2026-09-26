@@ -38,32 +38,7 @@ services:
     networks:
       - boxing-network
 
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: boxing-server
-    ports:
-      - "8081:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: boxing
-      DB_PASSWORD: boxing123
-      DB_NAME: boxing
-      REDIS_ADDR: redis:6379
-      REDIS_PASSWORD:
-      JWT_SECRET: dev-secret-key-change-in-production
-    networks:
-      - boxing-network
-    volumes:
-      # Mount source code for development so changes are picked up immediately
-      - .:/app
+
 
 volumes:
   postgres_data:

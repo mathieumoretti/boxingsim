@@ -5,6 +5,7 @@ import TopBar from './TopBar.jsx';
 import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
+import FightBooking from './FightBooking.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -14,6 +15,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
   const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
+  const [selectedBoxerForFight, setSelectedBoxerForFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
 
   useEffect(() => {
@@ -103,7 +105,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <button className="create-boxer-btn">Create New Boxer</button>
               </Link>
               {/* Development-only training control - hidden in production */}
-              {import.meta.env.DEV && (
+              {process.env.NODE_ENV === 'development' && (
                 <button
                   className="dev-control-btn"
                   onClick={() => setShowTrainingControlPanel(true)}
@@ -129,6 +131,7 @@ const Dashboard = ({ user, onLogout }) => {
                   boxer={boxer}
                   worldTime={worldTime}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
+                  onOpenFightBooking={() => setSelectedBoxerForFight(boxer)}
                   onBoxerStateChanged={handleBoxerStateChanged}
                 />
               ))}
@@ -156,6 +159,18 @@ const Dashboard = ({ user, onLogout }) => {
               />
             </div>
           </div>
+        )}
+
+        {/* Fight Booking Modal */}
+        {selectedBoxerForFight && (
+          <FightBooking
+            boxer={selectedBoxerForFight}
+            onClose={() => setSelectedBoxerForFight(null)}
+            onFightBooked={() => {
+              loadUserBoxers(currentUser.id);
+              setSelectedBoxerForFight(null);
+            }}
+          />
         )}
 
         {/* Training Control Panel - Development Only */}

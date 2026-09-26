@@ -86,6 +86,7 @@ func main() {
 	var trainingService *service.TrainingService
 	var rankingsService *service.RankingsService
 	var worldClockModel *model.WorldClockModel
+	var opponentDiscoveryService *service.OpponentDiscoveryService
 	if dbConn != nil {
 		boxerStore = store.NewBoxerStore(dbConn.DB)
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
@@ -98,6 +99,7 @@ func main() {
 		worldClockModel = model.NewWorldClockModel(logger)
 		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, scheduledEventStore, fatigueService, progressionService, worldClockModel, logger, dbConn.DB)
 		rankingsService = service.NewRankingsService(rankingsStore, redisClient.Client, logger)
+		opponentDiscoveryService = service.NewOpponentDiscoveryService(dbConn.DB)
 	}
 
 	// Setup auth service for middleware
@@ -116,6 +118,7 @@ func main() {
 	)
 	rankingsHandler := handler.NewRankingsHandler(rankingsService)
 	fightHandler := handler.NewFightHandler(fightService)
+	opponentHandler := handler.NewOpponentHandler(opponentDiscoveryService)
 	authHandler := handler.NewAuthHandler(dbConn)
 	dashboardHandler := handler.NewDashboardHandler()
 	worldClockHandler := handler.NewWorldClockHandler(dbConn.DB)
@@ -192,6 +195,30 @@ func main() {
 		boxerHandler.CreateBoxer(w, r)
 	}).Methods(optionsMethod, "POST")
 
+	// More specific boxer routes MUST come before /boxers/{id} (Gorilla Mux route ordering)
+	protectedRouter.HandleFunc("/boxers/{id}/fights", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		fightHandler.BookFightForBoxer(w, r)
+	}).Methods(optionsMethod, "POST")
+
+	protectedRouter.HandleFunc("/boxers/{id}/opponents", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		opponentHandler.GetOpponents(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	// Now the catch-all boxer ID routes
 	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -258,6 +285,29 @@ func main() {
 		}
 		fightHandler.GetFightByID(w, r)
 	}).Methods(optionsMethod, "GET")
+
+	// Opponent discovery endpoints (best_match and validate)
+	protectedRouter.HandleFunc("/opponents/best_match", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		opponentHandler.GetBestMatch(w, r)
+	}).Methods(optionsMethod, "GET")
+
+	protectedRouter.HandleFunc("/opponents/validate", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		opponentHandler.ValidateMatch(w, r)
+	}).Methods(optionsMethod, "POST")
 
 	// Training types endpoint - public (reference data)
 	router.HandleFunc("/training-types", func(w http.ResponseWriter, r *http.Request) {
