@@ -3,56 +3,54 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/mormm/boxing/internal/model"
 )
 
-var (
-	ErrNoOpponentsFound = errors.New("no opponents found matching criteria")
-)
+var ErrNoOpponentsFound = errors.New("no opponents found matching criteria")
 
 // OpponentFilter defines filtering criteria for opponent discovery.
 type OpponentFilter struct {
-	BoxerID       int     // Filter opponents for this boxer
-	MinLevel      int     // Minimum opponent level (default: boxer.Lvl - 3)
-	MaxLevel      int     // Maximum opponent level (default: boxer.Lvl + 3)
-	IncludeAI     bool    // Include AI fighters (default: true)
-	ExcludeOwned  bool    // Exclude player-owned boxers (default: true)
-	AvailableOnly bool    // Not currently in fight (default: true)
-	HealthyOnly   bool    // Health > threshold (default: true, threshold=30)
-	MinHealth     float64 // Minimum health threshold (default: 30)
-	MaxResults    int     // Limit results (default: 50)
-	PreferRankings bool   // Sort by ranking tier proximity
+	BoxerID        int     // Filter opponents for this boxer
+	MinLevel       int     // Minimum opponent level (default: boxer.Lvl - 3)
+	MaxLevel       int     // Maximum opponent level (default: boxer.Lvl + 3)
+	IncludeAI      bool    // Include AI fighters (default: true)
+	ExcludeOwned   bool    // Exclude player-owned boxers (default: true)
+	AvailableOnly  bool    // Not currently in fight (default: true)
+	HealthyOnly    bool    // Health > threshold (default: true, threshold=30)
+	MinHealth      float64 // Minimum health threshold (default: 30)
+	MaxResults     int     // Limit results (default: 50)
+	PreferRankings bool    // Sort by ranking tier proximity
 }
 
 // ApplyDefaults sets default values for unset filter fields based on the boxer's stats.
+// If MinLevel equals MaxLevel and both are non-zero, treats it as a +/- range around boxer level.
 func (f *OpponentFilter) ApplyDefaults(boxerLevel int, defaultMinHealth float64) {
-	if f.MinLevel == 0 {
-		f.MinLevel = boxerLevel - 3
+	// Check if MinLevel and MaxLevel were set to the same value (indicating a +/- range)
+	if f.MinLevel > 0 && f.MinLevel == f.MaxLevel {
+		// Treat as level range: boxerLevel +/- MinLevel
+		rangeValue := f.MinLevel
+		f.MinLevel = boxerLevel - rangeValue
 		if f.MinLevel < 1 {
 			f.MinLevel = 1
 		}
+		f.MaxLevel = boxerLevel + rangeValue
+	} else {
+		// Apply defaults if MinLevel or MaxLevel not set
+		if f.MinLevel == 0 {
+			f.MinLevel = boxerLevel - 3
+			if f.MinLevel < 1 {
+				f.MinLevel = 1
+			}
+		}
+		if f.MaxLevel == 0 {
+			f.MaxLevel = boxerLevel + 3
+		}
 	}
-	if f.MaxLevel == 0 {
-		f.MaxLevel = boxerLevel + 3
-	}
-	if !f.IncludeAI {
-		// Default to including AI fighters
-		f.IncludeAI = true
-	}
-	if !f.ExcludeOwned {
-		// Default to excluding owned boxers
-		f.ExcludeOwned = true
-	}
-	if !f.AvailableOnly {
-		// Default to only available opponents
-		f.AvailableOnly = true
-	}
-	if !f.HealthyOnly {
-		// Default to only healthy opponents
-		f.HealthyOnly = true
-	}
+	// Note: boolean fields (IncludeAI, ExcludeOwned, etc.) are not defaulted here
+	// to allow explicit false values from the caller. Defaults should be set in handler.
 	if f.MinHealth == 0 {
 		f.MinHealth = defaultMinHealth
 	}
@@ -64,11 +62,11 @@ func (f *OpponentFilter) ApplyDefaults(boxerLevel int, defaultMinHealth float64)
 // RankedOpponent represents a boxer with ranking and matchability information.
 type RankedOpponent struct {
 	Boxer           *model.Boxer `json:"boxer"`
-	Rank            int          `json:"rank,omitempty"` // Ranking position if available
+	Rank            int          `json:"rank,omitempty"`          // Ranking position if available
 	RankingScore    float64      `json:"ranking_score,omitempty"` // Score used for ranking
-	LevelDifference int          `json:"level_difference"` // Difference from requesting boxer's level
-	IsAI            bool         `json:"is_ai"` // True if user_id is null (AI fighter)
-	IsActiveRest    bool         `json:"is_active_rest"` // True if currently resting
+	LevelDifference int          `json:"level_difference"`        // Difference from requesting boxer's level
+	IsAI            bool         `json:"is_ai"`                   // True if user_id is null (AI fighter)
+	IsActiveRest    bool         `json:"is_active_rest"`          // True if currently resting
 }
 
 // FindOpponents retrieves available opponents for a boxer with intelligent filtering.
@@ -86,13 +84,7 @@ func FindOpponents(db *sql.DB, boxerID int, filter OpponentFilter) ([]*RankedOpp
 	// Build query with filters
 	query, params := buildOpponentQuery(filter)
 
-	rows, err := db.Query(query,
-		params[0], // $1 boxerID
-		params[1], // $2 MinLevel
-		params[2], // $3 MaxLevel
-		params[3], // $4 MinHealth
-		params[4], // $5 MaxResults (if used)
-	)
+	rows, err := db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -149,29 +141,36 @@ func FindOpponents(db *sql.DB, boxerID int, filter OpponentFilter) ([]*RankedOpp
 
 // buildOpponentQuery constructs the SQL query based on filter criteria.
 func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
+	var params []interface{}
+
+	// Add base parameters
+	params = append(params, filter.BoxerID) // $1 - boxerID for exclusion and level lookup
+	boxerIDParam := "$1"
+
+	params = append(params, filter.MinLevel) // $2 - min level
+	minLevelParam := "$2"
+
+	params = append(params, filter.MaxLevel) // $3 - max level
+	maxLevelParam := "$3"
+
 	var whereClauses []string
-	params := []interface{}{
-		filter.BoxerID,      // $1
-		filter.MinLevel,     // $2
-		filter.MaxLevel,     // $3
-		filter.MinHealth,    // $4
-		filter.MaxResults,   // $5
-	}
 
 	// Exclude the requesting boxer
-	whereClauses = append(whereClauses, "b.id != $1")
+	whereClauses = append(whereClauses, "b.id != "+boxerIDParam)
 
 	// Exclude player-owned boxers (same user_id)
 	if filter.ExcludeOwned {
-		whereClauses = append(whereClauses, "b.user_id != (SELECT user_id FROM boxers WHERE id = $1)")
+		whereClauses = append(whereClauses, "b.user_id != (SELECT user_id FROM boxers WHERE id = "+boxerIDParam+")")
 	}
 
 	// Filter by level range
-	whereClauses = append(whereClauses, "b.level >= $2 AND b.level <= $3")
+	whereClauses = append(whereClauses, "b.level >= "+minLevelParam+" AND b.level <= "+maxLevelParam)
 
 	// Filter by health
 	if filter.HealthyOnly {
-		whereClauses = append(whereClauses, "b.health > $4")
+		params = append(params, filter.MinHealth) // $4 - min health (if needed)
+		minHealthParam := fmt.Sprintf("$%d", len(params))
+		whereClauses = append(whereClauses, "b.health > "+minHealthParam)
 	}
 
 	// Exclude boxers currently in fights
@@ -193,7 +192,7 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 	// Build WHERE clause
 	whereClause := strings.Join(whereClauses, " AND ")
 
-	// Base query
+	// Base query - use $1 for boxer level lookup in SELECT
 	query := `
 		SELECT
 			b.id, b.user_id, b.name, b.nickname, b.position_x, b.position_y,
@@ -201,7 +200,7 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 			b.experience, b.level, b.fatigue_score,
 			b.wins, b.losses, b.draws, b.knockouts, b.knockdowns_suffered,
 			b.created_at, b.updated_at,
-			(b.level - (SELECT level FROM boxers WHERE id = $1)) AS level_difference,
+			(b.level - (SELECT level FROM boxers WHERE id = ` + boxerIDParam + `)) AS level_difference,
 			EXISTS (
 				SELECT 1 FROM scheduled_events se
 				WHERE se.boxer_id = b.id
@@ -215,16 +214,18 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 	// Add ordering
 	if filter.PreferRankings {
 		query += `
-			ORDER BY ABS(level_difference) ASC,
+			ORDER BY ABS((b.level - (SELECT level FROM boxers WHERE id = ` + boxerIDParam + `))) ASC,
 				CASE WHEN wins + losses + draws > 0 THEN wins::float / (wins + losses + draws)::float ELSE 0 END DESC
 		`
 	} else {
-		query += "ORDER BY ABS(level_difference) ASC, b.level DESC"
+		query += "ORDER BY ABS((b.level - (SELECT level FROM boxers WHERE id = " + boxerIDParam + "))) ASC, b.level DESC"
 	}
 
 	// Add limit
 	if filter.MaxResults > 0 {
-		query += " LIMIT $5"
+		params = append(params, filter.MaxResults)
+		limitParam := fmt.Sprintf("$%d", len(params))
+		query += " LIMIT " + limitParam
 	}
 
 	return query, params

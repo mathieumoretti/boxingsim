@@ -217,22 +217,21 @@ func CalculateStat(level int, templateRange [2]float64, baseMin float64, baseMax
 
 // CalculateHealth calculates health based on level and archetype.
 func CalculateHealth(level int, templateRange [2]float64) float64 {
-	// Health scales differently - starts higher and has more variance
-	baseHealth := 50.0 + float64(level)*1.5 // L1=51, L50=225 base
-	maxHealth := baseHealth * 1.2
+	// Health scales with level: L1 base = 50, L50 base = ~300
+	// With multiplier range [0.9, 1.1]: L1 ≈ 45-55, L50 ≈ 270-330
+	baseHealth := 50.0 + float64(level)*4.5
 
 	multiplierRange := templateRange[1] - templateRange[0]
 	multiplier := templateRange[0] + randFloat64()*multiplierRange
 
-	health := baseHealth + randFloat64()*(maxHealth-baseHealth)
-	health = health * multiplier
+	health := baseHealth * multiplier
 
-	// Clamp health (30-250 reasonable range)
+	// Clamp health (30-260 reasonable range)
 	if health < 30 {
 		health = 30 + randFloat64()*10
 	}
-	if health > 250 {
-		health = 240 + randFloat64()*10
+	if health > 260 {
+		health = 250 + randFloat64()*10
 	}
 
 	return roundToOneDecimal(health)

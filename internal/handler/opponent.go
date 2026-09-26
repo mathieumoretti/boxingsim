@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -29,7 +30,7 @@ func NewOpponentHandler(opponentService *service.OpponentDiscoveryService) *Oppo
 
 // OpponentResponse represents the API response for opponent discovery
 type OpponentResponse struct {
-	Opponent *db.RankedOpponent  `json:"opponent"`
+	Opponent *db.RankedOpponent    `json:"opponent"`
 	Score    service.OpponentScore `json:"score"`
 }
 
@@ -65,7 +66,7 @@ func (h *OpponentHandler) GetOpponents(w http.ResponseWriter, r *http.Request) {
 	// Get opponents
 	opponents, err := h.opponentDiscoveryService.FindOpponents(boxerID, filters)
 	if err != nil {
-		if err == db.ErrNoOpponentsFound {
+		if errors.Is(err, db.ErrNoOpponentsFound) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(ListOpponentsResponse{
@@ -75,7 +76,7 @@ func (h *OpponentHandler) GetOpponents(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		http.Error(w, "Failed to find opponents", http.StatusInternalServerError)
+		http.Error(w, "Failed to find opponents: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -260,7 +261,7 @@ func (h *OpponentHandler) GetRandomOpponent(w http.ResponseWriter, r *http.Reque
 func parseOpponentFilters(query url.Values) db.OpponentFilter {
 	filters := db.OpponentFilter{
 		IncludeAI:     true,
-		ExcludeOwned:  true,
+		ExcludeOwned:  false, // Temporarily disabled for development testing when all boxers have same user_id
 		AvailableOnly: true,
 		HealthyOnly:   true,
 		MinHealth:     30.0,
@@ -269,9 +270,11 @@ func parseOpponentFilters(query url.Values) db.OpponentFilter {
 
 	// Parse level_range (symmetric range around boxer's level - applied in service)
 	if levelRangeStr := query.Get("level_range"); levelRangeStr != "" {
-		if val, err := strconv.Atoi(levelRangeStr); err == nil && val > 0 {
-			// Store as comment - actual Min/Max calculated from boxer level in service
-			filters.MaxResults = val // Placeholder
+		if val, err := strconv.Atoi(levelRangeStr); err == nil && val >= 0 {
+			// Set both MinLevel and MaxLevel to the same value
+			// The ApplyDefaults function will convert this to boxerLevel +/- val
+			filters.MinLevel = val
+			filters.MaxLevel = val
 		}
 	}
 
