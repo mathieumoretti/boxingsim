@@ -2,7 +2,10 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/mormm/boxing/internal/model"
 )
@@ -152,6 +155,107 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 		)
 		if err != nil {
 			return nil, err
+		}
+		fights = append(fights, fight)
+	}
+
+	return fights, rows.Err()
+}
+
+// NullJSONB is a wrapper for JSONB that handles NULL values from the database
+type NullJSONB struct {
+	Value   map[string]interface{}
+	IsValid bool
+	Null    bool
+}
+
+func (n *NullJSONB) Scan(value interface{}) error {
+	if value == nil {
+		n.Value = nil
+		n.IsValid = false
+		n.Null = true
+		return nil
+	}
+	var jsonBytes []byte
+	switch v := value.(type) {
+	case []byte:
+		jsonBytes = v
+	case string:
+		jsonBytes = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type: %T", value)
+	}
+	return json.Unmarshal(jsonBytes, &n.Value)
+}
+
+// FightHistoryWithOpponent represents a fight record with opponent name included.
+type FightHistoryWithOpponent struct {
+	ID            int               `json:"id"`
+	Boxer1ID      int               `json:"boxer1_id"`
+	Boxer2ID      int               `json:"boxer2_id"`
+	OpponentName  string            `json:"opponent_name"`
+	Status        model.FightStatus `json:"status"`
+	ScheduledTime *time.Time        `json:"scheduled_time"`
+	StartTime     *time.Time        `json:"start_time"`
+	EndTime       *time.Time        `json:"end_time"`
+	WinnerID      *int              `json:"winner_id"`
+	Round         int               `json:"round"`
+	Data          *NullJSONB        `json:"-"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+	// JSONData is the processed data field for API response
+	JSONData map[string]interface{} `json:"data"`
+}
+
+// GetFightHistoryWithOpponents retrieves fight history for a boxer with opponent names (MAT-103).
+func GetFightHistoryWithOpponents(db *sql.DB, boxerID int) ([]*FightHistoryWithOpponent, error) {
+	query := `
+		SELECT f.id, f.boxer1_id, f.boxer2_id, f.status, f.scheduled_time, f.start_time, f.end_time,
+			f.winner_id, f.round, f.data, f.created_at, f.updated_at,
+			CASE
+			 WHEN f.boxer1_id = $1 THEN b2.name
+			 ELSE b1.name
+			END as opponent_name
+		FROM fights f
+		LEFT JOIN boxers b1 ON f.boxer1_id = b1.id
+		LEFT JOIN boxers b2 ON f.boxer2_id = b2.id
+		WHERE f.boxer1_id = $1 OR f.boxer2_id = $1
+		ORDER BY f.end_time DESC, f.created_at DESC
+		LIMIT 50`
+
+	rows, err := db.Query(query, boxerID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	fights := []*FightHistoryWithOpponent{}
+	for rows.Next() {
+		fight := &FightHistoryWithOpponent{}
+		fight.Data = &NullJSONB{Value: nil, IsValid: false, Null: true}
+		err := rows.Scan(
+			&fight.ID,
+			&fight.Boxer1ID,
+			&fight.Boxer2ID,
+			&fight.Status,
+			&fight.ScheduledTime,
+			&fight.StartTime,
+			&fight.EndTime,
+			&fight.WinnerID,
+			&fight.Round,
+			fight.Data,
+			&fight.CreatedAt,
+			&fight.UpdatedAt,
+			&fight.OpponentName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		// Copy the scanned NullJSONB value to JSONData for proper serialization
+		if fight.Data.IsValid {
+			fight.JSONData = fight.Data.Value
+		} else {
+			fight.JSONData = nil
 		}
 		fights = append(fights, fight)
 	}
