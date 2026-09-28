@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CreateBoxer from './components/CreateBoxer';
+import FightDetails from './components/FightDetails';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -68,6 +69,15 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateBoxer user={currentUser} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/fight/:id"
+          element={
+            <ProtectedRoute>
+              <FightDetails />
             </ProtectedRoute>
           }
         />

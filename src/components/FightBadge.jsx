@@ -70,7 +70,7 @@ const FightBadge = ({ fight, currentGameTime }) => {
   };
 
   return (
-    <Link to={`/fights/${fight.fight_id}`} className={`fight-badge ${pulseClass}`}>
+    <Link to={`/fight/${fight.fight_id}`} className={`fight-badge ${pulseClass}`}>
       <span className="fight-icon" title={`Upcoming fight: ${rounds} rounds`}>🥊</span>
       <span className="fight-info">vs {opponentName}</span>
       <span className={`fight-timer ${countdownColorClass}`} title={formatDateTooltip()}>

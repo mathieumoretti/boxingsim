@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './FightHistory.css';
 import { fetchFightHistory, formatTimeAgo, getGroupLabel } from '../utils/fights';
 
@@ -53,30 +54,35 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
 
   return (
     <div className={`fight-entry-card ${isExpanded ? 'expanded' : ''}`}>
-      <div className="fight-entry-header" onClick={() => setIsExpanded(!isExpanded)}>
-        {/* Result Badge */}
-        {getResultBadge()}
+      <Link to={`/fight/${fight.id}`} className="fight-entry-link">
+        <div className="fight-entry-header" onClick={(e) => {
+          e.preventDefault();
+          setIsExpanded(!isExpanded);
+        }}>
+          {/* Result Badge */}
+          {getResultBadge()}
 
-        {/* Opponent Info */}
-        <div className="fight-info">
-          <div className="opponent-name">
-            vs {fight.opponent_name || `Boxer #${opponentId}`}
+          {/* Opponent Info */}
+          <div className="fight-info">
+            <div className="opponent-name">
+              vs {fight.opponent_name || `Boxer #${opponentId}`}
+            </div>
+            <div className="fight-summary">
+              Round {fight.round} • {isKnockout && '🔥 KO'} • <span className="view-details">View Details →</span>
+            </div>
           </div>
-          <div className="fight-summary">
-            Round {fight.round} • {isKnockout && '🔥 KO'}
+
+          {/* Time Ago */}
+          <div className="fight-time">
+            {getTimeAgoDisplay()}
+          </div>
+
+          {/* Expand Icon */}
+          <div className="expand-icon">
+            {isExpanded ? '▲' : '▼'}
           </div>
         </div>
-
-        {/* Time Ago */}
-        <div className="fight-time">
-          {getTimeAgoDisplay()}
-        </div>
-
-        {/* Expand Icon */}
-        <div className="expand-icon">
-          {isExpanded ? '▲' : '▼'}
-        </div>
-      </div>
+      </Link>
 
       {/* Expanded Details */}
       {isExpanded && (
