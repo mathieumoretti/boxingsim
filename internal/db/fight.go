@@ -26,6 +26,7 @@ const fightSelectColumns = `
 func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 	query := `SELECT ` + fightSelectColumns + ` FROM fights WHERE id = $1`
 
+	var data NullJSONB
 	fight := &model.Fight{}
 	err := db.QueryRow(query, id).Scan(
 		&fight.ID,
@@ -37,7 +38,7 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 		&fight.EndTime,
 		&fight.WinnerID,
 		&fight.Round,
-		&fight.Data,
+		&data,
 		&fight.CreatedAt,
 		&fight.UpdatedAt,
 	)
@@ -46,6 +47,11 @@ func GetFightByID(db *sql.DB, id int) (*model.Fight, error) {
 			return nil, ErrFightNotFound
 		}
 		return nil, err
+	}
+
+	// Set Data field from NullJSONB if valid
+	if data.IsValid {
+		fight.Data = data.Value
 	}
 
 	return fight, nil
@@ -138,6 +144,7 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 
 	fights := []*model.Fight{}
 	for rows.Next() {
+		var data NullJSONB
 		fight := &model.Fight{}
 		err := rows.Scan(
 			&fight.ID,
@@ -149,13 +156,19 @@ func GetFightHistory(db *sql.DB, boxerID int) ([]*model.Fight, error) {
 			&fight.EndTime,
 			&fight.WinnerID,
 			&fight.Round,
-			&fight.Data,
+			&data,
 			&fight.CreatedAt,
 			&fight.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set Data field from NullJSONB if valid
+		if data.IsValid {
+			fight.Data = data.Value
+		}
+
 		fights = append(fights, fight)
 	}
 
@@ -269,6 +282,7 @@ func scanFights(rows *sql.Rows) ([]*model.Fight, error) {
 
 	var fights []*model.Fight
 	for rows.Next() {
+		var data NullJSONB
 		fight := &model.Fight{}
 		err := rows.Scan(
 			&fight.ID,
@@ -280,13 +294,19 @@ func scanFights(rows *sql.Rows) ([]*model.Fight, error) {
 			&fight.EndTime,
 			&fight.WinnerID,
 			&fight.Round,
-			&fight.Data,
+			&data,
 			&fight.CreatedAt,
 			&fight.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set Data field from NullJSONB if valid
+		if data.IsValid {
+			fight.Data = data.Value
+		}
+
 		fights = append(fights, fight)
 	}
 

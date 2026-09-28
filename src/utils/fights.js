@@ -195,3 +195,20 @@ export const fetchFightDetails = async (fightId) => {
 
   return response.json();
 };
+
+/**
+ * Fetches details for a specific boxer by ID (MAT-104).
+ * @param {number} boxerId - The boxer's ID
+ * @returns {Promise<Object>} Boxer details
+ */
+export const fetchBoxer = async (boxerId) => {
+  const response = await authenticatedFetch(`/api/boxers/${boxerId}`, {
+    method: 'GET',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch boxer details: ${response.statusText}`);
+  }
+
+  return response.json();
+};
