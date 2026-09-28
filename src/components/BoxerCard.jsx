@@ -40,7 +40,7 @@ const formatCountdown = (remainingSeconds) => {
   }
 };
 
-const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerStateChanged, onOpenFightBooking }) => {
+const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerStateChanged, onOpenFightBooking, onOpenFightHistory }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [fetchedFight, setFetchedFight] = useState(upcomingFight || null);
@@ -386,6 +386,14 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
           title={boxer.health < 30 ? 'Boxer too injured to fight (need 30+ health)' : boxer.has_active_rest ? 'Boxer is resting' : 'Book a Fight'}
         >
           🥊 Book Fight
+        </button>
+
+        <button
+          className="history-btn"
+          onClick={onOpenFightHistory}
+          title="View Fight History"
+        >
+          📜 History
         </button>
       </div>
 

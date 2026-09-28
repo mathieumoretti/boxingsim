@@ -125,6 +125,14 @@ func (s *FightService) GetUpcomingFightForBoxer(ctx context.Context, boxerID int
 	return boxerdb.GetUpcomingFightForBoxer(s.db, boxerID)
 }
 
+// GetFightHistoryWithOpponents retrieves fight history for a boxer with opponent names (MAT-103).
+func (s *FightService) GetFightHistoryWithOpponents(ctx context.Context, boxerID int) ([]*boxerdb.FightHistoryWithOpponent, error) {
+	if boxerID <= 0 {
+		return nil, errors.New("invalid boxer id")
+	}
+	return boxerdb.GetFightHistoryWithOpponents(s.db, boxerID)
+}
+
 // ValidateOpponentMatch validates a potential matchup between two boxers (MAT-102).
 func (s *FightService) ValidateOpponentMatch(boxer1ID, boxer2ID int) MatchValidation {
 	validation := MatchValidation{

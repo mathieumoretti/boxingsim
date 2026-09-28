@@ -10,13 +10,13 @@ var ErrUpcomingFightNotFound = errors.New("no upcoming fight found for this boxe
 
 // UpcomingFightResponse represents the response for an upcoming fight query
 type UpcomingFightResponse struct {
-	FightID        int        `json:"fight_id"`
-	OpponentID     int        `json:"opponent_id"`
-	OpponentName   string     `json:"opponent_name"`
-	OpponentNickname *string  `json:"opponent_nickname"`
-	ScheduledTime  *time.Time `json:"scheduled_time"`
-	Status         string     `json:"status"`
-	Rounds         int        `json:"rounds"`
+	FightID          int        `json:"fight_id"`
+	OpponentID       int        `json:"opponent_id"`
+	OpponentName     string     `json:"opponent_name"`
+	OpponentNickname *string    `json:"opponent_nickname"`
+	ScheduledTime    *time.Time `json:"scheduled_time"`
+	Status           string     `json:"status"`
+	Rounds           int        `json:"rounds"`
 }
 
 // GetUpcomingFightForBoxer retrieves the next scheduled or in-progress fight for a specific boxer
@@ -58,7 +58,6 @@ func GetUpcomingFightForBoxer(db *sql.DB, boxerID int) (*UpcomingFightResponse, 
 		&response.Status,
 		&response.Rounds,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUpcomingFightNotFound

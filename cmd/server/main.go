@@ -230,6 +230,18 @@ func main() {
 		fightHandler.GetUpcomingFightForBoxer(w, r)
 	}).Methods(optionsMethod, "GET")
 
+	// Fight history endpoint with opponent names (MAT-103)
+	protectedRouter.HandleFunc("/boxers/{id}/fights-history", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == optionsMethod {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		fightHandler.GetFightHistoryWithOpponents(w, r)
+	}).Methods(optionsMethod, "GET")
+
 	// Now the catch-all boxer ID routes
 	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == optionsMethod {

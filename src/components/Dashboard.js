@@ -6,6 +6,7 @@ import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
 import FightBooking from './FightBooking.jsx';
+import FightHistory from './FightHistory.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import { createFightMap } from '../utils/fights';
 
@@ -19,6 +20,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [selectedBoxerForFight, setSelectedBoxerForFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
   const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
+  const [selectedBoxerForHistory, setSelectedBoxerForHistory] = useState(null); // MAT-103
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -179,6 +181,7 @@ const Dashboard = ({ user, onLogout }) => {
                   upcomingFight={fightData[boxer.id]}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
                   onOpenFightBooking={() => setSelectedBoxerForFight(boxer)}
+                  onOpenFightHistory={() => setSelectedBoxerForHistory(boxer)}
                   onBoxerStateChanged={handleBoxerStateChanged}
                 />
               ))}
@@ -218,6 +221,20 @@ const Dashboard = ({ user, onLogout }) => {
               setSelectedBoxerForFight(null);
             }}
           />
+        )}
+
+        {/* Fight History Modal (MAT-103) */}
+        {selectedBoxerForHistory && (
+          <div className="training-modal-overlay" onClick={() => setSelectedBoxerForHistory(null)}>
+            <div className="training-modal fight-history-modal" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="modal-close"
+                onClick={() => setSelectedBoxerForHistory(null)}
+                aria-label="Close modal"
+              >×</button>
+              <FightHistory boxerId={selectedBoxerForHistory.id} currentGameTime={worldTime?.current_game_time} />
+            </div>
+          </div>
         )}
 
         {/* Training Control Panel - Development Only */}

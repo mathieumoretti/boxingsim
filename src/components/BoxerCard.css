@@ -406,6 +406,30 @@
   opacity: 0.6;
 }
 
+/* History Button (MAT-103) */
+.history-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.history-btn:hover {
+  background: linear-gradient(135deg, #4b5563, #374151);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+}
+
+.history-btn:active {
+  transform: translateY(0);
+}
+
 /* ========================================
    MODAL OVERLAY & CONTAINER
    ======================================== */

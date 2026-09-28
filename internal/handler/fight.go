@@ -205,3 +205,43 @@ func (h *FightHandler) GetUpcomingFightForBoxer(w http.ResponseWriter, r *http.R
 		return
 	}
 }
+
+// GetFightHistoryWithOpponents returns the fight history for a specific boxer with opponent names (GET /boxers/{id}/fights-history) (MAT-103)
+func (h *FightHandler) GetFightHistoryWithOpponents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		http.Error(w, `{"error": "boxer id required"}`, http.StatusBadRequest)
+		return
+	}
+
+	boxerID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error": "invalid boxer id format"}`, http.StatusBadRequest)
+		return
+	}
+
+	fights, err := h.fightService.GetFightHistoryWithOpponents(r.Context(), boxerID)
+	if err != nil {
+		switch {
+		case errors.Is(err, boxerdb.ErrBoxerNotExists):
+			http.Error(w, `{"error": "boxer not found"}`, http.StatusNotFound)
+		default:
+			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Return empty array if no fights found
+	if fights == nil {
+		fights = []*boxerdb.FightHistoryWithOpponent{}
+	}
+
+	if err := json.NewEncoder(w).Encode(fights); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+}
