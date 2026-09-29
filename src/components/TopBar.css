@@ -43,6 +43,36 @@
   gap: 16px;
 }
 
+/* Navigation Links */
+.nav-links {
+  display: flex;
+  gap: 8px;
+  margin-right: 8px;
+  padding-right: 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-link {
+  color: #a0aec0;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+  color: #ffffff;
+  background: rgba(255, 215, 0, 0.2);
+}
+
 .user-welcome {
   font-size: 14px;
   color: #a0aec0;
@@ -77,6 +107,11 @@
 
   .app-title {
     font-size: 16px;
+  }
+
+  /* Hide navigation links on mobile - use hamburger menu instead (future enhancement) */
+  .nav-links {
+    display: none;
   }
 
   .user-welcome {
