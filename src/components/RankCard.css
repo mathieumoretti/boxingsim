@@ -1,0 +1,407 @@
+/* ========================================
+   RANK CARD - Compact ranking display
+   ======================================== */
+
+.rank-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rank-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+.rank-card:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* ========================================
+   TIER STYLING - Gold/Silver/Bronze
+   ======================================== */
+
+.rank-card.rank-1 {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+.rank-card.rank-1:hover {
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.rank-card.rank-2 {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 2px solid #9ca3af;
+  box-shadow: 0 4px 16px rgba(156, 163, 175, 0.2), inset 0 0 20px rgba(192, 192, 192, 0.1);
+}
+
+.rank-card.rank-2:hover {
+  box-shadow: 0 6px 24px rgba(156, 163, 175, 0.3), inset 0 0 20px rgba(192, 192, 192, 0.15);
+}
+
+.rank-card.rank-3 {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 2px solid #b45309;
+  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.2), inset 0 0 20px rgba(205, 127, 50, 0.1);
+}
+
+.rank-card.rank-3:hover {
+  box-shadow: 0 6px 24px rgba(180, 83, 9, 0.3), inset 0 0 20px rgba(205, 127, 50, 0.15);
+}
+
+.rank-card.rank-regular {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+}
+
+/* ========================================
+   RANK POSITION BADGE
+   ======================================== */
+
+.rank-position {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+}
+
+.rank-badge {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.rank-1 .rank-badge {
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.4));
+  animation: goldShine 3s ease-in-out infinite;
+}
+
+@keyframes goldShine {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.rank-2 .rank-badge {
+  filter: grayscale(0.3) brightness(1.1);
+}
+
+.rank-3 .rank-badge {
+  filter: sepia(0.6) brightness(0.95);
+}
+
+/* ========================================
+   BOXER INFO SECTION
+   ======================================== */
+
+.rank-boxer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.boxer-name-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.boxer-avatar {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.boxer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.boxer-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-1 .boxer-name {
+  background: linear-gradient(90deg, #b45309, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rank-2 .boxer-name {
+  color: #4b5563;
+}
+
+.rank-3 .boxer-name {
+  color: #92400e;
+}
+
+.boxer-nickname {
+  font-size: 12px;
+  font-style: italic;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+   STATS ROW
+   ======================================== */
+
+.rank-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  min-width: fit-content;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Level styling */
+.stat-level .stat-value {
+  color: #7c3aed;
+}
+
+/* Record styling */
+.stat-record .stat-value {
+  color: #2563eb;
+}
+
+/* Win rate highlight */
+.stat-winrate .stat-value-highlight {
+  font-size: 16px;
+  font-weight: 800;
+  color: #059669;
+}
+
+.rank-1 .stat-value-highlight {
+  color: #b45309;
+}
+
+/* ========================================
+   NAVIGATION ARROW
+   ======================================== */
+
+.rank-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  border-radius: 50%;
+  color: #6b7280;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.rank-card:hover .rank-nav-arrow {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  transform: translateX(4px);
+}
+
+/* View Profile button for mobile */
+.rank-mobile-btn {
+  display: none; /* Hidden on desktop */
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-self: start;
+}
+
+.rank-mobile-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+
+.rank-card.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.rank-card.loading .boxer-name,
+.rank-card.loading .stat-value {
+  background: linear-gradient(90deg, #e5e7eb 25%, #d1d5db 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+@keyframes skeletonLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========================================
+   RESPONSIVE STYLES
+   ======================================== */
+
+@media (max-width: 768px) {
+  .rank-card {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+  }
+
+  .rank-position {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+  }
+
+  .rank-boxer-info {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+
+  .rank-nav-arrow {
+    display: none;
+  }
+
+  .rank-stats {
+    gap: 8px;
+  }
+
+  .stat-group {
+    padding: 3px 6px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .stat-value {
+    font-size: 13px;
+  }
+
+  .stat-winrate .stat-value-highlight {
+    font-size: 14px;
+  }
+}
+
+/* Mobile card view - stacked layout */
+@media (max-width: 480px) {
+  .rank-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    padding: 12px;
+  }
+
+  .rank-position {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    justify-content: flex-start;
+  }
+
+  .rank-badge {
+    font-size: 24px;
+  }
+
+  .rank-boxer-info {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+
+  .boxer-name-section {
+    gap: 8px;
+  }
+
+  .boxer-avatar {
+    font-size: 20px;
+  }
+
+  .boxer-name {
+    font-size: 14px;
+  }
+
+  .rank-stats {
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .stat-group {
+    padding: 2px 5px;
+    background: transparent;
+  }
+
+  .stat-label {
+    display: none;
+  }
+
+  .stat-value {
+    font-size: 12px;
+  }
+
+  .stat-winrate .stat-value-highlight {
+    font-size: 14px;
+    color: #059669;
+  }
+
+  /* Hide arrow on mobile, show button instead */
+  .rank-nav-arrow {
+    display: none;
+  }
+
+  .rank-mobile-btn {
+    display: flex;
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+  }
+}

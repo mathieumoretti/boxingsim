@@ -5,6 +5,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CreateBoxer from './components/CreateBoxer';
 import FightDetails from './components/FightDetails';
+import Rankings from './components/Rankings';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -78,6 +79,16 @@ function App() {
           element={
             <ProtectedRoute>
               <FightDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rankings Page (MAT-105) */}
+        <Route
+          path="/rankings"
+          element={
+            <ProtectedRoute>
+              <Rankings />
             </ProtectedRoute>
           }
         />
