@@ -10,26 +10,31 @@ help:
 	@echo "make worker-run   - Run the world clock worker (processes scheduled events)"
 	@echo "make worker-dev   - Run worker with hot reload using air"
 	@echo "make dev          - Run server with hot reload using air (requires air to be installed)"
-	@echo "make docker-up - Start all services using Docker Compose"
-	@echo "make docker-down - Stop all Docker services"
-	@echo "make test      - Run all tests"
-	@echo "make lint      - Run linters (golangci-lint)"
-	@echo "make fmt       - Format code with gofmt"
-	@echo "make clean     - Clean build artifacts"
+	@echo "make docker-up    - Start all services using Docker Compose"
+	@echo "make docker-down  - Stop all Docker services"
+	@echo "make test         - Run all Go unit tests"
+	@echo "make lint         - Run linters (golangci-lint)"
+	@echo "make fmt          - Format code with gofmt"
+	@echo "make clean        - Clean build artifacts"
 	@echo "make frontend-build - Build the frontend React app"
 	@echo "make frontend-dev - Start frontend development server"
-	@echo "make seed      - Seed the database with sample data"
-	@echo "make db-create - Create database"
-	@echo "make migrate   - Run database migrations"
-	@echo "make seed-ref  - Seed reference data (championship boxers)"
-	@echo "make seed-dev  - Seed development data (sample users + boxers)"
-	@echo "make seed-pop  - Generate AI boxer population (use --count=N for custom count, default 100)"
-	@echo "make world     - Generate complete world"
-	@echo "make reset-dev - Reset and reseed for development"
-	@echo "make test-db   - Verify isolated test database connectivity"
+	@echo "make seed         - Seed the database with sample data"
+	@echo "make db-create    - Create database"
+	@echo "make migrate      - Run database migrations"
+	@echo "make seed-ref     - Seed reference data (championship boxers)"
+	@echo "make seed-dev     - Seed development data (sample users + boxers)"
+	@echo "make seed-pop     - Generate AI boxer population (use --count=N, default 100)"
+	@echo "make world        - Generate complete world"
+	@echo "make reset-dev    - Reset and reseed for development"
+	@echo "make test-db      - Verify isolated test database connectivity"
 	@echo "make test-db-clean - Remove orphaned test databases"
 	@echo "make test-unit-only - Run unit tests only (fast, no database)"
-	@echo "make test-integration - Run integration tests (uses BOXING_DATABASE_* or TEST_DB_* config)"
+	@echo "make test-integration - Run integration tests for fight/event/rankings"
+	@echo "make test-fight-integration - Run fight simulation integration tests"
+	@echo "make test-event-integration - Run event processor integration tests"
+	@echo "make test-rankings-integration - Run rankings integration tests"
+	@echo "make test-frontend-integration - Run frontend Jest integration tests"
+	@echo "make test-all     - Run all tests (unit + integration + frontend)"
 	@echo "make snapshot-save - Save current simulation state"
 	@echo "make snapshot-load - Load saved simulation state"
 
@@ -51,7 +56,7 @@ docker-up:
 docker-down:
 	docker-compose down
 
-test:
+test: ## Run all Go unit tests (excludes integration tests)
 	gotestsum ./...
 
 lint:
@@ -111,9 +116,27 @@ test-unit-only: ## Run unit tests only (fast, no database required)
 	@echo "Running unit tests only..."
 	gotestsum --format=short-verbose `go list ./... | grep -v 'internal/integration$'`
 
-test-integration: ## Run integration tests with isolated database per-test (uses BOXING_DATABASE_* or TEST_DB_* config)
+test-integration: ## Run integration tests for fight, event processor, and rankings (uses TEST_DB_* config)
 	@echo "Running integration tests..."
-	gotestsum --format=short-verbose -- -tags=integration ./internal/integration/...
+	gotestsum --format=short-verbose -- -tags=integration ./internal/fight/... ./internal/service/...
+
+test-fight-integration: ## Run fight simulation integration tests only
+	@echo "Running fight integration tests..."
+	gotestsum --format=short-verbose -- -tags=integration ./internal/fight/...
+
+test-event-integration: ## Run event processor integration tests only
+	@echo "Running event processor integration tests..."
+	gotestsum --format=short-verbose -- -tags=integration ./internal/service/event_processor_integration_test.go
+
+test-rankings-integration: ## Run rankings integration tests only
+	@echo "Running rankings integration tests..."
+	gotestsum --format=short-verbose -- -tags=integration ./internal/service/... -run TestRankings
+
+test-frontend-integration: ## Run frontend integration tests (Jest + React Testing Library)
+	@echo "Running frontend integration tests..."
+	cd frontend && npm run test:integration
+
+test-all: test-unit-only test-integration test-frontend-integration ## Run all tests (unit + integration + frontend)
 
 snapshot-save:
 	# This would be implemented for saving simulation state
