@@ -109,6 +109,7 @@ func main() {
 	boxerStore := store.NewBoxerStore(db.DB)
 	trainingTypeStore := store.NewTrainingTypeStore(db.DB)
 	trainingSessionStore := store.NewTrainingSessionStore(db.DB)
+	fightStore := store.NewFightStore(db.DB)
 
 	// Initialize fatigue service
 	fatigueService := service.NewFatigueService(boxerStore, lg)
@@ -123,7 +124,7 @@ func main() {
 	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg, db.DB)
 
 	// Initialize fight service (for MAT-99)
-	fightSvc := fight.NewFightService(db.DB, cfg, boxerSvc, eventStore)
+	fightSvc := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvc, eventStore)
 
 	// Initialize event processor (for scheduled events)
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, *lg)

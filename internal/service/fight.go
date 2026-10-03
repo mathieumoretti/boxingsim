@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,20 +14,17 @@ import (
 )
 
 type FightService struct {
-	db         *sql.DB
-	eventStore *store.ScheduledEventStore
+	fightStore   *store.FightStore
+	boxerStore   *store.BoxerStore
+	eventStore   *store.ScheduledEventStore
 }
 
-func NewFightService(db interface{}, eventStore *store.ScheduledEventStore) *FightService {
-	pdb := db.(*PostgresDBWrapper)
+func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, eventStore *store.ScheduledEventStore) *FightService {
 	return &FightService{
-		db:         pdb.Conn,
+		fightStore: fightStore,
+		boxerStore: boxerStore,
 		eventStore: eventStore,
 	}
-}
-
-type PostgresDBWrapper struct {
-	Conn *sql.DB
 }
 
 func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
@@ -38,24 +34,26 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 		return errors.New("invalid request parameters")
 	}
 
-	exists, err := boxerdb.BoxerExists(s.db, boxer1ID)
-	if err != nil || !exists {
+	// Validate boxers exist using boxerStore
+	boxer1, err := s.boxerStore.GetByID(ctx, boxer1ID)
+	if err != nil || boxer1 == nil {
 		return fmt.Errorf("boxer does not exist: ID %d", boxer1ID)
 	}
 
-	exists2, err := boxerdb.BoxerExists(s.db, boxer2ID)
-	if err != nil || !exists2 {
+	boxer2, err := s.boxerStore.GetByID(ctx, boxer2ID)
+	if err != nil || boxer2 == nil {
 		return fmt.Errorf("boxer does not exist: ID %d", boxer2ID)
 	}
 
-	inUse, _ := boxerdb.BoxerInFight(s.db, boxer1ID)
+	// Check if boxers are in active fights using fightStore
+	inUse, _ := s.fightStore.BoxerInFight(ctx, boxer1ID)
 	if inUse {
-		return fmt.Errorf("%w: boxer %d is currently involved in another fight", boxerdb.ErrBoxerInUse, boxer1ID)
+		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer1ID)
 	}
 
-	inUse2, _ := boxerdb.BoxerInFight(s.db, boxer2ID)
+	inUse2, _ := s.fightStore.BoxerInFight(ctx, boxer2ID)
 	if inUse2 {
-		return fmt.Errorf("%w: boxer %d is currently involved in another fight", boxerdb.ErrBoxerInUse, boxer2ID)
+		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer2ID)
 	}
 
 	// Validate opponent match quality (MAT-102)
@@ -65,16 +63,8 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 		return fmt.Errorf("invalid matchup: status=%s, warnings=[%s]", validation.Status, warningsStr)
 	}
 
-	st := scheduledTime
-	fight := &model.FightCreate{
-		Boxer1ID:      boxer1ID,
-		Boxer2ID:      boxer2ID,
-		ScheduledTime: &st,
-		Round:         round,
-	}
-
-	// Create the fight and get the ID
-	fightID, err := boxerdb.CreateFight(s.db, fight)
+	// Create the fight and get the ID using fightStore
+	fightID, err := s.fightStore.Create(ctx, boxer1ID, boxer2ID, &scheduledTime, round)
 	if err != nil {
 		return fmt.Errorf("failed to create fight: %w", err)
 	}
@@ -107,14 +97,14 @@ func (s *FightService) GetActiveFights(ctx context.Context, statuses []string) (
 	if len(statuses) == 0 {
 		statuses = []string{"scheduled", "in_progress"}
 	}
-	return boxerdb.GetActiveFights(s.db, statuses)
+	return s.fightStore.GetActiveFights(ctx, statuses)
 }
 
 func (s *FightService) GetFightByID(ctx context.Context, id int) (*model.Fight, error) {
 	if id <= 0 {
 		return nil, errors.New("invalid fight id")
 	}
-	return boxerdb.GetFightByID(s.db, id)
+	return s.fightStore.GetByID(ctx, id)
 }
 
 // GetUpcomingFightForBoxer retrieves the next upcoming fight for a specific boxer (MAT-106)
@@ -122,7 +112,7 @@ func (s *FightService) GetUpcomingFightForBoxer(ctx context.Context, boxerID int
 	if boxerID <= 0 {
 		return nil, errors.New("invalid boxer id")
 	}
-	return boxerdb.GetUpcomingFightForBoxer(s.db, boxerID)
+	return s.fightStore.GetUpcomingFightForBoxer(ctx, boxerID)
 }
 
 // GetFightHistoryWithOpponents retrieves fight history for a boxer with opponent names (MAT-103).
@@ -130,7 +120,7 @@ func (s *FightService) GetFightHistoryWithOpponents(ctx context.Context, boxerID
 	if boxerID <= 0 {
 		return nil, errors.New("invalid boxer id")
 	}
-	return boxerdb.GetFightHistoryWithOpponents(s.db, boxerID)
+	return s.fightStore.GetFightHistoryWithOpponents(ctx, boxerID)
 }
 
 // ValidateOpponentMatch validates a potential matchup between two boxers (MAT-102).
@@ -142,15 +132,17 @@ func (s *FightService) ValidateOpponentMatch(boxer1ID, boxer2ID int) MatchValida
 		Suggestions: []string{},
 	}
 
-	// Retrieve both boxers
-	boxer1, err := boxerdb.GetBoxerByID(s.db, boxer1ID)
-	if err != nil {
+	ctx := context.Background()
+
+	// Retrieve both boxers using boxerStore
+	boxer1, err := s.boxerStore.GetByID(ctx, boxer1ID)
+	if err != nil || boxer1 == nil {
 		validation.Warnings = append(validation.Warnings, "Boxer 1 not found")
 		return validation
 	}
 
-	boxer2, err := boxerdb.GetBoxerByID(s.db, boxer2ID)
-	if err != nil {
+	boxer2, err := s.boxerStore.GetByID(ctx, boxer2ID)
+	if err != nil || boxer2 == nil {
 		validation.Warnings = append(validation.Warnings, "Boxer 2 not found")
 		return validation
 	}
