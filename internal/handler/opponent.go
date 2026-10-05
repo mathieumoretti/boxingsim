@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mormm/boxing/internal/db"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/service"
 )
 
@@ -56,7 +57,7 @@ func (h *OpponentHandler) GetOpponents(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.Split(path, "/")[0]
 	boxerID, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "Invalid boxer ID"))
 		return
 	}
 
@@ -67,23 +68,21 @@ func (h *OpponentHandler) GetOpponents(w http.ResponseWriter, r *http.Request) {
 	opponents, err := h.opponentDiscoveryService.FindOpponents(boxerID, filters)
 	if err != nil {
 		if errors.Is(err, db.ErrNoOpponentsFound) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(ListOpponentsResponse{
+			pkgerrors.WriteJSON(w, http.StatusOK, ListOpponentsResponse{
 				Opportunities: []*ScoredOpponentResponse{},
 				TotalCount:    0,
 				Filters:       buildFilterMap(filters),
 			})
 			return
 		}
-		http.Error(w, "Failed to find opponents: "+err.Error(), http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to find opponents"))
 		return
 	}
 
 	// Get the requesting boxer for scoring
 	boxer, err := h.opponentDiscoveryService.GetBoxerByID(boxerID)
 	if err != nil {
-		http.Error(w, "Boxer not found", http.StatusNotFound)
+		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
 	}
 
@@ -105,9 +104,7 @@ func (h *OpponentHandler) GetOpponents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // GetBestMatch handles GET /opponents/best_match
@@ -116,13 +113,13 @@ func (h *OpponentHandler) GetBestMatch(w http.ResponseWriter, r *http.Request) {
 	// Parse boxer ID from query parameter
 	boxerIDStr := r.URL.Query().Get("boxer_id")
 	if boxerIDStr == "" {
-		http.Error(w, "boxer_id parameter is required", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "boxer_id parameter is required"))
 		return
 	}
 
 	boxerID, err := strconv.Atoi(boxerIDStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer_id", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer_id"))
 		return
 	}
 
@@ -133,29 +130,24 @@ func (h *OpponentHandler) GetBestMatch(w http.ResponseWriter, r *http.Request) {
 	opponents, err := h.opponentDiscoveryService.FindOpponents(boxerID, filters)
 	if err != nil {
 		if err == db.ErrNoOpponentsFound {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error":   "no_opponents_found",
-				"message": "No available opponents match your criteria",
-			})
+			pkgerrors.WriteError(w, pkgerrors.NotFound("opponents"))
 			return
 		}
-		http.Error(w, "Failed to find opponents", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to find opponents"))
 		return
 	}
 
 	// Get the requesting boxer for scoring
 	boxer, err := h.opponentDiscoveryService.GetBoxerByID(boxerID)
 	if err != nil {
-		http.Error(w, "Boxer not found", http.StatusNotFound)
+		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
 	}
 
 	// Find best match
 	bestMatch, err := service.FindBestMatch(boxer, opponents)
 	if err != nil {
-		http.Error(w, "No suitable opponents available", http.StatusNotFound)
+		pkgerrors.WriteError(w, pkgerrors.NotFound("suitable opponent"))
 		return
 	}
 
@@ -164,9 +156,7 @@ func (h *OpponentHandler) GetBestMatch(w http.ResponseWriter, r *http.Request) {
 		Score:    bestMatch.Score,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // GetRandomOpponent handles GET /opponents/random
@@ -194,13 +184,13 @@ func (h *OpponentHandler) GetRandomOpponent(w http.ResponseWriter, r *http.Reque
 	// Get boxer ID from query parameter
 	boxerIDStr := r.URL.Query().Get("boxer_id")
 	if boxerIDStr == "" {
-		http.Error(w, "boxer_id parameter is required", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "boxer_id parameter is required"))
 		return
 	}
 
 	boxerID, err := strconv.Atoi(boxerIDStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer_id", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer_id"))
 		return
 	}
 
@@ -221,15 +211,10 @@ func (h *OpponentHandler) GetRandomOpponent(w http.ResponseWriter, r *http.Reque
 	opponents, err := h.opponentDiscoveryService.FindOpponents(boxerID, filters)
 	if err != nil {
 		if err == db.ErrNoOpponentsFound {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error":   "no_opponents_found",
-				"message": "No available opponents found within level range",
-			})
+			pkgerrors.WriteError(w, pkgerrors.NotFound("opponents"))
 			return
 		}
-		http.Error(w, "Failed to find opponents", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to find opponents"))
 		return
 	}
 
@@ -240,7 +225,7 @@ func (h *OpponentHandler) GetRandomOpponent(w http.ResponseWriter, r *http.Reque
 	// Get boxer for scoring
 	boxer, err := h.opponentDiscoveryService.GetBoxerByID(boxerID)
 	if err != nil {
-		http.Error(w, "Boxer not found", http.StatusNotFound)
+		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
 	}
 
@@ -252,9 +237,7 @@ func (h *OpponentHandler) GetRandomOpponent(w http.ResponseWriter, r *http.Reque
 		Score:    score,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // parseOpponentFilters extracts opponent filter parameters from query string
@@ -336,19 +319,17 @@ func (h *OpponentHandler) ValidateMatch(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid request body"))
 		return
 	}
 
 	if request.Boxer1ID == 0 || request.Boxer2ID == 0 {
-		http.Error(w, "Both boxer1_id and boxer2_id are required", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_ids", "Both boxer1_id and boxer2_id are required"))
 		return
 	}
 
 	// Validate the matchup
 	validation := h.opponentDiscoveryService.ValidateOpponentMatch(request.Boxer1ID, request.Boxer2ID)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(validation)
+	pkgerrors.WriteJSON(w, http.StatusOK, validation)
 }

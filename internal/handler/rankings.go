@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/mormm/boxing/internal/auth"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/service"
 )
@@ -27,7 +27,7 @@ func NewRankingsHandler(rankingsService *service.RankingsService) *RankingsHandl
 // GET /rankings?criteria=win_rate&limit=100
 func (h *RankingsHandler) GetRankings(w http.ResponseWriter, r *http.Request) {
 	if h.rankingsService == nil {
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -50,10 +50,10 @@ func (h *RankingsHandler) GetRankings(w http.ResponseWriter, r *http.Request) {
 	boxers, err := h.rankingsService.GetTopRanked(r.Context(), criteriaStr, limit)
 	if err != nil {
 		if err.Error() == "invalid ranking criteria: "+criteriaStr {
-			http.Error(w, "Invalid ranking criteria", http.StatusBadRequest)
+			pkgerrors.WriteError(w, pkgerrors.Validation("criteria", "Invalid ranking criteria"))
 			return
 		}
-		http.Error(w, "Failed to retrieve rankings", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve rankings"))
 		return
 	}
 
@@ -65,16 +65,14 @@ func (h *RankingsHandler) GetRankings(w http.ResponseWriter, r *http.Request) {
 		TotalCount:  len(boxers),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // GetRankingForBoxer handles retrieving a specific boxer's ranking
 // GET /rankings/{boxer_id}?criteria=win_rate
 func (h *RankingsHandler) GetRankingForBoxer(w http.ResponseWriter, r *http.Request) {
 	if h.rankingsService == nil {
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -82,7 +80,7 @@ func (h *RankingsHandler) GetRankingForBoxer(w http.ResponseWriter, r *http.Requ
 	idStr := r.URL.Path[len("/rankings/"):]
 	boxerID, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "Invalid boxer ID"))
 		return
 	}
 
@@ -96,27 +94,25 @@ func (h *RankingsHandler) GetRankingForBoxer(w http.ResponseWriter, r *http.Requ
 	position, err := h.rankingsService.GetRankingForBoxer(r.Context(), boxerID, criteriaStr)
 	if err != nil {
 		if err.Error() == "invalid ranking criteria: "+criteriaStr {
-			http.Error(w, "Invalid ranking criteria", http.StatusBadRequest)
+			pkgerrors.WriteError(w, pkgerrors.Validation("criteria", "Invalid ranking criteria"))
 			return
 		}
 		if err.Error() == "failed to get boxer ranking: sql: no rows in result set" {
-			http.Error(w, "Boxer not found", http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 			return
 		}
-		http.Error(w, "Failed to retrieve boxer ranking", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve boxer ranking"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(position)
+	pkgerrors.WriteJSON(w, http.StatusOK, position)
 }
 
 // GetNearbyRankings handles retrieving boxers ranked near a specific boxer
 // GET /rankings/nearby/{boxer_id}?criteria=win_rate&radius=5
 func (h *RankingsHandler) GetNearbyRankings(w http.ResponseWriter, r *http.Request) {
 	if h.rankingsService == nil {
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -124,7 +120,7 @@ func (h *RankingsHandler) GetNearbyRankings(w http.ResponseWriter, r *http.Reque
 	idStr := r.URL.Path[len("/rankings/nearby/"):]
 	boxerID, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "Invalid boxer ID"))
 		return
 	}
 
@@ -147,14 +143,14 @@ func (h *RankingsHandler) GetNearbyRankings(w http.ResponseWriter, r *http.Reque
 	boxers, err := h.rankingsService.GetNearbyRankings(r.Context(), boxerID, criteriaStr, radius)
 	if err != nil {
 		if err.Error() == "invalid ranking criteria: "+criteriaStr {
-			http.Error(w, "Invalid ranking criteria", http.StatusBadRequest)
+			pkgerrors.WriteError(w, pkgerrors.Validation("criteria", "Invalid ranking criteria"))
 			return
 		}
 		if err.Error() == "failed to get nearby rankings: sql: no rows in result set" {
-			http.Error(w, "Boxer not found", http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 			return
 		}
-		http.Error(w, "Failed to retrieve nearby rankings", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve nearby rankings"))
 		return
 	}
 
@@ -165,9 +161,7 @@ func (h *RankingsHandler) GetNearbyRankings(w http.ResponseWriter, r *http.Reque
 		TotalCount:  len(boxers),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // InvalidateRankings handles cache invalidation for rankings (admin endpoint)
@@ -176,26 +170,24 @@ func (h *RankingsHandler) InvalidateRankings(w http.ResponseWriter, r *http.Requ
 	// Get authenticated user from context (injected by middleware)
 	user := auth.UserFromRequest(r)
 	if user == nil {
-		http.Error(w, `{"error": "Authentication failed"}`, http.StatusUnauthorized)
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
 		return
 	}
 
 	// TODO: Add admin check here
 
 	if h.rankingsService == nil {
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
 	err := h.rankingsService.InvalidateRankingsCache(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to invalidate rankings cache", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to invalidate rankings cache"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
 		"message": "Rankings cache invalidated successfully",
 	})
 }

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"time"
 
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -46,22 +46,14 @@ func (h *WorldClockHandler) GetCurrentGameTime(w http.ResponseWriter, r *http.Re
 	// Get current game time
 	currentTime, err := clockModel.GetCurrentGameTime(ctx, h.db)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error": "Failed to get game time: " + err.Error(),
-		})
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to get game time"))
 		return
 	}
 
 	// Get clock anchors for status and metadata
 	anchors, err := clockModel.GetAnchors(ctx, h.db)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error": "Failed to get clock status: " + err.Error(),
-		})
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to get clock status"))
 		return
 	}
 
@@ -95,9 +87,7 @@ func (h *WorldClockHandler) GetCurrentGameTime(w http.ResponseWriter, r *http.Re
 		TimeSinceStart:     timeSinceStartStr,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 }
 
 // formatReadableTime formats a time into human-readable form like "March 15, 2030 at 2:30 PM"

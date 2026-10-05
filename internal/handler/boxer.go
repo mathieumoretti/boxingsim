@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mormm/boxing/internal/auth"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/store"
 )
@@ -89,31 +90,31 @@ func (h *BoxerHandler) enrichBoxersResponse(ctx context.Context, boxers []*model
 func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 	var boxerCreate model.BoxerCreate
 	if err := json.NewDecoder(r.Body).Decode(&boxerCreate); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
 
 	// Get authenticated user from context (injected by middleware)
 	user := auth.UserFromRequest(r)
 	if user == nil {
-		http.Error(w, `{"error": "Authentication failed"}`, http.StatusUnauthorized)
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
 		return
 	}
 
 	// Validate the boxer creation request
 	if boxerCreate.Name == "" {
-		http.Error(w, "Boxer name is required", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("name", "Boxer name is required"))
 		return
 	}
 
 	if boxerCreate.Strength < 0 || boxerCreate.Defense < 0 || boxerCreate.Agility < 0 {
-		http.Error(w, "Strength, defense, and agility must be non-negative", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("stats", "Strength, defense, and agility must be non-negative"))
 		return
 	}
 
 	// Check if database connection is available
 	if h.boxerStore == nil {
-		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -135,13 +136,11 @@ func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 
 	err := h.boxerStore.Create(r.Context(), boxer)
 	if err != nil {
-		http.Error(w, "Failed to create boxer", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to create boxer"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	pkgerrors.WriteSuccess(w, http.StatusCreated, map[string]any{
 		"message": "Boxer created successfully",
 		"boxer":   boxer,
 	})
@@ -153,22 +152,22 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Path[len("/boxers/"):]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "Invalid boxer ID"))
 		return
 	}
 
 	// Check if database connection is available
 	if h.boxerStore == nil {
-		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
 	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
 	if getErr != nil {
 		if getErr.Error() == "no rows in result set" {
-			http.Error(w, "Boxer not found", http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		} else {
-			http.Error(w, "Failed to retrieve boxer", http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve boxer"))
 		}
 		return
 	}
@@ -176,13 +175,11 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 	// Enrich boxer response with rest status (MAT-89)
 	enrichedResponse, err := h.enrichBoxerResponse(r.Context(), boxer)
 	if err != nil {
-		http.Error(w, "Failed to enrich boxer response", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to enrich boxer response"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(enrichedResponse)
+	pkgerrors.WriteJSON(w, http.StatusOK, enrichedResponse)
 }
 
 // UpdateBoxer handles updating a boxer
@@ -191,19 +188,19 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Path[len("/boxers/"):]
 	id, parseErr := strconv.Atoi(idStr)
 	if parseErr != nil {
-		http.Error(w, "Invalid boxer ID", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "Invalid boxer ID"))
 		return
 	}
 
 	var boxerUpdate model.BoxerUpdate
 	if decodeErr := json.NewDecoder(r.Body).Decode(&boxerUpdate); decodeErr != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
 
 	// Check if database connection is available
 	if h.boxerStore == nil {
-		http.Error(w, "Database connection not available", http.StatusServiceUnavailable)
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -211,9 +208,9 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
 	if getErr != nil {
 		if getErr.Error() == "no rows in result set" {
-			http.Error(w, "Boxer not found", http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		} else {
-			http.Error(w, "Failed to retrieve boxer", http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve boxer"))
 		}
 		return
 	}
@@ -244,13 +241,11 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	// Update the boxer in the database
 	updateErr := h.boxerStore.Update(r.Context(), boxer)
 	if updateErr != nil {
-		http.Error(w, "Failed to update boxer", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to update boxer"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]any{
 		"message": "Boxer updated successfully",
 		"id":      id,
 	})
@@ -261,34 +256,30 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 	// Get authenticated user from context (injected by middleware)
 	user := auth.UserFromRequest(r)
 	if user == nil {
-		http.Error(w, `{"error": "Authentication failed"}`, http.StatusUnauthorized)
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
 		return
 	}
 
 	// Check if database connection is available
 	if h.boxerStore == nil {
 		// Return empty array if no database connection
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode([]model.Boxer{})
+		pkgerrors.WriteJSON(w, http.StatusOK, []*model.BoxerResponse{})
 		return
 	}
 
 	// Get the boxers from the database using the boxerStore
 	boxers, err := h.boxerStore.GetByUserID(r.Context(), user.ID)
 	if err != nil {
-		http.Error(w, "Failed to retrieve boxers", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve boxers"))
 		return
 	}
 
 	// Enrich boxer responses with rest status (MAT-89)
 	enrichedBoxers, err := h.enrichBoxersResponse(r.Context(), boxers)
 	if err != nil {
-		http.Error(w, "Failed to enrich boxer responses", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to enrich boxer responses"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(enrichedBoxers)
+	pkgerrors.WriteJSON(w, http.StatusOK, enrichedBoxers)
 }

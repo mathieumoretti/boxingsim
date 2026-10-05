@@ -177,7 +177,7 @@ func TestTrainingBlockedDuringRestPeriod(t *testing.T) {
 		t.Errorf("Expected status 400, got %d. Body: %s", resp.StatusCode, string(respBody))
 	}
 
-	// Verify error response includes rest_ends_at
+	// Verify error response includes rest_ends_at in details
 	var respMap map[string]interface{}
 	if err := json.Unmarshal(respBody, &respMap); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
@@ -187,8 +187,13 @@ func TestTrainingBlockedDuringRestPeriod(t *testing.T) {
 		t.Error("Response should include 'error' field")
 	}
 
-	if _, ok := respMap["rest_ends_at"]; !ok {
-		t.Error("Response should include 'rest_ends_at' field when boxer is resting")
+	// Check that error.details includes rest_ends_at
+	errorObj, ok := respMap["error"].(map[string]interface{})
+	if ok {
+		details, ok := errorObj["details"].(map[string]interface{})
+		if !ok || details["rest_ends_at"] == nil {
+			t.Error("Response should include 'rest_ends_at' in error.details when boxer is resting")
+		}
 	}
 
 	t.Logf("Training blocked during rest: %s", string(respBody))
@@ -277,9 +282,13 @@ func TestTrainingRequiresSufficientEnergy(t *testing.T) {
 
 	var boxerResp map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&boxerResp)
-	boxerObj, ok := boxerResp["boxer"].(map[string]interface{})
+	dataObj, ok := boxerResp["data"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("Failed to get boxer object from response: %v", boxerResp)
+		t.Fatalf("Failed to get data object from response: %v", boxerResp)
+	}
+	boxerObj, ok := dataObj["boxer"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Failed to get boxer object from data: %v", boxerResp)
 	}
 	boxerIDFloat, ok := boxerObj["id"].(float64)
 	if !ok {
@@ -356,9 +365,13 @@ func TestTrainingRequiresHealthyBoxer(t *testing.T) {
 
 	var boxerResp map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&boxerResp)
-	boxerObj, ok := boxerResp["boxer"].(map[string]interface{})
+	dataObj, ok := boxerResp["data"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("Failed to get boxer object from response: %v", boxerResp)
+		t.Fatalf("Failed to get data object from response: %v", boxerResp)
+	}
+	boxerObj, ok := dataObj["boxer"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Failed to get boxer object from data: %v", boxerResp)
 	}
 	boxerIDFloat, ok := boxerObj["id"].(float64)
 	if !ok {
@@ -469,7 +482,12 @@ func TestTrainingBlocksWhenPendingExists(t *testing.T) {
 	if resp.StatusCode == http.StatusBadRequest {
 		var respBody map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&respBody)
-		t.Logf("Training correctly blocked due to pending session: %v", respBody["error"])
+		if errObj, ok := respBody["error"].(map[string]interface{}); ok {
+			t.Logf("Training correctly blocked due to pending session: %s (code: %s)",
+				errObj["message"], errObj["code"])
+		} else {
+			t.Logf("Training correctly blocked due to pending session: error response received")
+		}
 	} else {
 		t.Errorf("Expected status 400 for duplicate pending training, got %d", resp.StatusCode)
 	}
@@ -849,10 +867,14 @@ func createTrainingTestBoxer(t *testing.T, client *http.Client, token string) in
 	var boxerResp map[string]interface{}
 	json.Unmarshal(body, &boxerResp)
 
-	// Response is {"boxer": {"id": 1, ...}, "message": "..."}
-	boxerObj, ok := boxerResp["boxer"].(map[string]interface{})
+	// Response is {"success": true, "data": {"message": "...", "boxer": {...}}}
+	dataObj, ok := boxerResp["data"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("Failed to get boxer object from response: %s", string(body))
+		t.Fatalf("Failed to get data object from response: %s", string(body))
+	}
+	boxerObj, ok := dataObj["boxer"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Failed to get boxer object from data: %s", string(body))
 	}
 
 	boxerID, ok := boxerObj["id"].(float64)

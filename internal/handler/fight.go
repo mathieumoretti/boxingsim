@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/service"
 )
 
@@ -28,30 +29,28 @@ type BookFightForBoxerRequest struct {
 
 // BookFightForBoxer schedules a fight for a specific boxer with an opponent (POST /boxers/{id}/fights)
 func (h *FightHandler) BookFightForBoxer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	vars := mux.Vars(r)
 	boxerIDStr := vars["id"]
 
 	if boxerIDStr == "" {
-		http.Error(w, `{"error": "boxer id required"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("boxer id required"))
 		return
 	}
 
 	boxerID, err := strconv.Atoi(boxerIDStr)
 	if err != nil {
-		http.Error(w, `{"error": "invalid boxer id format"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "invalid boxer id format"))
 		return
 	}
 
 	var req BookFightForBoxerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("invalid request body"))
 		return
 	}
 
 	if req.OpponentID == 0 {
-		http.Error(w, `{"error": "opponent_id is required"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("opponent_id", "opponent_id is required"))
 		return
 	}
 
@@ -62,20 +61,16 @@ func (h *FightHandler) BookFightForBoxer(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		switch {
 		case errors.Is(err, boxerdb.ErrBoxerNotExists):
-			http.Error(w, `{"error": "boxer not found"}`, http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		default:
-			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusConflict)
+			pkgerrors.WriteError(w, pkgerrors.Conflict(err.Error()))
 		}
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
 		"message": "Fight booked successfully",
-	}); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	})
 }
 
 // BookFightRequest represents the JSON body for booking a fight
@@ -88,11 +83,9 @@ type BookFightRequest struct {
 
 // BookFight schedules a new fight between two boxers (POST /fights/book)
 func (h *FightHandler) BookFight(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var req BookFightRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("invalid request body"))
 		return
 	}
 
@@ -105,52 +98,43 @@ func (h *FightHandler) BookFight(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, boxerdb.ErrBoxerNotExists):
-			http.Error(w, `{"error": "boxer not found"}`, http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		default:
-			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusConflict)
+			pkgerrors.WriteError(w, pkgerrors.Conflict(err.Error()))
 		}
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Fight booked successfully"}); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
+		"message": "Fight booked successfully",
+	})
 }
 
 // GetActiveFights returns all active (scheduled/in_progress) fights (GET /fights/active)
 func (h *FightHandler) GetActiveFights(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	statuses := []string{"scheduled", "in_progress"}
 	fights, err := h.fightService.GetActiveFights(r.Context(), statuses)
 	if err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to fetch active fights"))
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(fights); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	pkgerrors.WriteJSON(w, http.StatusOK, fights)
 }
 
 // GetFightByID returns a specific fight by ID (GET /fights/{id})
 func (h *FightHandler) GetFightByID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
 	if idStr == "" {
-		http.Error(w, `{"error": "fight id required"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("fight id required"))
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, `{"error": "invalid fight id format"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "invalid fight id format"))
 		return
 	}
 
@@ -158,34 +142,29 @@ func (h *FightHandler) GetFightByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, boxerdb.ErrBoxerNotExists):
-			http.Error(w, `{"error": "fight not found"}`, http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("fight"))
 		default:
-			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to fetch fight"))
 		}
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(fight); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	pkgerrors.WriteJSON(w, http.StatusOK, fight)
 }
 
 // GetUpcomingFightForBoxer returns the next upcoming fight for a specific boxer (GET /boxers/{id}/upcoming-fight) (MAT-106)
 func (h *FightHandler) GetUpcomingFightForBoxer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
 	if idStr == "" {
-		http.Error(w, `{"error": "boxer id required"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("boxer id required"))
 		return
 	}
 
 	boxerID, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, `{"error": "invalid boxer id format"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "invalid boxer id format"))
 		return
 	}
 
@@ -193,34 +172,29 @@ func (h *FightHandler) GetUpcomingFightForBoxer(w http.ResponseWriter, r *http.R
 	if err != nil {
 		switch {
 		case errors.Is(err, boxerdb.ErrUpcomingFightNotFound):
-			http.Error(w, `{"error": "no upcoming fight found"}`, http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("upcoming fight"))
 		default:
-			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to fetch upcoming fight"))
 		}
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(fight); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	pkgerrors.WriteJSON(w, http.StatusOK, fight)
 }
 
 // GetFightHistoryWithOpponents returns the fight history for a specific boxer with opponent names (GET /boxers/{id}/fights-history) (MAT-103)
 func (h *FightHandler) GetFightHistoryWithOpponents(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
 	if idStr == "" {
-		http.Error(w, `{"error": "boxer id required"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("boxer id required"))
 		return
 	}
 
 	boxerID, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, `{"error": "invalid boxer id format"}`, http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "invalid boxer id format"))
 		return
 	}
 
@@ -228,9 +202,9 @@ func (h *FightHandler) GetFightHistoryWithOpponents(w http.ResponseWriter, r *ht
 	if err != nil {
 		switch {
 		case errors.Is(err, boxerdb.ErrBoxerNotExists):
-			http.Error(w, `{"error": "boxer not found"}`, http.StatusNotFound)
+			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		default:
-			http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to fetch fight history"))
 		}
 		return
 	}
@@ -240,8 +214,5 @@ func (h *FightHandler) GetFightHistoryWithOpponents(w http.ResponseWriter, r *ht
 		fights = []*boxerdb.FightHistoryWithOpponent{}
 	}
 
-	if err := json.NewEncoder(w).Encode(fights); err != nil {
-		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
+	pkgerrors.WriteJSON(w, http.StatusOK, fights)
 }
