@@ -6,6 +6,7 @@ import (
 
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/db"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/database"
@@ -45,7 +46,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var registerReq model.UserRegister
 	if err := json.NewDecoder(r.Body).Decode(&registerReq); err != nil {
 		logger.Error("Invalid JSON in RegisterUser: %v", err)
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
 
@@ -54,7 +55,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// Validate input
 	if registerReq.Password != registerReq.ConfirmPassword {
 		logger.Error("Passwords do not match for user: %s", registerReq.Username)
-		http.Error(w, "Passwords do not match", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.Validation("password", "Passwords do not match"))
 		return
 	}
 
@@ -64,7 +65,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		_, err := db.GetUserByUsername(h.db.DB, registerReq.Username)
 		if err == nil {
 			logger.Error("User already exists: %s", registerReq.Username)
-			http.Error(w, "User already exists", http.StatusConflict)
+			pkgerrors.WriteError(w, pkgerrors.Conflict("User already exists"))
 			return
 		}
 	} else {
@@ -75,7 +76,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	hashedPassword, err := h.authService.HashPassword(registerReq.Password)
 	if err != nil {
 		logger.Error("Failed to hash password for user %s: %v", registerReq.Username, err)
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to hash password"))
 		return
 	}
 
@@ -90,16 +91,14 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		err = db.CreateUser(h.db.DB, userCreate)
 		if err != nil {
 			logger.Error("Failed to create user %s: %v", registerReq.Username, err)
-			http.Error(w, "Failed to create user", http.StatusInternalServerError)
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to create user"))
 			return
 		}
 	} else {
 		logger.Info("No database connection - skipping user creation")
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
 		"message": "User registered successfully",
 	})
 	logger.Info("RegisterUser completed successfully for user: %s", registerReq.Username)
@@ -113,7 +112,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var loginReq model.UserLogin
 	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 		logger.Error("Invalid JSON in LoginUser: %v", err)
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
 
@@ -126,7 +125,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		foundUser, err := db.GetUserByUsername(h.db.DB, loginReq.Username)
 		if err != nil {
 			logger.Error("User not found: %s", loginReq.Username)
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			pkgerrors.WriteError(w, pkgerrors.Unauthorized("Invalid credentials"))
 			return
 		}
 		modelUser = foundUser
@@ -144,7 +143,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Verify password
 	if !h.authService.CheckPassword(loginReq.Password, modelUser.HashedPassword) {
 		logger.Error("Invalid password for user: %s", loginReq.Username)
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Invalid credentials"))
 		return
 	}
 
@@ -152,19 +151,18 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	tokenPair, err := h.authService.GenerateTokenPair(modelUser)
 	if err != nil {
 		logger.Error("Failed to generate tokens for user %s: %v", loginReq.Username, err)
-		http.Error(w, "Failed to generate authentication token", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to generate authentication token"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"token": tokenPair.AccessToken,
-		"user": map[string]interface{}{
+		"user": map[string]any{
 			"id":       modelUser.ID,
 			"username": modelUser.Username,
 			"email":    modelUser.Email,
 		},
-	})
+	}
+	pkgerrors.WriteJSON(w, http.StatusOK, response)
 	logger.Info("LoginUser completed successfully for user: %s", loginReq.Username)
 }

@@ -14,9 +14,9 @@ import (
 )
 
 type FightService struct {
-	fightStore   *store.FightStore
-	boxerStore   *store.BoxerStore
-	eventStore   *store.ScheduledEventStore
+	fightStore *store.FightStore
+	boxerStore *store.BoxerStore
+	eventStore *store.ScheduledEventStore
 }
 
 func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, eventStore *store.ScheduledEventStore) *FightService {

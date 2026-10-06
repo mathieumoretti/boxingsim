@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mormm/boxing/internal/auth"
+	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
@@ -49,21 +50,17 @@ func NewTrainingHandler(
 // GetAllTrainingTypes returns all available training types (reference data)
 func (h *TrainingHandler) GetAllTrainingTypes(w http.ResponseWriter, r *http.Request) {
 	if h.trainingTypeStore == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode([]model.TrainingType{})
+		pkgerrors.WriteJSON(w, http.StatusServiceUnavailable, []model.TrainingType{})
 		return
 	}
 
 	trainingTypes, err := h.trainingTypeStore.GetAll(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to retrieve training types", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve training types"))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(trainingTypes)
+	pkgerrors.WriteJSON(w, http.StatusOK, trainingTypes)
 }
 
 // ScheduleTraining handles scheduling a new training session for a boxer
@@ -78,9 +75,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	// Get authenticated user from context (injected by middleware)
 	user := auth.UserFromRequest(r)
 	if user == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Authentication failed"})
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
 		return
 	}
 
@@ -88,26 +83,20 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	idStr := mux.Vars(r)["id"]
 	boxerID, parseErr := strconv.Atoi(idStr)
 	if parseErr != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid boxer ID"})
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer ID"))
 		return
 	}
 
 	// Decode request body
 	var req ScheduleTrainingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
 
 	// Check if stores are available
 	if h.boxerStore == nil || h.trainingTypeStore == nil || h.trainingService == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Database connection not available"})
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -116,70 +105,50 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	// 1. Validate boxer exists and belongs to user
 	boxer, err := h.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Boxer not found"})
+		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
 	}
 
 	if boxer.UserID != user.ID {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "You don't own this boxer"})
+		pkgerrors.WriteError(w, pkgerrors.Forbidden("You don't own this boxer"))
 		return
 	}
 
 	// 2. Validate training type exists
 	trainingType, err := h.trainingTypeStore.GetByID(ctx, req.TrainingTypeID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Training type not found"})
+		pkgerrors.WriteError(w, pkgerrors.NotFound("training type"))
 		return
 	}
 
 	// 3. Validate boxer has sufficient energy
 	energyCost := trainingType.EnergyCost * int(req.DurationHours)
 	if int(boxer.Energy) < energyCost {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error":     "Insufficient energy",
-			"required":  strconv.Itoa(energyCost),
-			"available": strconv.Itoa(int(boxer.Energy)),
-		})
+		pkgerrors.WriteError(w, pkgerrors.EnergyInsufficient(energyCost, int(boxer.Energy)))
 		return
 	}
 
 	// 4. Validate boxer is not in recovery (health < 50%)
 	if boxer.Health < 50 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Boxer needs to recover before training (health < 50%)"})
+		pkgerrors.WriteError(w, pkgerrors.BoxerInRecovery("Boxer needs to recover before training (health < 50%)"))
 		return
 	}
 
 	// 6. Validate duration constraints (1-8 hours, already enforced by binding tag)
 	if req.DurationHours < 1 || req.DurationHours > 8 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Duration must be between 1 and 8 hours"})
+		pkgerrors.WriteError(w, pkgerrors.Validation("duration_hours", "Duration must be between 1 and 8 hours"))
 		return
 	}
 
 	// 7. Check for pending training sessions (boxer can only do one training at a time)
 	pendingSessions, err := h.trainingSessionStore.GetPendingByBoxerID(ctx, boxerID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to check pending training sessions"})
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to check pending training sessions"))
 		return
 	}
 
 	if len(pendingSessions) > 0 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Boxer already has a pending training session"})
+		pkgerrors.WriteError(w, pkgerrors.TrainingScheduled())
 		return
 	}
 
@@ -187,21 +156,14 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	if h.scheduledEventStore != nil {
 		pendingRestEvents, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxerID, model.EventTypeRest)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to check rest events"})
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to check rest events"))
 			return
 		}
 
 		now := time.Now().UTC()
 		for _, restEvent := range pendingRestEvents {
 			if !restEvent.Processed && restEvent.EventTime.After(now) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusBadRequest)
-				_ = json.NewEncoder(w).Encode(map[string]string{
-					"error":        "Boxer is currently resting",
-					"rest_ends_at": restEvent.EventTime.Format(time.RFC3339),
-				})
+				pkgerrors.WriteError(w, pkgerrors.BoxerResting(restEvent.EventTime.Format(time.RFC3339)))
 				return
 			}
 		}
@@ -211,9 +173,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	if h.fatigueService != nil {
 		canTrain, errMsg := h.fatigueService.CheckCanTrain(boxer)
 		if !canTrain {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": errMsg})
+			pkgerrors.WriteError(w, pkgerrors.FatigueTooHigh(errMsg))
 			return
 		}
 	}
@@ -229,9 +189,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 		plannedStrengthGain, plannedDefenseGain, plannedAgilityGain,
 	)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create training session"})
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to create training session"))
 		return
 	}
 
@@ -252,7 +210,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Calculate effective gains with progression modifiers (MAT-22)
-	var effectiveGains map[string]interface{}
+	var effectiveGains map[string]any
 	var fatigueMultiplier float64
 	if h.progressionService != nil {
 		eff := h.progressionService.CalculateEffectiveGains(
@@ -263,7 +221,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 			req.DurationHours,
 		)
 		fatigueMultiplier = eff.FatigueMultiplier
-		effectiveGains = map[string]interface{}{
+		effectiveGains = map[string]any{
 			"strength":             eff.Strength,
 			"defense":              eff.Defense,
 			"agility":              eff.Agility,
@@ -276,11 +234,9 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Return success response with training session details
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"message": "Training scheduled successfully",
-		"session": map[string]interface{}{
+		"session": map[string]any{
 			"id":                        trainingSession.ID,
 			"boxer_id":                  trainingSession.BoxerID,
 			"training_type_id":          trainingSession.TrainingTypeID,
@@ -295,12 +251,13 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 			"energy_cost":     energyCost,
 			"status":          trainingSession.Status,
 		},
-		"training_type": map[string]interface{}{
+		"training_type": map[string]any{
 			"name":                 trainingType.Name,
 			"description":          trainingType.Description,
 			"energy_cost_per_hour": trainingType.EnergyCost,
 		},
-	})
+	}
+	pkgerrors.WriteSuccess(w, http.StatusCreated, response)
 }
 
 // GetTrainingSessionsForBoxer returns all training sessions for a boxer
@@ -309,22 +266,18 @@ func (h *TrainingHandler) GetTrainingSessionsForBoxer(w http.ResponseWriter, r *
 	idStr := mux.Vars(r)["id"]
 	boxerID, parseErr := strconv.Atoi(idStr)
 	if parseErr != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid boxer ID"})
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer ID"))
 		return
 	}
 
 	if h.trainingSessionStore == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode([]model.TrainingSession{})
+		pkgerrors.WriteJSON(w, http.StatusServiceUnavailable, []*model.TrainingSession{})
 		return
 	}
 
 	sessions, err := h.trainingSessionStore.GetPendingByBoxerID(r.Context(), boxerID)
 	if err != nil {
-		http.Error(w, "Failed to retrieve training sessions", http.StatusInternalServerError)
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve training sessions"))
 		return
 	}
 
@@ -333,40 +286,32 @@ func (h *TrainingHandler) GetTrainingSessionsForBoxer(w http.ResponseWriter, r *
 		sessions = []*model.TrainingSession{}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(sessions)
+	pkgerrors.WriteJSON(w, http.StatusOK, sessions)
 }
 
 // CompleteTraining handles completing a training session manually
 // POST /training/{id}/complete
 func (h *TrainingHandler) CompleteTraining(w http.ResponseWriter, r *http.Request) {
 	if h.trainingService == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Training service not available"})
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
 	idStr := mux.Vars(r)["id"]
 	sessionID, parseErr := strconv.Atoi(idStr)
 	if parseErr != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid training session ID"})
+		pkgerrors.WriteError(w, pkgerrors.Validation("session_id", "Invalid training session ID"))
 		return
 	}
 
 	if err := h.trainingService.CompleteTrainingSession(r.Context(), sessionID); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		pkgerrors.WriteError(w, pkgerrors.InvalidState(err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"message": "Training session completed successfully"})
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
+		"message": "Training session completed successfully",
+	})
 }
 
 // BulkCompleteRequest represents the request body for bulk training completion
@@ -385,9 +330,7 @@ type BulkCompleteResponse struct {
 // POST /training/bulk-complete
 func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Request) {
 	if h.trainingService == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Training service not available"})
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
 		return
 	}
 
@@ -395,9 +338,7 @@ func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Re
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// Empty body is valid - means complete all pending sessions
 		if r.ContentLength != 0 {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
+			pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 			return
 		}
 	}
@@ -410,25 +351,19 @@ func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Re
 		// Complete only specific boxer's training sessions
 		completed, failed, err = h.trainingService.CompleteTrainingForBoxer(ctx, *req.BoxerID)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			pkgerrors.WriteError(w, pkgerrors.Internal(err.Error()))
 			return
 		}
 	} else {
 		// Complete all pending training sessions
 		completed, failed, err = h.trainingService.CompleteAllDueTrainingSessions(ctx, nil)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			pkgerrors.WriteError(w, pkgerrors.Internal(err.Error()))
 			return
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(BulkCompleteResponse{
+	pkgerrors.WriteSuccess(w, http.StatusOK, BulkCompleteResponse{
 		Completed: completed,
 		Failed:    failed,
 		Message:   fmt.Sprintf("Completed %d training session(s)", completed),

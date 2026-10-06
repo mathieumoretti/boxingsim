@@ -682,7 +682,12 @@ func createBoxer(t *testing.T, router *mux.Router, token, name string) int {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if boxerData, ok := response["boxer"].(map[string]interface{}); ok {
+	// Response is {"success": true, "data": {"boxer": {...}, "message": "..."}}
+	dataObj, ok := response["data"].(map[string]interface{})
+	if !ok {
+		t.Fatal("Response should contain 'data' object")
+	}
+	if boxerData, ok := dataObj["boxer"].(map[string]interface{}); ok {
 		if id, ok := boxerData["id"].(float64); ok {
 			return int(id)
 		}
