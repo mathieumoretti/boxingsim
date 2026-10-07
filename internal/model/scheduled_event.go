@@ -44,15 +44,27 @@ func (e *EventData) ToMap() map[string]interface{} {
 	return m
 }
 
+// EventStatus represents the lifecycle state of a scheduled event.
+type EventStatus string
+
+const (
+	EventStatusPending    EventStatus = "pending"    // Awaiting processing by worker
+	EventStatusProcessing EventStatus = "processing" // Currently being handled
+	EventStatusCompleted  EventStatus = "completed"  // Successfully processed
+	EventStatusFailed     EventStatus = "failed"     // Processing error occurred
+)
+
 // ScheduledEvent represents a scheduled event for a boxer with idempotent processing support.
 type ScheduledEvent struct {
-	ID           int       `db:"id" json:"id"`
-	BoxerID      int       `db:"boxer_id" json:"boxer_id"`
-	EventType    EventType `db:"event_type" json:"event_type"`
-	EventTime    time.Time `db:"event_time" json:"event_time"`
-	Processed    bool      `db:"processed" json:"processed"`
-	EventData    EventData `db:"event_data" dbtype:"jsonb" json:"-"`
-	ErrorMessage *string   `db:"error_message" json:"error_message,omitempty"`
+	ID           int         `db:"id" json:"id"`
+	BoxerID      int         `db:"boxer_id" json:"boxer_id"`
+	EventType    EventType   `db:"event_type" json:"event_type"`
+	EventTime    time.Time   `db:"event_time" json:"event_time"`
+	Processed    bool        `db:"processed" json:"processed"`
+	Status       EventStatus `db:"status" json:"status"`
+	EventData    EventData   `db:"event_data" dbtype:"jsonb" json:"-"`
+	ErrorMessage *string     `db:"error_message" json:"error_message,omitempty"`
+	ProcessedAt  *time.Time  `db:"processed_at" json:"processed_at,omitempty"`
 
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }

@@ -34,10 +34,10 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 	}
 
 	query := `
-			INSERT INTO scheduled_events (
-				boxer_id, event_type, event_time, processed, event_data, created_at
-			) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-			RETURNING id`
+					INSERT INTO scheduled_events (
+						boxer_id, event_type, event_time, processed, status, event_data, created_at
+					) VALUES ($1, $2, $3, $4, 'pending', COALESCE($5, 'null'::jsonb), CURRENT_TIMESTAMP)
+					RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
 		event.BoxerID, event.EventType, event.EventTime, event.Processed, event.EventData).Scan(&event.ID)
@@ -54,17 +54,18 @@ func (s *ScheduledEventStore) GetByID(ctx context.Context, id int) (*model.Sched
 	}
 
 	query := `
-			SELECT
-				id, boxer_id, event_type, event_time, processed, event_data,
-				error_message, created_at
-			FROM scheduled_events WHERE id = $1`
+					SELECT
+						id, boxer_id, event_type, event_time, processed, status, event_data,
+						error_message, processed_at, created_at
+					FROM scheduled_events WHERE id = $1`
 
 	event := &model.ScheduledEvent{}
 	row := s.db.QueryRowContext(ctx, query, id)
 
 	err := row.Scan(
 		&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
-		&event.Processed, &event.EventData, &event.ErrorMessage, &event.CreatedAt)
+		&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+		&event.ProcessedAt, &event.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, ErrEventNotFound
 	}
@@ -82,10 +83,10 @@ func (s *ScheduledEventStore) GetByBoxerID(ctx context.Context, boxerID int) ([]
 	}
 
 	query := `
-			SELECT
-				id, boxer_id, event_type, event_time, processed, event_data,
-				error_message, created_at
-			FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
+					SELECT
+						id, boxer_id, event_type, event_time, processed, status, event_data,
+						error_message, processed_at, created_at
+					FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
 
 	rows, err := s.db.QueryContext(ctx, query, boxerID)
 	if err != nil {
@@ -98,7 +99,8 @@ func (s *ScheduledEventStore) GetByBoxerID(ctx context.Context, boxerID int) ([]
 		event := &model.ScheduledEvent{}
 		err := rows.Scan(
 			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
-			&event.Processed, &event.EventData, &event.ErrorMessage, &event.CreatedAt)
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -124,12 +126,12 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 	}
 
 	query := `
-			SELECT
-				id, boxer_id, event_type, event_time, processed, event_data,
-				error_message, created_at
-			FROM scheduled_events
-			WHERE event_time <= $1 AND NOT processed
-			ORDER BY event_time ASC LIMIT $2`
+					SELECT
+						id, boxer_id, event_type, event_time, processed, status, event_data,
+						error_message, processed_at, created_at
+					FROM scheduled_events
+					WHERE event_time <= $1 AND processed = FALSE AND status IN ('pending', 'processing')
+					ORDER BY event_time ASC LIMIT $2`
 
 	rows, err := s.db.QueryContext(ctx, query, gameTime, limit)
 	if err != nil {
@@ -142,7 +144,8 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 		event := &model.ScheduledEvent{}
 		err := rows.Scan(
 			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
-			&event.Processed, &event.EventData, &event.ErrorMessage, &event.CreatedAt)
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -156,17 +159,17 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 	return events, nil
 }
 
-// MarkAsProcessed marks a scheduled event as processed atomically using row-level locking.
-// Returns ErrAlreadyProcessed if the event was already marked as processed (idempotent operation).
-func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId int) error {
+// MarkAsProcessing marks an event as currently being processed (for crash recovery tracking).
+// Returns ErrAlreadyProcessed if the event was already processed or failed.
+func (s *ScheduledEventStore) MarkAsProcessing(ctx context.Context, eventId int) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
 	query := `
-			UPDATE scheduled_events
-			SET processed = TRUE
-			WHERE id = $1 AND NOT processed`
+					UPDATE scheduled_events
+					SET status = 'processing', processed_at = NULL
+					WHERE id = $1 AND status IN ('pending', 'processing')`
 
 	result, err := s.db.ExecContext(ctx, query, eventId)
 	if err != nil {
@@ -176,6 +179,165 @@ func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId int) 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		return ErrAlreadyProcessed
+	}
+
+	return nil
+}
+
+// MarkAsCompleted marks a scheduled event as successfully processed atomically.
+// Returns ErrAlreadyProcessed if the event was already processed or failed.
+func (s *ScheduledEventStore) MarkAsCompleted(ctx context.Context, eventId int) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
+	query := `
+					UPDATE scheduled_events
+					SET processed = TRUE, status = 'completed', processed_at = CURRENT_TIMESTAMP, error_message = NULL
+					WHERE id = $1 AND status IN ('pending', 'processing')`
+
+	result, err := s.db.ExecContext(ctx, query, eventId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return ErrAlreadyProcessed
+	}
+
+	return nil
+}
+
+// MarkAsFailed marks a scheduled event as failed with an error message.
+// This allows for debugging and potential retry mechanisms.
+func (s *ScheduledEventStore) MarkAsFailed(ctx context.Context, eventId int, errorMessage string) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
+	query := `
+					UPDATE scheduled_events
+					SET status = 'failed', processed_at = CURRENT_TIMESTAMP, error_message = $2
+					WHERE id = $1 AND status IN ('pending', 'processing')`
+
+	result, err := s.db.ExecContext(ctx, query, eventId, errorMessage)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return ErrAlreadyProcessed
+	}
+
+	return nil
+}
+
+// MarkAsProcessed marks a scheduled event as processed atomically using row-level locking.
+// Returns ErrAlreadyProcessed if the event was already marked as processed (idempotent operation).
+// Deprecated: Use MarkAsCompleted or MarkAsFailed instead for better visibility.
+func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId int) error {
+	return s.MarkAsCompleted(ctx, eventId)
+}
+
+// GetFailedEvents retrieves all events that have failed processing for debugging/monitoring.
+func (s *ScheduledEventStore) GetFailedEvents(ctx context.Context, limit int) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+					SELECT
+						id, boxer_id, event_type, event_time, processed, status, event_data,
+						error_message, processed_at, created_at
+					FROM scheduled_events
+					WHERE status = 'failed'
+					ORDER BY processed_at DESC
+					LIMIT $1`
+
+	rows, err := s.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var events []*model.ScheduledEvent
+	for rows.Next() {
+		event := &model.ScheduledEvent{}
+		err := rows.Scan(
+			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+// GetProcessingEvents retrieves all events currently in 'processing' state (for crash recovery).
+func (s *ScheduledEventStore) GetProcessingEvents(ctx context.Context) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+					SELECT
+						id, boxer_id, event_type, event_time, processed, status, event_data,
+						error_message, processed_at, created_at
+					FROM scheduled_events
+					WHERE status = 'processing'
+					ORDER BY created_at ASC`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var events []*model.ScheduledEvent
+	for rows.Next() {
+		event := &model.ScheduledEvent{}
+		err := rows.Scan(
+			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+// ResetToPending resets an event from 'processing' state back to 'pending' for crash recovery.
+func (s *ScheduledEventStore) ResetToPending(ctx context.Context, eventId int) error {
+	if s.db == nil {
+		return errors.New("database connection is nil")
+	}
+
+	query := `UPDATE scheduled_events SET status = 'pending', processed_at = NULL WHERE id = $1 AND status = 'processing'`
+
+	result, err := s.db.ExecContext(ctx, query, eventId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return ErrEventNotFound
 	}
 
 	return nil
@@ -201,9 +363,9 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 	defer func() { _ = tx.Rollback() }() // Will be ignored if committed
 
 	insertQuery := `
-			INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, event_data, created_at)
-			VALUES ($1, $2, $3, FALSE, COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
-			RETURNING id`
+					INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, status, event_data, created_at)
+					VALUES ($1, $2, $3, FALSE, 'pending', COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
+					RETURNING id`
 
 	var eventId int
 	err = tx.QueryRowContext(ctx, insertQuery, boxerID, eventType, eventTime, data).Scan(&eventId)
@@ -216,6 +378,7 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 		BoxerID:   boxerID,
 		EventType: eventType,
 		EventTime: eventTime,
+		Status:    model.EventStatusPending,
 		CreatedAt: time.Now(),
 	}
 
@@ -246,14 +409,15 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 	}
 
 	query := `
-				SELECT
-					id, boxer_id, event_type, event_time, processed, event_data,
-					error_message, created_at
-				FROM scheduled_events
-				WHERE boxer_id = $1
-				AND event_type = $2
-				AND NOT processed
-				ORDER BY event_time ASC`
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events
+						WHERE boxer_id = $1
+						AND event_type = $2
+						AND processed = FALSE
+						AND status IN ('pending', 'processing')
+						ORDER BY event_time ASC`
 
 	rows, err := s.db.QueryContext(ctx, query, boxerID, eventType)
 	if err != nil {
@@ -266,7 +430,8 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 		event := &model.ScheduledEvent{}
 		err := rows.Scan(
 			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
-			&event.Processed, &event.EventData, &event.ErrorMessage, &event.CreatedAt)
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

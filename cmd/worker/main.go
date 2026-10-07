@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -156,8 +157,16 @@ func startWorkerLoop(
 	lg *logger.Logger,
 	pollInterval time.Duration,
 ) {
+	// MAT-113: Crash recovery - check for events stuck in 'processing' state from previous crashes
+	recoverProcessingEvents(ctx, eventStore, lg)
+
+	// Check for failed events and log them for visibility
+	logFailedEvents(ctx, eventStore, lg)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	lg.Info("Worker loop started with poll interval: %v", pollInterval)
 
 	for {
 		select {
@@ -171,8 +180,9 @@ func startWorkerLoop(
 			gameTime, err := worldClock.GetCurrentGameTime(ctx, db.DB)
 			if err != nil {
 				lg.Error("Failed to get current game time: " + err.Error())
-			} else {
-				lg.Debug("Current game time: " + gameTime.Format("2006-01-02 15:04:05"))
+				// Sleep and retry on next iteration
+				time.Sleep(pollInterval)
+				continue
 			}
 
 			// Query pending scheduled events due at or before current game time
@@ -180,15 +190,10 @@ func startWorkerLoop(
 			if err != nil {
 				lg.Error("Failed to get pending events: " + err.Error())
 			} else if len(events) > 0 {
-				lg.Info("Found %d pending events to process", len(events))
+				lg.Debug("Game time %s: found %d pending events",
+					gameTime.Format("2006-01-02 15:04:05"), len(events))
 				for _, event := range events {
-					if err := eventProcessor.ProcessScheduledEvent(ctx, event); err != nil {
-						lg.Error("Failed to process event ID=%d Type=%s BoxerID=%d: %v",
-							event.ID, event.EventType, event.BoxerID, err)
-					} else {
-						lg.Info("Processed event ID=%d Type=%s BoxerID=%d",
-							event.ID, event.EventType, event.BoxerID)
-					}
+					_ = eventProcessor.ProcessScheduledEvent(ctx, event)
 				}
 			}
 
@@ -210,6 +215,52 @@ func startWorkerLoop(
 			case <-quit:
 				return
 			}
+		}
+	}
+}
+
+// recoverProcessingEvents handles crash recovery by resetting events stuck in 'processing' state
+// back to 'pending' so they can be reprocessed. This should be called on worker startup.
+func recoverProcessingEvents(ctx context.Context, eventStore *store.ScheduledEventStore, lg *logger.Logger) {
+	processingEvents, err := eventStore.GetProcessingEvents(ctx)
+	if err != nil {
+		lg.Error("Failed to query processing events for crash recovery: %v", err)
+		return
+	}
+
+	if len(processingEvents) > 0 {
+		lg.Warn("Found %d events stuck in 'processing' state from previous run - recovering...", len(processingEvents))
+		for _, event := range processingEvents {
+			if err := eventStore.ResetToPending(ctx, event.ID); err != nil {
+				if !errors.Is(err, store.ErrEventNotFound) {
+					lg.Error("Failed to reset event ID=%d to pending: %v", event.ID, err)
+				}
+			} else {
+				lg.Info("Recovered event ID=%d type=%s (was stuck in processing)", event.ID, event.EventType)
+			}
+		}
+		lg.Info("Crash recovery complete: %d events reset to pending", len(processingEvents))
+	}
+}
+
+// logFailedEvents logs all failed events for visibility and monitoring purposes.
+// This should be called on worker startup and periodically during runtime.
+func logFailedEvents(ctx context.Context, eventStore *store.ScheduledEventStore, lg *logger.Logger) {
+	failedEvents, err := eventStore.GetFailedEvents(ctx, 100) // Limit to last 100
+	if err != nil {
+		lg.Error("Failed to query failed events: %v", err)
+		return
+	}
+
+	if len(failedEvents) > 0 {
+		lg.Warn("Found %d failed events in the system:", len(failedEvents))
+		for _, event := range failedEvents {
+			errorMsg := "unknown error"
+			if event.ErrorMessage != nil {
+				errorMsg = *event.ErrorMessage
+			}
+			lg.Warn("  - Event ID=%d type=%s boxer_id=%d error='%s'",
+				event.ID, event.EventType, event.BoxerID, errorMsg)
 		}
 	}
 }
