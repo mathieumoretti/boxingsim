@@ -59,16 +59,25 @@ func NewTrainingService(
 	}
 }
 
-// CompleteTrainingSession completes a pending training session by:
-// 1. Validating the session exists and is pending
-// 2. Fetching boxer and validating ownership/constraints
-// 3. Deducting energy cost from boxer
-// 4. Applying planned stat gains to boxer
-// 5. Updating boxer via boxerStore.Update()
-// 6. Marking training session as completed
+// CompleteTrainingSession completes a pending training session using database transactions.
+// Uses SELECT FOR UPDATE to prevent concurrent modifications and ensures atomic updates:
+// 1. Locks the training session and boxer rows
+// 2. Validates session is pending and boxer has sufficient energy
+// 3. Deducts energy cost and applies stat gains atomically
+// 4. Marks training session as completed within same transaction
+// All operations either succeed together or rollback on error (no partial state).
 func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID int) error {
-	// Step 1: Fetch and validate training session
-	session, err := s.trainingSessionStore.GetByID(ctx, sessionID)
+	// Begin transaction with serializable isolation for maximum consistency
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback() // Safe to call even after Commit; only rolls back if not committed
+	}()
+
+	// Step 1: Lock and fetch training session (prevents concurrent completion of same session)
+	session, err := s.trainingSessionStore.GetByIDWithLockTx(ctx, tx, sessionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%w: ID=%d", ErrTrainingNotFound, sessionID)
@@ -80,8 +89,8 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		return fmt.Errorf("%w: current status is %q", ErrTrainingNotPending, session.Status)
 	}
 
-	// Step 2: Fetch boxer
-	boxer, err := s.boxerStore.GetByID(ctx, session.BoxerID)
+	// Step 2: Lock boxer row (prevents concurrent training/fights on same boxer)
+	boxer, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, session.BoxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("boxer not found: ID=%d", session.BoxerID)
@@ -89,7 +98,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		return fmt.Errorf("failed to fetch boxer %d: %w", session.BoxerID, err)
 	}
 
-	// Step 3: Fetch training type to calculate energy cost
+	// Step 3: Fetch training type to calculate energy cost (no lock needed - reference data)
 	trainingType, err := s.trainingTypeStore.GetByID(ctx, session.TrainingTypeID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -107,7 +116,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 			ErrInsufficientEnergy, boxer.Energy, energyCost)
 	}
 
-	// Step 5: Apply progression-aware stat gains (MAT-22)
+	// Step 5: Apply progression-aware stat gains (MAT-22) - modifies boxer in memory only
 	boxer.Energy -= energyCost // Deduct energy cost
 
 	if s.progressionService != nil {
@@ -157,20 +166,23 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 		boxer.Energy = 0
 	}
 
-	// Step 6: Update boxer in database
-	if err := s.boxerStore.Update(ctx, boxer); err != nil {
+	// Step 6: Update boxer in database within transaction
+	if err := s.boxerStore.UpdateTx(ctx, tx, boxer); err != nil {
 		return fmt.Errorf("failed to update boxer %d after training: %w", boxer.ID, err)
 	}
 
-	// Step 7: Mark training session as completed
-	if err := s.trainingSessionStore.MarkAsCompleted(ctx, sessionID); err != nil {
-		// Note: boxer was already updated; this is a partial failure state
-		// In production, we might want to rollback or track this for manual recovery
-		s.logger.Error("Training session %d completion failed after boxer update: %v", sessionID, err)
+	// Step 7: Mark training session as completed within transaction (atomic with boxer update)
+	if err := s.trainingSessionStore.MarkAsCompletedTx(ctx, tx, sessionID); err != nil {
 		return fmt.Errorf("failed to mark training session %d as completed: %w", sessionID, err)
 	}
 
+	// Commit the entire transaction - all updates happen atomically
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	// Step 8: Apply fatigue increase from training (duration_hours × 15)
+	// This is outside the transaction as it's a separate concern and shouldn't block training completion
 	if s.fatigueService != nil {
 		fatigueIncrease := s.fatigueService.CalculateFatigueIncrease(session.DurationHours)
 		if err := s.fatigueService.ApplyFatigueIncrease(ctx, boxer.ID, fatigueIncrease); err != nil {
@@ -180,6 +192,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	}
 
 	// Step 9: Schedule automatic rest period based on fatigue (MAT-86)
+	// This is also outside the transaction as it's a side effect that shouldn't block training completion
 	if s.fatigueService != nil && s.scheduledEventStore != nil {
 		// Get updated boxer state after fatigue increase
 		updatedBoxer, err := s.boxerStore.GetByID(ctx, boxer.ID)

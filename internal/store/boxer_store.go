@@ -75,6 +75,63 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 	return boxer, nil
 }
 
+// GetByIDWithLock retrieves a boxer by ID with an exclusive row lock (SELECT FOR UPDATE).
+// Must be called within a transaction to properly hold the lock.
+func (s *BoxerStore) GetByIDWithLock(ctx context.Context, id int) (*model.Boxer, error) {
+	query := `
+		SELECT id, user_id, name, nickname, position_x, position_y,
+		       health, energy, strength, defense, agility,
+		       experience, level, fatigue_score, forced_rest_until,
+		       wins, losses, draws, knockouts, knockdowns_suffered,
+		       created_at, updated_at
+		FROM boxers WHERE id = $1
+		FOR UPDATE`
+
+	row := s.db.QueryRowContext(ctx, query, id)
+
+	boxer := &model.Boxer{}
+	err := row.Scan(
+		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname, &boxer.PositionX, &boxer.PositionY,
+		&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
+		&boxer.Experience, &boxer.Level, &boxer.FatigueScore, &boxer.ForcedRestUntil,
+		&boxer.Wins, &boxer.Losses, &boxer.Draws, &boxer.Knockouts, &boxer.KnockdownsSuffered,
+		&boxer.CreatedAt, &boxer.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boxer, nil
+}
+
+// GetByIDWithLockTx retrieves a boxer by ID with an exclusive row lock within a transaction.
+func (s *BoxerStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.Boxer, error) {
+	query := `
+		SELECT id, user_id, name, nickname, position_x, position_y,
+		       health, energy, strength, defense, agility,
+		       experience, level, fatigue_score, forced_rest_until,
+		       wins, losses, draws, knockouts, knockdowns_suffered,
+		       created_at, updated_at
+		FROM boxers WHERE id = $1
+		FOR UPDATE`
+
+	row := tx.QueryRowContext(ctx, query, id)
+
+	boxer := &model.Boxer{}
+	err := row.Scan(
+		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname, &boxer.PositionX, &boxer.PositionY,
+		&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
+		&boxer.Experience, &boxer.Level, &boxer.FatigueScore, &boxer.ForcedRestUntil,
+		&boxer.Wins, &boxer.Losses, &boxer.Draws, &boxer.Knockouts, &boxer.KnockdownsSuffered,
+		&boxer.CreatedAt, &boxer.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boxer, nil
+}
+
 // GetByUserID retrieves all boxers for a user
 func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxer, error) {
 	query := `
@@ -131,6 +188,31 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 	boxer.UpdatedAt = now
 
 	_, err := s.db.ExecContext(ctx, query,
+		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
+		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
+		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.Wins, boxer.Losses, boxer.Draws, boxer.Knockouts, boxer.KnockdownsSuffered,
+		boxer.UpdatedAt, boxer.ID,
+	)
+
+	return err
+}
+
+// UpdateTx updates a boxer's information within a transaction.
+func (s *BoxerStore) UpdateTx(ctx context.Context, tx *sql.Tx, boxer *model.Boxer) error {
+	query := `
+		UPDATE boxers SET
+			name = $1, nickname = $2, position_x = $3, position_y = $4,
+			health = $5, energy = $6, strength = $7, defense = $8, agility = $9,
+			experience = $10, level = $11, fatigue_score = $12, forced_rest_until = $13,
+			wins = $14, losses = $15, draws = $16, knockouts = $17, knockdowns_suffered = $18,
+			updated_at = $19
+		WHERE id = $20`
+
+	now := time.Now()
+	boxer.UpdatedAt = now
+
+	_, err := tx.ExecContext(ctx, query,
 		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
 		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
