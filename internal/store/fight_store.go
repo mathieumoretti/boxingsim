@@ -65,6 +65,51 @@ func (s *FightStore) GetByID(ctx context.Context, id int) (*model.Fight, error) 
 	return fight, nil
 }
 
+// GetByIDWithLock retrieves a fight by its ID with an exclusive row lock (SELECT FOR UPDATE).
+// This prevents concurrent modifications during fight simulation.
+// Must be called within a transaction to properly hold the lock.
+func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight, error) {
+	query := `
+		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+		       winner_id, round, data, created_at, updated_at
+		FROM fights
+		WHERE id = $1
+		FOR UPDATE`
+
+	row := s.db.QueryRowContext(ctx, query, id)
+	fight, err := s.scanFight(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrFightNotFound
+		}
+		return nil, err
+	}
+
+	return fight, nil
+}
+
+// GetByIDWithLockTx retrieves a fight by its ID with an exclusive row lock using the provided transaction.
+// This is the preferred method when performing fight simulation within a transaction.
+func (s *FightStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.Fight, error) {
+	query := `
+		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+		       winner_id, round, data, created_at, updated_at
+		FROM fights
+		WHERE id = $1
+		FOR UPDATE SKIP LOCKED`
+
+	row := tx.QueryRowContext(ctx, query, id)
+	fight, err := s.scanFightTx(tx, row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrFightNotFound
+		}
+		return nil, err
+	}
+
+	return fight, nil
+}
+
 // GetActiveFights retrieves fights with specified statuses (e.g., "scheduled", "in_progress").
 func (s *FightStore) GetActiveFights(ctx context.Context, statuses []string) ([]*model.Fight, error) {
 	if len(statuses) == 0 {
@@ -253,6 +298,35 @@ func (s *FightStore) UpdateStatus(ctx context.Context, id int, status string) er
 	return nil
 }
 
+// UpdateStatusTx updates the status of a fight within a transaction.
+func (s *FightStore) UpdateStatusTx(ctx context.Context, tx *sql.Tx, id int, status string) error {
+	var query string
+	var args []interface{}
+
+	if status == "completed" {
+		query = `UPDATE fights SET status = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2`
+		args = []interface{}{status, id}
+	} else {
+		query = `UPDATE fights SET status = $1 WHERE id = $2`
+		args = []interface{}{status, id}
+	}
+
+	result, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
 // UpdateRound updates the current round of a fight.
 func (s *FightStore) UpdateRound(ctx context.Context, id, round int) error {
 	query := `UPDATE fights SET round = $1 WHERE id = $2`
@@ -272,10 +346,48 @@ func (s *FightStore) UpdateRound(ctx context.Context, id, round int) error {
 	return nil
 }
 
+// UpdateRoundTx updates the current round of a fight within a transaction.
+func (s *FightStore) UpdateRoundTx(ctx context.Context, tx *sql.Tx, id, round int) error {
+	query := `UPDATE fights SET round = $1 WHERE id = $2`
+	result, err := tx.ExecContext(ctx, query, round, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
 // SetWinner sets the winner of a fight and marks it as completed.
 func (s *FightStore) SetWinner(ctx context.Context, id, winnerID int) error {
 	query := `UPDATE fights SET winner_id = $1, status = 'completed' WHERE id = $2`
 	result, err := s.db.ExecContext(ctx, query, winnerID, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
+// SetWinnerTx sets the winner of a fight and marks it as completed within a transaction.
+func (s *FightStore) SetWinnerTx(ctx context.Context, tx *sql.Tx, id, winnerID int) error {
+	query := `UPDATE fights SET winner_id = $1, status = 'completed' WHERE id = $2`
+	result, err := tx.ExecContext(ctx, query, winnerID, id)
 	if err != nil {
 		return err
 	}
@@ -315,6 +427,30 @@ func (s *FightStore) SetData(ctx context.Context, id int, data map[string]interf
 	return nil
 }
 
+// SetDataTx updates the data field of a fight within a transaction.
+func (s *FightStore) SetDataTx(ctx context.Context, tx *sql.Tx, id int, data map[string]interface{}) error {
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	query := `UPDATE fights SET data = $1 WHERE id = $2`
+	result, err := tx.ExecContext(ctx, query, dataJSON, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
 // Delete removes a fight from the database.
 func (s *FightStore) Delete(ctx context.Context, id int) error {
 	query := `DELETE FROM fights WHERE id = $1`
@@ -332,6 +468,13 @@ func (s *FightStore) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+// BeginFightTx begins a new transaction for fighting operations with serializable isolation.
+func (s *FightStore) BeginFightTx(ctx context.Context) (*sql.Tx, error) {
+	return s.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
 }
 
 // BoxerInFight checks if a boxer is currently involved in an active fight.
@@ -394,6 +537,37 @@ func (s *FightStore) scanFights(rows *sql.Rows) ([]*model.Fight, error) {
 	}
 
 	return fights, nil
+}
+
+// scanFightTx scans a single row from a transaction query into a Fight model.
+func (s *FightStore) scanFightTx(_ *sql.Tx, row Scanner) (*model.Fight, error) {
+	var data db.NullJSONB
+	fight := &model.Fight{}
+
+	err := row.Scan(
+		&fight.ID,
+		&fight.Boxer1ID,
+		&fight.Boxer2ID,
+		&fight.Status,
+		&fight.ScheduledTime,
+		&fight.StartTime,
+		&fight.EndTime,
+		&fight.WinnerID,
+		&fight.Round,
+		&data,
+		&fight.CreatedAt,
+		&fight.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set Data field from NullJSONB if valid
+	if data.IsValid {
+		fight.Data = data.Value
+	}
+
+	return fight, nil
 }
 
 // Scanner is an interface for types that can scan database rows.

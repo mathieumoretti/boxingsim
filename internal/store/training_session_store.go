@@ -156,6 +156,69 @@ func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.Trai
 	return session, nil
 }
 
+// GetByIDWithLock retrieves a training session by ID with an exclusive row lock (SELECT FOR UPDATE).
+// Must be called within a transaction to properly hold the lock.
+func (s *TrainingSessionStore) GetByIDWithLock(ctx context.Context, id int) (*model.TrainingSession, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+		SELECT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
+		       ts.duration_hours, ts.planned_strength_gain, ts.planned_defense_gain,
+		       ts.planned_agility_gain, ts.status, ts.scheduled_completion_time, ts.completed_at,
+		       ts.created_at, ts.updated_at
+		FROM training_sessions ts
+		WHERE ts.id = $1
+		FOR UPDATE`
+
+	session := &model.TrainingSession{}
+	err := s.db.QueryRowContext(ctx, query, id).Scan(
+		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
+		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
+		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
+		&session.CreatedAt, &session.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrTrainingSessionNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+// GetByIDWithLockTx retrieves a training session by ID with an exclusive row lock within a transaction.
+func (s *TrainingSessionStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.TrainingSession, error) {
+	if tx == nil {
+		return nil, errors.New("transaction is nil")
+	}
+
+	query := `
+		SELECT ts.id, ts.boxer_id, ts.training_type_id, ts.scheduled_event_id,
+		       ts.duration_hours, ts.planned_strength_gain, ts.planned_defense_gain,
+		       ts.planned_agility_gain, ts.status, ts.scheduled_completion_time, ts.completed_at,
+		       ts.created_at, ts.updated_at
+		FROM training_sessions ts
+		WHERE ts.id = $1
+		FOR UPDATE`
+
+	session := &model.TrainingSession{}
+	err := tx.QueryRowContext(ctx, query, id).Scan(
+		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
+		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
+		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
+		&session.CreatedAt, &session.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrTrainingSessionNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
 // GetByIDWithType retrieves a training session by ID with joined training type data
 func (s *TrainingSessionStore) GetByIDWithType(ctx context.Context, id int) (*model.TrainingSession, error) {
 	session, err := s.GetByID(ctx, id)
@@ -338,9 +401,32 @@ func (s *TrainingSessionStore) UpdateStatus(ctx context.Context, id int, status 
 	return err
 }
 
-// MarkAsCompleted marks a training session as completed with the current timestamp
-func (s *TrainingSessionStore) MarkAsCompleted(ctx context.Context, id int) error {
-	return s.UpdateStatus(ctx, id, model.TrainingSessionCompleted)
+// MarkAsCompletedTx marks a training session as completed within a transaction.
+func (s *TrainingSessionStore) MarkAsCompletedTx(ctx context.Context, tx *sql.Tx, id int) error {
+	if tx == nil {
+		return errors.New("transaction is nil")
+	}
+
+	query := `
+		UPDATE training_sessions
+		SET status = $2, completed_at = $3, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND status = 'pending'`
+
+	now := time.Now()
+	result, err := tx.ExecContext(ctx, query, id, model.TrainingSessionCompleted, now)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrTrainingSessionNotFound
+	}
+
+	return nil
 }
 
 // GetAllPending retrieves all training sessions with pending status

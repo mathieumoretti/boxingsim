@@ -283,75 +283,158 @@ func (s *FightService) Deserialize(data []byte) (*Fight, error) {
 	return &fight, nil
 }
 
-// SimulateFight simulates a fight between two boxers
+// SimulateFight simulates a fight between two boxers using database transactions.
+// Uses SELECT FOR UPDATE to prevent concurrent modifications and ensures atomic updates.
 func (s *FightService) SimulateFight(fightID int) error {
-	fight, err := s.GetByID(fightID)
+	ctx := context.Background()
+
+	// Begin transaction with serializable isolation for maximum consistency
+	tx, err := s.fightStore.BeginFightTx(ctx)
 	if err != nil {
-		return err
+		s.logger.Error("Failed to begin transaction for fight %d: %v", fightID, err)
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback() // Safe to call even after Commit; only rolls back if not committed
+	}()
+
+	// Lock the fight row for update (prevents concurrent simulations of same fight)
+	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, fightID)
+	if err != nil {
+		s.logger.Error("Failed to lock fight %d: %v", fightID, err)
+		return fmt.Errorf("failed to lock fight: %w", err)
 	}
 
-	if fight.Status != "scheduled" {
+	// Verify fight is scheduled before processing
+	if string(fight.Status) != "scheduled" {
+		s.logger.Debug("Fight %d is not scheduled (status=%s), skipping", fightID, fight.Status)
 		return nil
 	}
 
-	// Update status to in_progress
-	if err := s.UpdateStatus(fightID, "in_progress"); err != nil {
-		return err
+	// Lock both boxer rows for update (prevents concurrent training/fights)
+	boxer1, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer1ID)
+	if err != nil {
+		s.logger.Error("Failed to lock boxer %d: %v", fight.Boxer1ID, err)
+		return fmt.Errorf("failed to lock boxer1: %w", err)
 	}
 
-	ctx := context.Background()
-	boxer1, errGetBoxer1 := s.boxerSvc.GetBoxer(ctx, *fight.Boxer1ID)
-	if errGetBoxer1 != nil {
-		return errGetBoxer1
+	boxer2, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer2ID)
+	if err != nil {
+		s.logger.Error("Failed to lock boxer %d: %v", fight.Boxer2ID, err)
+		return fmt.Errorf("failed to lock boxer2: %w", err)
 	}
 
-	boxer2, errGetBoxer2 := s.boxerSvc.GetBoxer(ctx, *fight.Boxer2ID)
-	if errGetBoxer2 != nil {
-		return errGetBoxer2
+	s.logger.Info("Simulating fight: %s vs %s", boxer1.Name, boxer2.Name)
+
+	// Update fight status to in_progress within transaction
+	if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "in_progress"); err != nil {
+		return fmt.Errorf("failed to update fight status: %w", err)
 	}
 
-	s.logger.Info("Simulating fight", "boxer1", boxer1.Name, "boxer2", boxer2.Name)
-
-	// Fight simulation logic - reduced complexity by splitting into smaller functions
+	// Run the fight simulation logic (still within transaction)
 	maxRounds := 12
 	minHealth := 0.0
 	damageMultiplier := 0.1
 	evasionThreshold := 0.4
 	energyDrain := 10.0
 
-	for fight.Round = 1; fight.Round <= maxRounds; fight.Round++ {
+	for currentRound := 1; currentRound <= maxRounds; currentRound++ {
 		if boxer1.Health <= minHealth || boxer2.Health <= minHealth {
 			break
 		}
 
-		// Process attacks
-		s.processAttack(fight, boxer1, boxer2, damageMultiplier, evasionThreshold, energyDrain)
+		// Process attacks (modifies boxer state in memory only)
+		s.processAttack(currentRound, boxer1, boxer2, damageMultiplier, evasionThreshold, energyDrain)
 
 		// Recover some energy
 		boxer1.Energy = math.Min(boxer1.Energy+20, 100)
 		boxer2.Energy = math.Min(boxer2.Energy+20, 100)
 
-		// Update fighters
-		if err := s.updateBoxers(*boxer1, *boxer2, fight.Boxer1ID, fight.Boxer2ID); err != nil {
-			return err
+		// Update boxer stats in database (within transaction)
+		if err := s.boxerStore.UpdateTx(ctx, tx, boxer1); err != nil {
+			return fmt.Errorf("failed to update boxer1: %w", err)
+		}
+		if err := s.boxerStore.UpdateTx(ctx, tx, boxer2); err != nil {
+			return fmt.Errorf("failed to update boxer2: %w", err)
 		}
 
-		// Update fight data and database
-		if err := s.updateFightData(fight, *boxer1, *boxer2, fightID); err != nil {
-			return err
+		// Update fight data and round (within transaction)
+		fightData := map[string]any{
+			"round":         currentRound,
+			"boxer1_health": boxer1.Health,
+			"boxer1_energy": boxer1.Energy,
+			"boxer2_health": boxer2.Health,
+			"boxer2_energy": boxer2.Energy,
 		}
 
-		// Sleep a bit between rounds for visualization
-		time.Sleep(500 * time.Millisecond)
+		if err := s.fightStore.UpdateRoundTx(ctx, tx, fightID, currentRound); err != nil {
+			return fmt.Errorf("failed to update round: %w", err)
+		}
+		if err := s.fightStore.SetDataTx(ctx, tx, fightID, fightData); err != nil {
+			return fmt.Errorf("failed to set fight data: %w", err)
+		}
+
+		s.logger.Debug("Round %d completed: %s %.1fHP vs %s %.1fHP",
+			currentRound, boxer1.Name, boxer1.Health, boxer2.Name, boxer2.Health)
 	}
 
-	// Determine winner and update status
-	return s.determineWinnerAndStatus(fightID, fight, boxer1, boxer2, ctx)
+	// Determine winner and finalize fight (within transaction)
+	var winnerID *int
+	if boxer1.Health > boxer2.Health {
+		winnerID = &fight.Boxer1ID
+		s.logger.Info("Fight winner: %s", boxer1.Name)
+	} else if boxer2.Health > boxer1.Health {
+		winnerID = &fight.Boxer2ID
+		s.logger.Info("Fight winner: %s", boxer2.Name)
+	}
+
+	if winnerID != nil {
+		// Set winner and mark as completed (atomic update)
+		if err := s.fightStore.SetWinnerTx(ctx, tx, fightID, *winnerID); err != nil {
+			return fmt.Errorf("failed to set winner: %w", err)
+		}
+
+		// Award experience to winner (within transaction)
+		experienceGain := 50.0
+		boxerToUpdate := boxer1
+		if *winnerID == fight.Boxer2ID {
+			boxerToUpdate = boxer2
+		}
+		boxerToUpdate.Experience += experienceGain
+
+		// Check for level up
+		oldLevel := boxerToUpdate.Level
+		newLevel := int(boxerToUpdate.Experience/100.0) + 1
+		if newLevel > oldLevel {
+			boxerToUpdate.Level = newLevel
+			s.logger.Info("Boxer %s leveled up from %d to %d", boxerToUpdate.Name, oldLevel, newLevel)
+		}
+
+		// Update winner boxer stats (within transaction)
+		if err := s.boxerStore.UpdateTx(ctx, tx, boxerToUpdate); err != nil {
+			return fmt.Errorf("failed to update winner experience: %w", err)
+		}
+	} else {
+		// Draw - just mark as completed
+		if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "completed"); err != nil {
+			return fmt.Errorf("failed to mark draw: %w", err)
+		}
+		s.logger.Info("Fight ended in a draw")
+	}
+
+	// Commit the entire transaction - all updates happen atomically
+	if err := tx.Commit(); err != nil {
+		s.logger.Error("Failed to commit fight transaction: %v", err)
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	s.logger.Info("Fight %d simulation completed successfully", fightID)
+	return nil
 }
 
 // processAttack handles the attack logic for both boxers
 func (s *FightService) processAttack(
-	fight *Fight,
+	round int,
 	boxer1, boxer2 *model.Boxer,
 	damageMultiplier, evasionThreshold, energyDrain float64,
 ) {
@@ -359,9 +442,9 @@ func (s *FightService) processAttack(
 	attack1 := boxer1.Strength * damageMultiplier
 	evasion1 := boxer2.Agility / 100.0
 
-	if evasion1 > evasionThreshold && fight.Round%3 != 0 {
+	if evasion1 > evasionThreshold && round%3 != 0 {
 		// Boxer 2 evades
-		s.logger.Debug("Boxer 2 evaded attack", "round", fight.Round)
+		s.logger.Debug("Boxer 2 evaded attack", "round", round)
 	} else {
 		damage := attack1 * (1 - boxer2.Defense/100.0)
 		boxer2.Health -= damage
@@ -371,16 +454,16 @@ func (s *FightService) processAttack(
 			"damage", damage,
 			"boxer2_health", boxer2.Health,
 			"boxer2_energy", boxer2.Energy,
-			"round", fight.Round)
+			"round", round)
 	}
 
 	// Boxer 2 attacks
 	attack2 := boxer2.Strength * damageMultiplier
 	evasion2 := boxer1.Agility / 100.0
 
-	if evasion2 > evasionThreshold && fight.Round%3 != 0 {
+	if evasion2 > evasionThreshold && round%3 != 0 {
 		// Boxer 1 evades
-		s.logger.Debug("Boxer 1 evaded attack", "round", fight.Round)
+		s.logger.Debug("Boxer 1 evaded attack", "round", round)
 	} else {
 		damage := attack2 * (1 - boxer1.Defense/100.0)
 		boxer1.Health -= damage
@@ -390,92 +473,6 @@ func (s *FightService) processAttack(
 			"damage", damage,
 			"boxer1_health", boxer1.Health,
 			"boxer1_energy", boxer1.Energy,
-			"round", fight.Round)
+			"round", round)
 	}
-}
-
-// updateBoxers updates the boxers' health and energy using boxerStore
-func (s *FightService) updateBoxers(boxer1, boxer2 model.Boxer, boxer1ID, boxer2ID *int) error {
-	ctx := context.Background()
-
-	// Update boxer 1
-	boxer1.ID = *boxer1ID
-	if err := s.boxerStore.Update(ctx, &boxer1); err != nil {
-		return fmt.Errorf("failed to update boxer1 %d: %w", *boxer1ID, err)
-	}
-
-	// Update boxer 2
-	boxer2.ID = *boxer2ID
-	if err := s.boxerStore.Update(ctx, &boxer2); err != nil {
-		return fmt.Errorf("failed to update boxer2 %d: %w", *boxer2ID, err)
-	}
-
-	return nil
-}
-
-// updateFightData updates the fight data in the database using fightStore
-func (s *FightService) updateFightData(fight *Fight, boxer1, boxer2 model.Boxer, fightID int) error {
-	ctx := context.Background()
-
-	// Update fight data
-	fightData := map[string]interface{}{
-		"round":         fight.Round,
-		"boxer1_health": boxer1.Health,
-		"boxer1_energy": boxer1.Energy,
-		"boxer2_health": boxer2.Health,
-		"boxer2_energy": boxer2.Energy,
-	}
-
-	// Update round
-	if err := s.fightStore.UpdateRound(ctx, fightID, fight.Round); err != nil {
-		return fmt.Errorf("failed to update round: %w", err)
-	}
-
-	// Set data
-	if err := s.fightStore.SetData(ctx, fightID, fightData); err != nil {
-		return fmt.Errorf("failed to set fight data: %w", err)
-	}
-
-	return nil
-}
-
-// determineWinnerAndStatus determines the winner and updates the fight status
-func (s *FightService) determineWinnerAndStatus(
-	fightID int,
-	fight *Fight,
-	boxer1, boxer2 *model.Boxer,
-	ctx context.Context,
-) error {
-	var winnerID *int
-	if boxer1.Health > boxer2.Health {
-		winnerID = fight.Boxer1ID
-	} else if boxer2.Health > boxer1.Health {
-		winnerID = fight.Boxer2ID
-	}
-
-	// Update fight status
-	if winnerID != nil {
-		if err := s.SetWinner(fightID, *winnerID); err != nil {
-			return err
-		}
-
-		// Award experience
-		experienceGain := 50.0
-		if err := s.boxerSvc.UpdateStats(ctx, *winnerID, model.BoxerStats{
-			Experience: experienceGain,
-			Level:      int(experienceGain/100.0) + 1,
-		}); err != nil {
-			s.logger.Error("Failed to update winner experience", err)
-		}
-
-		s.logger.Info("Fight completed", "winner", winnerID, "boxer1_health", boxer1.Health, "boxer2_health", boxer2.Health)
-	} else {
-		// Draw
-		if err := s.UpdateStatus(fightID, "completed"); err != nil {
-			return err
-		}
-		s.logger.Info("Fight ended in draw", "boxer1_health", boxer1.Health, "boxer2_health", boxer2.Health)
-	}
-
-	return nil
 }
