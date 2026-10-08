@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
@@ -50,8 +51,21 @@ func NewEventProcessor(
 
 // ProcessScheduledEvent processes a single scheduled event based on its type.
 // It applies the appropriate handler and marks the event as processed upon success.
+// Implements state machine: pending -> processing -> completed/failed
 func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model.ScheduledEvent) error {
-	p.logger.Info("Processing event ID=%d type=%s boxer_id=%d", event.ID, event.EventType, event.BoxerID)
+	startTime := time.Now()
+
+	p.logger.Info("Event state transition ID=%d: %s -> processing", event.ID, event.Status)
+
+	// Mark event as processing for crash recovery tracking
+	if err := p.eventStore.MarkAsProcessing(ctx, event.ID); err != nil {
+		if errors.Is(err, store.ErrAlreadyProcessed) {
+			p.logger.Warn("Event already processed or failed ID=%d status=%s", event.ID, event.Status)
+			return nil // Idempotent: event was already handled
+		}
+		p.logger.Error("Failed to mark event as processing ID=%d error=%v", event.ID, err)
+		return fmt.Errorf("failed to mark event as processing: %w", err)
+	}
 
 	var processErr error
 	switch event.EventType {
@@ -67,28 +81,44 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 		processErr = fmt.Errorf("%w: %q", ErrUnknownEventType, event.EventType)
 	}
 
+	processingDuration := time.Since(startTime)
+
 	if processErr != nil {
-		p.logger.Error("Event processing failed ID=%d error=%v", event.ID, processErr)
+		p.logger.Error("Event processing failed ID=%d type=%s boxer_id=%d duration=%v error=%v",
+			event.ID, event.EventType, event.BoxerID, processingDuration, processErr)
+
+		// Mark as failed with error message for visibility
+		if err := p.eventStore.MarkAsFailed(ctx, event.ID, processErr.Error()); err != nil {
+			if !errors.Is(err, store.ErrAlreadyProcessed) {
+				p.logger.Error("Failed to mark event as failed ID=%d error=%v", event.ID, err)
+			}
+		}
+
+		p.logger.Info("Event state transition ID=%d: processing -> failed (duration=%v)", event.ID, processingDuration)
 		return processErr
 	}
 
-	// Mark event as processed only after successful handling (idempotent)
-	if err := p.eventStore.MarkAsProcessed(ctx, event.ID); err != nil {
+	// Mark event as completed only after successful handling (idempotent)
+	if err := p.eventStore.MarkAsCompleted(ctx, event.ID); err != nil {
 		if errors.Is(err, store.ErrAlreadyProcessed) {
-			p.logger.Info("Event already marked as processed ID=%d", event.ID)
+			p.logger.Info("Event already marked as completed ID=%d", event.ID)
 			return nil
 		}
-		p.logger.Error("Failed to mark event as processed ID=%d error=%v", event.ID, err)
-		return fmt.Errorf("failed to mark event as processed: %w", err)
+		p.logger.Error("Failed to mark event as completed ID=%d error=%v", event.ID, err)
+		return fmt.Errorf("failed to mark event as completed: %w", err)
 	}
 
-	p.logger.Info("Event processed successfully ID=%d", event.ID)
+	p.logger.Info("Event state transition ID=%d: processing -> completed (duration=%v)", event.ID, processingDuration)
+	p.logger.Info("Event processed successfully ID=%d type=%s boxer_id=%d duration=%v",
+		event.ID, event.EventType, event.BoxerID, processingDuration)
 	return nil
 }
 
 // processTrainingComplete handles training completion events.
 // It applies stat gains based on the training data (strength_gain, defense_gain, agility_gain).
 func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *model.ScheduledEvent) error {
+	p.logger.Debug("Processing training event ID=%d boxer_id=%d", event.ID, event.BoxerID)
+
 	// Unmarshal training data
 	var data map[string]any
 	if len(event.EventData) > 0 {
@@ -129,6 +159,8 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 // processRecovery handles rest/recovery events.
 // It delegates to FatigueService.ApplyRecovery for comprehensive recovery handling.
 func (p *EventProcessor) processRecovery(ctx context.Context, event *model.ScheduledEvent) error {
+	p.logger.Debug("Processing recovery event ID=%d boxer_id=%d", event.ID, event.BoxerID)
+
 	// Unmarshal recovery data
 	var data map[string]any
 	if len(event.EventData) > 0 {
@@ -146,9 +178,10 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 	}
 
 	if err := p.fatigueService.ApplyRecovery(ctx, event.BoxerID, restHours); err != nil {
-		return fmt.Errorf("failed to apply recovery: %w", err)
+		return fmt.Errorf("failed to apply recovery for boxer %d: %w", event.BoxerID, err)
 	}
 
+	p.logger.Info("Recovery applied to boxer ID=%d rest_hours=%d", event.BoxerID, restHours)
 	return nil
 }
 
@@ -156,7 +189,6 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 // Currently a placeholder for future fight/competition processing.
 func (p *EventProcessor) processCompetition(ctx context.Context, event *model.ScheduledEvent) error {
 	_ = ctx // Unused for now, will be used when competition logic is implemented
-	// TODO: Implement competition processing logic
 	p.logger.Info("Competition event received for boxer ID=%d (not yet implemented)", event.BoxerID)
 	return nil
 }
@@ -165,6 +197,8 @@ func (p *EventProcessor) processCompetition(ctx context.Context, event *model.Sc
 // It extracts the fight_id from event data and delegates to FightService.SimulateFight.
 func (p *EventProcessor) processFightSimulate(ctx context.Context, event *model.ScheduledEvent) error {
 	_ = ctx // Reserved for future use (e.g., cancellation, timeouts)
+
+	p.logger.Debug("Processing fight simulation event ID=%d", event.ID)
 
 	// Unmarshal fight event data
 	var data map[string]any
