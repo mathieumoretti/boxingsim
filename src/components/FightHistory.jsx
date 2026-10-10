@@ -54,35 +54,38 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
 
   return (
     <div className={`fight-entry-card ${isExpanded ? 'expanded' : ''}`}>
-      <Link to={`/fight/${fight.id}`} className="fight-entry-link">
-        <div className="fight-entry-header" onClick={(e) => {
-          e.preventDefault();
-          setIsExpanded(!isExpanded);
-        }}>
-          {/* Result Badge */}
-          {getResultBadge()}
+      {/* Result Badge - non-clickable */}
+      {getResultBadge()}
 
-          {/* Opponent Info */}
-          <div className="fight-info">
-            <div className="opponent-name">
-              vs {fight.opponent_name || `Boxer #${opponentId}`}
-            </div>
-            <div className="fight-summary">
-              Round {fight.round} • {isKnockout && '🔥 KO'} • <span className="view-details">View Details →</span>
-            </div>
+      {/* Header row - clickable to expand, separate View Details link navigates */}
+      <div className="fight-entry-header" onClick={(e) => {
+        // Don't prevent default if clicking the View Details link
+        if (e.target.closest('.view-details-link')) {
+          return;
+        }
+        setIsExpanded(!isExpanded);
+      }}>
+        {/* Opponent Info */}
+        <div className="fight-info">
+          <div className="opponent-name">
+            vs {fight.opponent_name || `Boxer #${opponentId}`}
           </div>
-
-          {/* Time Ago */}
-          <div className="fight-time">
-            {getTimeAgoDisplay()}
-          </div>
-
-          {/* Expand Icon */}
-          <div className="expand-icon">
-            {isExpanded ? '▲' : '▼'}
+          <div className="fight-summary">
+            Round {fight.round} • {isKnockout && '🔥 KO'} •
+            <Link to={`/fight/${fight.id}`} className="view-details-link">View Details →</Link>
           </div>
         </div>
-      </Link>
+
+        {/* Time Ago */}
+        <div className="fight-time">
+          {getTimeAgoDisplay()}
+        </div>
+
+        {/* Expand Icon */}
+        <div className="expand-icon">
+          {isExpanded ? '▲' : '▼'}
+        </div>
+      </div>
 
       {/* Expanded Details */}
       {isExpanded && (
@@ -135,7 +138,7 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
           )}
 
           <div className="detail-row">
-            <span className="detail-label">Date & Time:</span>
+            <span className="detail-label">Game Time:</span>
             <span className="detail-value">
               {new Date(fight.end_time || fight.created_at).toLocaleString('en-US', {
                 year: 'numeric',
@@ -144,7 +147,7 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true
-              })}
+              })} (in-game)
             </span>
           </div>
         </div>

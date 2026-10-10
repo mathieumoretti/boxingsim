@@ -25,3 +25,11 @@ jwt:
 
 logging:
   level: "warn"
+
+worker:
+  poll_interval_ms: 250       # Faster polling for tests
+  startup_jitter_max_ms: 100  # Minimal jitter in tests
+  game_speed_factor: 600.0    # Very fast for quick test execution (1 sec = 10 game minutes)
+
+fight:
+  min_schedule_hours: 1       # Shorter minimum for faster testing

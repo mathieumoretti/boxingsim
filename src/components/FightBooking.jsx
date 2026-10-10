@@ -81,11 +81,20 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
         })
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to book fight');
+        // Try to parse error from response, but handle non-JSON responses
+        let errorMessage = 'Failed to book fight';
+        try {
+          const data = await response.json();
+          errorMessage = data.error?.message || errorMessage;
+        } catch (parseErr) {
+          // Response wasn't valid JSON - use generic error
+          console.error('Non-JSON error response:', response.status, response.statusText);
+        }
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       // Success - close modal and refresh parent
       onFightBooked(data);

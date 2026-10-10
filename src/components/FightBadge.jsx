@@ -7,12 +7,20 @@ const FightBadge = ({ fight, currentGameTime }) => {
 
   const { opponent_name: opponentName, scheduled_time: scheduledTime, status, rounds } = fight;
 
+  // Don't show badge for fights scheduled in the past relative to game time
+  // These should be either completed or cancelled (MAT-FIGHT-SCHEDULING)
+  if (!scheduledTime || !currentGameTime) return null;
+
+  const fightTime = new Date(scheduledTime);
+  const gameTime = new Date(currentGameTime);
+
+  // Hide badge for past-dated scheduled fights (data cleanup needed)
+  if (fightTime < gameTime) {
+    return null;
+  }
+
   // Calculate remaining time until fight
   const calculateRemainingTime = () => {
-    if (!scheduledTime || !currentGameTime) return '';
-
-    const fightTime = new Date(scheduledTime);
-    const gameTime = new Date(currentGameTime);
     const diffMs = fightTime - gameTime;
     const diffSeconds = Math.max(0, Math.ceil(diffMs / 1000));
 
@@ -33,10 +41,6 @@ const FightBadge = ({ fight, currentGameTime }) => {
 
   // Determine countdown color based on time remaining
   const getCountdownColorClass = () => {
-    if (!scheduledTime || !currentGameTime) return '';
-
-    const fightTime = new Date(scheduledTime);
-    const gameTime = new Date(currentGameTime);
     const diffMs = fightTime - gameTime;
     const diffHours = diffMs / (1000 * 60 * 60);
 
@@ -48,10 +52,6 @@ const FightBadge = ({ fight, currentGameTime }) => {
 
   // Determine if fight is within 24 hours for pulse animation
   const isWithin24Hours = () => {
-    if (!scheduledTime || !currentGameTime) return false;
-
-    const fightTime = new Date(scheduledTime);
-    const gameTime = new Date(currentGameTime);
     const diffHours = (fightTime - gameTime) / (1000 * 60 * 60);
 
     return diffHours > 0 && diffHours < 24;
@@ -63,10 +63,8 @@ const FightBadge = ({ fight, currentGameTime }) => {
 
   // Format date for tooltip
   const formatDateTooltip = () => {
-    if (!scheduledTime) return '';
-    const d = new Date(scheduledTime);
     const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', hour12: true };
-    return d.toLocaleDateString('en-US', options);
+    return fightTime.toLocaleDateString('en-US', options);
   };
 
   return (

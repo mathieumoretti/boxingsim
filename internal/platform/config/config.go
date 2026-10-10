@@ -15,6 +15,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
 	Worker   WorkerConfig   `mapstructure:"worker"`
+	Fight    FightConfig    `mapstructure:"fight"`
 }
 
 // DatabaseConfig holds PostgreSQL connection settings.
@@ -53,6 +54,11 @@ type WorkerConfig struct {
 	PollIntervalMS     int     `mapstructure:"poll_interval_ms"`
 	StartupJitterMaxMS int     `mapstructure:"startup_jitter_max_ms"`
 	GameSpeedFactor    float64 `mapstructure:"game_speed_factor"`
+}
+
+// FightConfig holds fight scheduling settings.
+type FightConfig struct {
+	MinScheduleHours int `mapstructure:"min_schedule_hours"`
 }
 
 // TestDBConfig represents test database configuration for integration tests.
@@ -127,6 +133,11 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Worker.GameSpeedFactor == 0 {
 		cfg.Worker.GameSpeedFactor = 600.0 // 1 real second = 10 game minutes (600x speed) for faster testing
+	}
+
+	// Fight scheduling defaults
+	if cfg.Fight.MinScheduleHours == 0 {
+		cfg.Fight.MinScheduleHours = 24 // Minimum 24 hours from game time for fight scheduling
 	}
 }
 

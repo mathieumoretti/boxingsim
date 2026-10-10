@@ -324,7 +324,7 @@ const FightDetails = () => {
           {boxer1?.name || 'Boxer 1'} vs {boxer2?.name || 'Boxer 2'}
         </h2>
         <p className="fight-date">
-          📅 {new Date(fight?.end_time || fight?.created_at).toLocaleDateString('en-US', {
+          📅 Game Time: {new Date(fight?.end_time || fight?.created_at).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'

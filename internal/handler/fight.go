@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,16 +11,26 @@ import (
 	"github.com/gorilla/mux"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/model"
 	pkgerrors "github.com/mormm/boxing/internal/errors"
+	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/service"
 )
 
 type FightHandler struct {
-	fightService *service.FightService
+	fightService    *service.FightService
+	worldClockModel *model.WorldClockModel
+	cfg             *config.Config
+	db              *sql.DB
 }
 
-func NewFightHandler(fightService *service.FightService) *FightHandler {
-	return &FightHandler{fightService: fightService}
+func NewFightHandler(fightService *service.FightService, worldClockModel *model.WorldClockModel, cfg *config.Config, db *sql.DB) *FightHandler {
+	return &FightHandler{
+		fightService:    fightService,
+		worldClockModel: worldClockModel,
+		cfg:             cfg,
+		db:              db,
+	}
 }
 
 // BookFightForBoxerRequest represents the JSON body for booking a fight for a specific boxer
@@ -54,8 +65,15 @@ func (h *FightHandler) BookFightForBoxer(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Schedule fight for current game time (immediate booking)
-	scheduledTime := time.Now()
+	// Get current game time and schedule fight at game time + min_schedule_hours + 3 days buffer
+	gameTime, err := h.worldClockModel.GetCurrentGameTime(r.Context(), h.db)
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to get current game time"))
+		return
+	}
+
+	minScheduleHours := h.cfg.Fight.MinScheduleHours
+	scheduledTime := gameTime.Add(time.Duration(minScheduleHours)*time.Hour + (72 * time.Hour)) // 3 days = 72 hours buffer
 
 	err = h.fightService.BookFight(r.Context(), boxerID, req.OpponentID, scheduledTime, 0)
 	if err != nil {

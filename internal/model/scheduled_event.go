@@ -2,7 +2,7 @@ package model
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -24,9 +24,20 @@ func (e *EventData) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
+
+	// Handle string representation of null from PostgreSQL jsonb NULLIF
+	if str, ok := value.(string); ok {
+		if str == "null" || str == "" {
+			return nil
+		}
+		*e = EventData([]byte(str))
+		return nil
+	}
+
 	b, ok := value.([]byte)
 	if !ok {
-		return errors.New("failed to scan []byte")
+		// Log what type we actually received for debugging
+		return fmt.Errorf("failed to scan []byte: received type %T with value %#v", value, value)
 	}
 	*e = EventData(b)
 	return nil
