@@ -1,4 +1,4 @@
-﻿package store
+package store
 
 import (
 	"context"
@@ -444,5 +444,3 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 
 	return events, nil
 }
-
-

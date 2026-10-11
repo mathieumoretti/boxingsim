@@ -19,6 +19,7 @@ import (
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
 	"github.com/mormm/boxing/internal/platform/logger"
+	"github.com/mormm/boxing/internal/platform/middleware"
 	"github.com/mormm/boxing/internal/platform/redis"
 	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
@@ -31,29 +32,29 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		logger := logger.New("SERVER")
-		logger.Error("Failed to load configuration", "error", err)
+		logger.Error("Failed to load configuration", "error", err.Error())
 		os.Exit(1)
 	}
 	logger := logger.New("SERVER")
 
 	logger.Info("Starting Boxing API Server")
 	logger.Info("Configuration loaded",
-		"dbHost", cfg.Database.Host,
-		"dbPort", cfg.Database.Port,
-		"dbName", cfg.Database.Name,
-		"jwtSecretSet", len(cfg.JWT.Secret) > 0)
+		"db_host", cfg.Database.Host,
+		"db_port", cfg.Database.Port,
+		"db_name", cfg.Database.Name,
+		"jwt_secret_set", len(cfg.JWT.Secret) > 0)
 
 	// Initialize database
 	dbConn, dbErr := database.NewPostgresDB(cfg)
 	if dbErr != nil {
-		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", dbErr)
+		logger.Error("Failed to connect to database - proceeding without database connection for UI serving", "error", dbErr.Error())
 		// Continue without database connection for web UI serving
 	} else {
 		logger.Info("Successfully connected to database")
 
 		// Run migrations
 		if err := db.MigrateDatabase(dbConn.DB); err != nil {
-			logger.Error("Failed to run database migrations", "error", err)
+			logger.Error("Failed to run database migrations", "error", err.Error())
 			os.Exit(1)
 		}
 
@@ -67,7 +68,7 @@ func main() {
 	// Initialize Redis
 	redisClient, err := redis.New(cfg)
 	if err != nil {
-		logger.Error("Failed to connect to Redis", "error", err)
+		logger.Error("Failed to connect to Redis", "error", err.Error())
 		os.Exit(1)
 	}
 	defer func() {
@@ -141,10 +142,14 @@ func main() {
 	// Apply CORS middleware
 	router.Use(cors.Middleware)
 
-	// Add logging middleware for debugging
+	// Add request ID middleware (generates unique ID per request for tracing)
+	router.Use(middleware.RequestIDMiddleware)
+
+	// Add logging middleware with request ID correlation
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			logger.Info("Request: %s %s", r.Method, r.URL.Path)
+			requestID := middleware.RequestIDFromRequest(r)
+			logger.Info("Request", "request_id", requestID, "method", r.Method, "path", r.URL.Path)
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -480,7 +485,7 @@ func main() {
 	// Start server in background
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("Server failed to start", "error", err)
+			logger.Error("Server failed to start", "error", err.Error())
 			os.Exit(1)
 		}
 	}()
@@ -495,7 +500,7 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Error("Server shutdown error", "error", err)
+		logger.Error("Server shutdown error", "error", err.Error())
 	}
 
 	logger.Info("Server stopped")
