@@ -1,4 +1,4 @@
-package store
+﻿package store
 
 import (
 	"context"
@@ -36,11 +36,11 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 	query := `
 					INSERT INTO scheduled_events (
 						boxer_id, event_type, event_time, processed, status, event_data, created_at
-					) VALUES ($1, $2, $3, $4, 'pending', COALESCE($5, 'null'::jsonb), CURRENT_TIMESTAMP)
+					) VALUES ($1, $2, $3, $4, 'pending', NULLIF($5::jsonb, '{}'::jsonb), CURRENT_TIMESTAMP)
 					RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
-		event.BoxerID, event.EventType, event.EventTime, event.Processed, event.EventData).Scan(&event.ID)
+		event.BoxerID, event.EventType, event.EventTime, event.Processed, []byte(event.EventData)).Scan(&event.ID)
 	if err != nil {
 		return ErrFailedToInsert
 	}
@@ -444,3 +444,5 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 
 	return events, nil
 }
+
+

@@ -94,10 +94,10 @@ func main() {
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
 		rankingsStore = store.NewRankingsStore(dbConn.DB)
 		fightStore := store.NewFightStore(dbConn.DB)
-		fightService = service.NewFightService(fightStore, boxerStore, scheduledEventStore)
+		worldClockModel = model.NewWorldClockModel(logger)
+		fightService = service.NewFightService(fightStore, boxerStore, scheduledEventStore, worldClockModel, cfg, dbConn.DB)
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
-		worldClockModel = model.NewWorldClockModel(logger)
 		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, scheduledEventStore, fatigueService, progressionService, worldClockModel, logger, dbConn.DB)
 		rankingsService = service.NewRankingsService(rankingsStore, redisClient.Client, logger)
 		opponentDiscoveryService = service.NewOpponentDiscoveryService(dbConn.DB)
@@ -106,23 +106,34 @@ func main() {
 	// Setup auth service for middleware
 	authService := auth.NewAuthService(cfg)
 
-	// Setup handlers
-	boxerHandler := handler.NewBoxerHandler(boxerStore, scheduledEventStore)
-	trainingHandler := handler.NewTrainingHandler(
-		boxerStore,
-		trainingTypeStore,
-		trainingSessionStore,
-		scheduledEventStore,
-		fatigueService,
-		progressionService,
-		trainingService,
-	)
-	rankingsHandler := handler.NewRankingsHandler(rankingsService)
-	fightHandler := handler.NewFightHandler(fightService)
-	opponentHandler := handler.NewOpponentHandler(opponentDiscoveryService)
-	authHandler := handler.NewAuthHandler(dbConn)
-	dashboardHandler := handler.NewDashboardHandler()
-	worldClockHandler := handler.NewWorldClockHandler(dbConn.DB)
+	// Setup handlers only if DB is connected
+	var boxerHandler *handler.BoxerHandler
+	var trainingHandler *handler.TrainingHandler
+	var rankingsHandler *handler.RankingsHandler
+	var fightHandler *handler.FightHandler
+	var opponentHandler *handler.OpponentHandler
+	var authHandler *handler.AuthHandler
+	var dashboardHandler *handler.DashboardHandler
+	var worldClockHandler *handler.WorldClockHandler
+
+	if dbConn != nil {
+		boxerHandler = handler.NewBoxerHandler(boxerStore, scheduledEventStore)
+		trainingHandler = handler.NewTrainingHandler(
+			boxerStore,
+			trainingTypeStore,
+			trainingSessionStore,
+			scheduledEventStore,
+			fatigueService,
+			progressionService,
+			trainingService,
+		)
+		rankingsHandler = handler.NewRankingsHandler(rankingsService)
+		fightHandler = handler.NewFightHandler(fightService, worldClockModel, cfg, dbConn.DB)
+		opponentHandler = handler.NewOpponentHandler(opponentDiscoveryService)
+		authHandler = handler.NewAuthHandler(dbConn)
+		dashboardHandler = handler.NewDashboardHandler()
+		worldClockHandler = handler.NewWorldClockHandler(dbConn.DB)
+	}
 
 	// Setup router
 	router := mux.NewRouter()

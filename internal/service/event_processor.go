@@ -203,6 +203,8 @@ func (p *EventProcessor) processFightSimulate(ctx context.Context, event *model.
 	// Unmarshal fight event data
 	var data map[string]any
 	if len(event.EventData) > 0 {
+		p.logger.Debug("Event %d raw EventData bytes: %s (length=%d, first byte=%d)",
+			event.ID, string(event.EventData), len(event.EventData), event.EventData[0])
 		if err := json.Unmarshal(event.EventData, &data); err != nil {
 			return fmt.Errorf("%w: failed to unmarshal fight event data: %w", ErrInvalidEventData, err)
 		}

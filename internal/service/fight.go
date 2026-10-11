@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,20 +11,27 @@ import (
 
 	boxerdb "github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/model"
+	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/store"
 )
 
 type FightService struct {
-	fightStore *store.FightStore
-	boxerStore *store.BoxerStore
-	eventStore *store.ScheduledEventStore
+	fightStore      *store.FightStore
+	boxerStore      *store.BoxerStore
+	eventStore      *store.ScheduledEventStore
+	worldClockModel *model.WorldClockModel
+	cfg             *config.Config
+	db              *sql.DB
 }
 
-func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, eventStore *store.ScheduledEventStore) *FightService {
+func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, eventStore *store.ScheduledEventStore, worldClockModel *model.WorldClockModel, cfg *config.Config, db *sql.DB) *FightService {
 	return &FightService{
-		fightStore: fightStore,
-		boxerStore: boxerStore,
-		eventStore: eventStore,
+		fightStore:      fightStore,
+		boxerStore:      boxerStore,
+		eventStore:      eventStore,
+		worldClockModel: worldClockModel,
+		cfg:             cfg,
+		db:              db,
 	}
 }
 
@@ -32,6 +40,22 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 ) error {
 	if boxer1ID <= 0 || boxer2ID <= 0 {
 		return errors.New("invalid request parameters")
+	}
+
+	// Validate fight is scheduled in the future relative to game time (MAT-FIGHT-SCHEDULING)
+	if s.worldClockModel != nil && s.db != nil && s.cfg != nil {
+		gameTime, err := s.worldClockModel.GetCurrentGameTime(ctx, s.db)
+		if err != nil {
+			return fmt.Errorf("failed to get current game time: %w", err)
+		}
+
+		minScheduleHours := s.cfg.Fight.MinScheduleHours
+		minScheduleTime := gameTime.Add(time.Duration(minScheduleHours) * time.Hour)
+
+		if scheduledTime.Before(minScheduleTime) || scheduledTime.Before(gameTime) {
+			return fmt.Errorf("fight must be scheduled at least %d hours from current game time (game time: %v, minimum: %v, requested: %v)",
+				minScheduleHours, gameTime.Format("2006-01-02 15:04"), minScheduleTime.Format("2006-01-02 15:04"), scheduledTime.Format("2006-01-02 15:04"))
+		}
 	}
 
 	// Validate boxers exist using boxerStore
@@ -71,9 +95,12 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 
 	// Create a scheduled event for the fight simulation (MAT-99)
 	if s.eventStore != nil && scheduledTime.After(time.Now()) {
-		eventData, _ := json.Marshal(map[string]interface{}{
+		eventData, err := json.Marshal(map[string]interface{}{
 			"fight_id": fightID,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal fight event data: %w", err)
+		}
 
 		event := &model.ScheduledEvent{
 			BoxerID:   boxer1ID, // Associate with first boxer

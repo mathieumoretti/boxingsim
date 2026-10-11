@@ -118,23 +118,19 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* Fight entry link (MAT-104) */
-.fight-entry-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  padding: 0;
-  height: 100%;
-}
-
-.fight-entry-link:hover .fight-entry-header {
-  background: rgba(79, 70, 229, 0.08);
-}
-
-.view-details {
+/* View Details Link (MAT-104) */
+.view-details-link {
   color: #4f46e5;
   font-weight: 600;
   margin-left: 4px;
+  text-decoration: none;
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+.view-details-link:hover {
+  color: #7c3aed;
+  text-decoration: underline;
 }
 
 /* Result Badges */

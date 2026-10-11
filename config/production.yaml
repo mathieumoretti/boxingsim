@@ -23,3 +23,11 @@ jwt:
 
 logging:
   level: "info"
+
+worker:
+  poll_interval_ms: 1000      # Poll every 1 second in production
+  startup_jitter_max_ms: 10000 # Max 10 second jitter on startup to prevent thundering herd
+  game_speed_factor: 60.0     # 1 real minute = 1 game hour (60x speed)
+
+fight:
+  min_schedule_hours: 24      # Fights must be scheduled at least 24 hours from current game time
