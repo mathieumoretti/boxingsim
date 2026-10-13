@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/mux"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
-	"github.com/mormm/boxing/internal/model"
 	pkgerrors "github.com/mormm/boxing/internal/errors"
+	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/service"
 )
