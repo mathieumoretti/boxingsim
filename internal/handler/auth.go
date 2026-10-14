@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/mormm/boxing/internal/auth"
@@ -40,7 +39,7 @@ func NewAuthHandler(db *database.PostgresDB) *AuthHandler {
 // RegisterUser handles user registration (POST /auth/register)
 func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var registerReq model.UserRegister
-	if err := json.NewDecoder(r.Body).Decode(&registerReq); err != nil {
+	if err := BindJSON(r, &registerReq); err != nil {
 		h.lg.Error("Invalid JSON in RegisterUser", "error", err.Error())
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
@@ -103,7 +102,7 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 // LoginUser handles user login (POST /auth/login)
 func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var loginReq model.UserLogin
-	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
+	if err := BindJSON(r, &loginReq); err != nil {
 		h.lg.Error("Invalid JSON in LoginUser", "error", err.Error())
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return

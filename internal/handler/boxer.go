@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -89,7 +88,7 @@ func (h *BoxerHandler) enrichBoxersResponse(ctx context.Context, boxers []*model
 // CreateBoxer handles creating a new boxer
 func (h *BoxerHandler) CreateBoxer(w http.ResponseWriter, r *http.Request) {
 	var boxerCreate model.BoxerCreate
-	if err := json.NewDecoder(r.Body).Decode(&boxerCreate); err != nil {
+	if err := BindJSON(r, &boxerCreate); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
@@ -193,7 +192,7 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var boxerUpdate model.BoxerUpdate
-	if decodeErr := json.NewDecoder(r.Body).Decode(&boxerUpdate); decodeErr != nil {
+	if err := BindJSON(r, &boxerUpdate); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}

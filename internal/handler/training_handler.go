@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -89,7 +88,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 
 	// Decode request body
 	var req ScheduleTrainingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := BindJSON(r, &req); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
 		return
 	}
@@ -335,7 +334,7 @@ func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Re
 	}
 
 	var req BulkCompleteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := BindJSON(r, &req); err != nil {
 		// Empty body is valid - means complete all pending sessions
 		if r.ContentLength != 0 {
 			pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid JSON"))
