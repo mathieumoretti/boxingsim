@@ -19,16 +19,18 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
 
     try {
       // Build query parameters from filters
+      // Backend uses level_range as ± value (e.g., "3" means boxer's level ±3)
+
       const filterParams = {
         availableOnly: true,
-        ...(filters.levelRange ? {
-          minLevel: parseInt(filters.levelRange.split('-')[0]) || 1,
-          maxLevel: parseInt(filters.levelRange.split('-')[1]) || 100
-        } : {}),
-        ...(filters.minHealth ? { minHealth: filters.minHealth } : {})
+        ...(filters.levelRange !== undefined ? { minLevel: filters.levelRange } : {}),
+        ...(filters.minHealth ? { minHealth: filters.minHealth } : {}),
+        limit: filters.limit || 50
       };
 
+      console.log('[OpponentList] Fetching opponents for boxer', boxerId, 'with filters:', filterParams);
       const data = await fetchOpponents(boxerId, filterParams);
+      console.log('[OpponentList] Received', data.length, 'opponents');
       setOpponents(data || []);
     } catch (err) {
       setError(err.message);

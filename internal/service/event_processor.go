@@ -161,12 +161,17 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 func (p *EventProcessor) processRecovery(ctx context.Context, event *model.ScheduledEvent) error {
 	p.logger.Debug("Processing recovery event ID=%d boxer_id=%d", event.ID, event.BoxerID)
 
-	// Unmarshal recovery data
+	// Unmarshal recovery data with defensive null/empty check
 	var data map[string]any
 	if len(event.EventData) > 0 {
+		// Log the raw bytes for debugging unmarshal issues
+		p.logger.Debug("Event %d EventData bytes: %s (length=%d)", event.ID, string(event.EventData), len(event.EventData))
 		if err := json.Unmarshal(event.EventData, &data); err != nil {
-			return fmt.Errorf("%w: failed to unmarshal recovery data: %w", ErrInvalidEventData, err)
+			return fmt.Errorf("%w: failed to unmarshal recovery data: %w (raw=%q)", ErrInvalidEventData, err, string(event.EventData))
 		}
+	} else {
+		p.logger.Debug("Event %d has empty EventData, using defaults", event.ID)
+		data = map[string]any{} // Empty map, not nil
 	}
 
 	// Extract rest duration from event data (default to 1 hour if not specified)

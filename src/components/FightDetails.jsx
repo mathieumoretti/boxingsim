@@ -263,8 +263,11 @@ const FightDetails = () => {
 
   // Calculate fight data for display
   const fightData = fight?.data || {};
-  const roundsFought = fight?.round || 12;
-  const method = fightData?.method || 'decision';
+
+  // Only show fight results if the fight is completed
+  const isFightCompleted = fight?.status === 'completed';
+  const roundsFought = isFightCompleted ? (fight?.round || 12) : 0;
+  const method = isFightCompleted ? (fightData?.method || 'decision') : null;
 
   // Render loading state
   if (isLoading) {
@@ -310,35 +313,71 @@ const FightDetails = () => {
         </button>
       </div>
 
-      {/* Victory Banner */}
-      <VictoryBanner
-        winner={winner}
-        loser={fightData.winner_id ? opponent : null}
-        method={method}
-        round={roundsFought}
-      />
-
       {/* Fight Info Header */}
       <div className="fight-info-header">
         <h2>
           {boxer1?.name || 'Boxer 1'} vs {boxer2?.name || 'Boxer 2'}
         </h2>
-        <p className="fight-date">
-          📅 Game Time: {new Date(fight?.end_time || fight?.created_at).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })} at{' '}
-          {new Date(fight?.end_time || fight?.created_at).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          })}
-        </p>
-        <p className="time-ago">
-          ({formatTimeAgo(fight?.end_time || fight?.created_at)})
-        </p>
+
+        {/* Status Badge */}
+        <div className={`fight-status-badge ${fight?.status}`}>
+          {fight?.status === 'scheduled' && '📅 SCHEDULED'}
+          {fight?.status === 'in_progress' && '🥊 IN PROGRESS'}
+          {fight?.status === 'completed' && '✅ COMPLETED'}
+          {fight?.status === 'canceled' && '❌ CANCELED'}
+        </div>
+
+        {/* Scheduled Time for future fights */}
+        {fight?.status === 'scheduled' && fight?.scheduled_time && (
+          <>
+            <p className="fight-date">
+              📅 Scheduled for Game Time:{' '}
+              {new Date(fight.scheduled_time).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })} at{' '}
+              {new Date(fight.scheduled_time).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </p>
+            <p className="info-message">
+              This fight is scheduled for a future game time. Results will appear here once the worker processes the fight simulation.
+            </p>
+          </>
+        )}
+
+        {/* End Time for completed fights */}
+        {fight?.status === 'completed' && (
+          <>
+            <p className="fight-date">
+              📅 Completed at Game Time:{' '}
+              {new Date(fight.end_time || fight.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })} at{' '}
+              {new Date(fight.end_time || fight.created_at).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </p>
+          </>
+        )}
       </div>
+
+      {/* Victory Banner - Only show for completed fights */}
+      {isFightCompleted && (
+        <VictoryBanner
+          winner={winner}
+          loser={fightData.winner_id ? opponent : null}
+          method={method}
+          round={roundsFought}
+        />
+      )}
 
       {/* Boxer Comparison */}
       <div className="boxer-comparison-section">
@@ -347,7 +386,7 @@ const FightDetails = () => {
           <BoxerComparisonCard
             boxer={boxer1}
             role="boxer1"
-            fightData={fightData}
+            fightData={isFightCompleted ? fightData : undefined}
           />
 
           <div className="vs-badge">VS</div>
@@ -355,13 +394,13 @@ const FightDetails = () => {
           <BoxerComparisonCard
             boxer={boxer2}
             role="boxer2"
-            fightData={fightData}
+            fightData={isFightCompleted ? fightData : undefined}
           />
         </div>
       </div>
 
-      {/* Round Timeline */}
-      {roundsFought && (
+      {/* Round Timeline - Only show for completed fights */}
+      {isFightCompleted && roundsFought > 0 && (
         <div className="timeline-section">
           <h3>ROUND TIMELINE</h3>
           <RoundTimeline
@@ -371,8 +410,8 @@ const FightDetails = () => {
         </div>
       )}
 
-      {/* Play-by-Play Log */}
-      {fightData?.log && (
+      {/* Play-by-Play Log - Only show for completed fights */}
+      {isFightCompleted && fightData?.log && (
         <div className="playbyplay-section">
           <h3>FIGHT NARRATIVE</h3>
           <PlayByPlayLog
@@ -393,30 +432,35 @@ const FightDetails = () => {
             </span>
           </div>
 
-          <div className="summary-card">
-            <span className="label">Rounds Fought</span>
-            <span className="value">{roundsFought}</span>
-          </div>
+          {/* Only show rounds for completed fights */}
+          {isFightCompleted && (
+            <>
+              <div className="summary-card">
+                <span className="label">Rounds Fought</span>
+                <span className="value">{roundsFought}</span>
+              </div>
 
-          {method && (
-            <div className="summary-card">
-              <span className="label">Method of Victory</span>
-              <span className="value capitalize">{method}</span>
-            </div>
-          )}
+              {method && (
+                <div className="summary-card">
+                  <span className="label">Method of Victory</span>
+                  <span className="value capitalize">{method}</span>
+                </div>
+              )}
 
-          {fightData?.xp_gained && (
-            <div className="summary-card xp">
-              <span className="label">XP Gained</span>
-              <span className="value">+{Math.round(fightData.xp_gained)}</span>
-            </div>
-          )}
+              {fightData?.xp_gained && (
+                <div className="summary-card xp">
+                  <span className="label">XP Gained</span>
+                  <span className="value">+{Math.round(fightData.xp_gained)}</span>
+                </div>
+              )}
 
-          {fightData?.reward && (
-            <div className="summary-card reward">
-              <span className="label">Purse Earned</span>
-              <span className="value">${Math.round(fightData.reward).toLocaleString()}</span>
-            </div>
+              {fightData?.reward && (
+                <div className="summary-card reward">
+                  <span className="label">Purse Earned</span>
+                  <span className="value">${Math.round(fightData.reward).toLocaleString()}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

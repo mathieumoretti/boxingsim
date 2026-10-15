@@ -21,20 +21,34 @@ export async function fetchOpponents(boxerId, filters = {}) {
   if (filters.availableOnly !== undefined) {
     params.append('available_only', filters.availableOnly.toString());
   }
-  if (filters.minLevel !== undefined) {
-    params.append('min_level', filters.minLevel.toString());
+  // Backend expects level_range as a symmetric range (e.g., "3" means ±3 from boxer's level)
+  // If minLevel and maxLevel are provided, calculate the range from them
+  if (filters.minLevel !== undefined || filters.maxLevel !== undefined) {
+    if (filters.minLevel !== undefined && filters.maxLevel !== undefined) {
+      // If both provided, use minLevel as the range value (backend will apply symmetrically)
+      params.append('level_range', filters.minLevel.toString());
+    } else if (filters.minLevel !== undefined) {
+      params.append('level_range', filters.minLevel.toString());
+    }
   }
-  if (filters.maxLevel !== undefined) {
-    params.append('max_level', filters.maxLevel.toString());
+  if (filters.minHealth !== undefined) {
+    params.append('min_health', filters.minHealth.toString());
   }
-  if (filters.sortBy) {
-    params.append('sort_by', filters.sortBy);
+  if (filters.limit !== undefined) {
+    params.append('limit', filters.limit.toString());
+  }
+  if (filters.aiOnly) {
+    params.append('ai_only', 'true');
   }
 
   const url = `/api/boxers/${boxerId}/opponents?${params}`;
   const data = await apiGetJson(url);
 
-  return Array.isArray(data) ? data : [];
+  // Response format is { opportunities: [...], total_count: N, filters: {...} }
+  if (data && Array.isArray(data.opportunities)) {
+    return data.opportunities;
+  }
+  return [];
 }
 
 /**

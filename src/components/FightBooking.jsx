@@ -72,7 +72,10 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
       onFightBooked(data);
       onClose();
     } catch (err) {
-      setBookingError(err.message || 'Failed to book fight');
+      // Extract detailed error message from API response
+      const errorMessage = err.body?.message || err.message || 'Failed to book fight';
+      console.error('[FightBooking] Error booking fight:', err);
+      setBookingError(errorMessage);
     } finally {
       setIsBooking(false);
     }
