@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './BoxerCard.css';
-import { fetchActiveTrainingSessions, fetchUpcomingFight, fetchBoxer } from '../api/fights';
+import { fetchUpcomingFight, fetchBoxer } from '../api/fights';
+import { fetchActiveTrainingSessions } from '../api/training';
 import RestingBadge from './RestingBadge';
 import FightBadge from './FightBadge';
 

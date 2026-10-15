@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -22,12 +23,14 @@ type EventData json.RawMessage
 
 func (e *EventData) Scan(value interface{}) error {
 	if value == nil {
+		*e = EventData([]byte("{}")) // Empty object instead of nil
 		return nil
 	}
 
 	// Handle string representation of null from PostgreSQL jsonb NULLIF
 	if str, ok := value.(string); ok {
 		if str == "null" || str == "" {
+			*e = EventData([]byte("{}")) // Empty object instead of nil
 			return nil
 		}
 		*e = EventData([]byte(str))
@@ -41,6 +44,14 @@ func (e *EventData) Scan(value interface{}) error {
 	}
 	*e = EventData(b)
 	return nil
+}
+
+// Value implements driver.Valuer for proper INSERT/UPDATE handling.
+func (e EventData) Value() (driver.Value, error) {
+	if len(e) == 0 {
+		return nil, nil // Return NULL for empty data
+	}
+	return []byte(e), nil
 }
 
 // ToMap converts EventData to a map[string]interface{} for API responses.

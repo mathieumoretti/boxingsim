@@ -117,6 +117,58 @@
   color: #a0aec0;
 }
 
+.fight-status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+}
+
+.fight-status-badge.scheduled {
+  background: linear-gradient(135deg, #63b3ed, #4299e1);
+  color: white;
+}
+
+.fight-status-badge.in_progress {
+  background: linear-gradient(135deg, #f6ad55, #ed8936);
+  color: white;
+  animation: pulse 2s ease infinite;
+}
+
+.fight-status-badge.completed {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+}
+
+.fight-status-badge.canceled {
+  background: linear-gradient(135deg, #a0aec0, #718096);
+  color: white;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.info-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #718096;
+  font-style: italic;
+  padding: 12px;
+  background: #edf2f7;
+  border-radius: 8px;
+  border-left: 3px solid #4299e1;
+}
+
 /* ========================================
    BOXER COMPARISON SECTION (MAT-104)
    ======================================== */
@@ -282,6 +334,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 16px;
+  overflow: visible;
 }
 
 .combat-stats-grid .stat-item {
@@ -290,11 +343,14 @@
   padding: 12px 8px;
   text-align: center;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .combat-stats-grid .stat-item:hover {
   background: #edf2f7;
-  transform: scale(1.05);
+  transform: scale(1.02);
+  z-index: 1;
 }
 
 .stat-icon {
@@ -865,18 +921,25 @@
   }
 
   .comparison-layout {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
   }
 
   .vs-badge {
     transform: rotate(90deg);
     margin: 8px 0;
+    order: -1;
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
   }
 
   .boxer-comparison-card {
-    max-width: 100%;
-    width: 100%;
+    max-width: 280px;
+    width: calc(50% - 20px);
+    min-width: 260px;
   }
 
   .round-timeline {
