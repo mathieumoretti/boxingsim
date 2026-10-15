@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './FightBooking.css';
 import OpponentList from './OpponentList.jsx';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import { fetchBestMatch, validateFight } from '../api/opponents';
+import { bookFight } from '../api/fights';
 
 const FightBooking = ({ boxer, onClose, onFightBooked }) => {
   const [selectedOpponent, setSelectedOpponent] = useState(null);
@@ -24,19 +25,14 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
 
   const loadBestMatch = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/opponents/best_match?boxer_id=${boxer.id}`, {
-        method: 'GET'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Pre-select the best match if available
-        if (data.opponent) {
-          setSelectedOpponent({
-            opponent: data.opponent,
-            score: data.score,
-            reasoning: data.score?.reasoning || ''
-          });
-        }
+      const data = await fetchBestMatch(boxer.id);
+      // Pre-select the best match if available
+      if (data) {
+        setSelectedOpponent({
+          opponent: data.opponent,
+          score: data.score,
+          reasoning: data.score?.reasoning || ''
+        });
       }
     } catch (err) {
       // Silently fail - best match is optional enhancement
@@ -50,18 +46,12 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
 
   const validateMatch = async (opponentId) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/opponents/validate`, {
-        method: 'POST',
-        body: JSON.stringify({
-          boxer1_id: boxer.id,
-          boxer2_id: opponentId
-        })
+      const validation = await validateFight({
+        boxerId: boxer.id,
+        opponentId: opponentId,
+        scheduledTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Tomorrow
       });
-
-      if (response.ok) {
-        const validation = await response.json();
-        setMatchValidation(validation);
-      }
+      setMatchValidation(validation);
     } catch (err) {
       // Validation is optional - don't block booking
     }
@@ -74,33 +64,15 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
     setBookingError('');
 
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/fights`, {
-        method: 'POST',
-        body: JSON.stringify({
-          opponent_id: selectedOpponent.opponent.boxer.id
-        })
+      const data = await bookFight(boxer.id, {
+        opponent_id: selectedOpponent.opponent.boxer.id
       });
-
-      if (!response.ok) {
-        // Try to parse error from response, but handle non-JSON responses
-        let errorMessage = 'Failed to book fight';
-        try {
-          const data = await response.json();
-          errorMessage = data.error?.message || errorMessage;
-        } catch (parseErr) {
-          // Response wasn't valid JSON - use generic error
-          console.error('Non-JSON error response:', response.status, response.statusText);
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
 
       // Success - close modal and refresh parent
       onFightBooked(data);
       onClose();
     } catch (err) {
-      setBookingError(err.message);
+      setBookingError(err.message || 'Failed to book fight');
     } finally {
       setIsBooking(false);
     }

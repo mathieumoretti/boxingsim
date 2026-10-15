@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './BoxerCard.css';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import { fetchActiveTrainingSessions, fetchUpcomingFight, fetchBoxer } from '../api/fights';
 import RestingBadge from './RestingBadge';
 import FightBadge from './FightBadge';
 
@@ -48,18 +48,11 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
   // Fetch active training session for this boxer
   const loadActiveTraining = useCallback(async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/training-sessions`, {
-        method: 'GET',
-      });
+      const sessions = await fetchActiveTrainingSessions(boxer.id);
 
-      if (response.ok) {
-        const sessions = await response.json();
-        const sessionsArray = Array.isArray(sessions) ? sessions : [];
-
-        // Find the most recent pending session
-        const pendingSession = sessionsArray.find(s => s.status === 'pending');
-        setActiveSession(pendingSession);
-      }
+      // Find the most recent pending session
+      const pendingSession = sessions.find(s => s.status === 'pending');
+      setActiveSession(pendingSession);
     } catch (err) {
       // Silently fail - boxer card still works without training status
     }
@@ -73,7 +66,7 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
 
   // Fetch upcoming fight for this boxer (MAT-106)
   useEffect(() => {
-    const fetchUpcomingFight = async () => {
+    const fetchUpcomingFightData = async () => {
       // If fight data is already provided via prop, use it
       if (upcomingFight) {
         setFetchedFight(upcomingFight);
@@ -81,24 +74,15 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
       }
 
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/upcoming-fight`, {
-          method: 'GET',
-        });
-
-        if (response.ok) {
-          const fightData = await response.json();
-          setFetchedFight(fightData);
-        } else if (response.status === 404) {
-          // No upcoming fight found - that's fine
-          setFetchedFight(null);
-        }
+        const fightData = await fetchUpcomingFight(boxer.id);
+        setFetchedFight(fightData);
       } catch (err) {
         // Silently fail - boxer card still works without fight data
       }
     };
 
     if (boxer.id) {
-      fetchUpcomingFight();
+      fetchUpcomingFightData();
     }
   }, [boxer.id, upcomingFight]);
 
@@ -108,24 +92,18 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
 
     const pollInterval = setInterval(async () => {
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}/training-sessions`, {
-          method: 'GET',
-        });
+        const sessions = await fetchActiveTrainingSessions(boxer.id);
 
-        if (response.ok) {
-          const sessions = await response.json();
-          const sessionsArray = Array.isArray(sessions) ? sessions : [];
-          const pendingSession = sessionsArray.find(s => s.status === 'pending');
+        const pendingSession = sessions.find(s => s.status === 'pending');
 
-          // If training completed (no longer pending), notify parent to refresh boxer data
-          if (!pendingSession && activeSession) {
-            setActiveSession(null);
-            if (onBoxerStateChanged) {
-              onBoxerStateChanged(boxer.id);
-            }
-          } else {
-            setActiveSession(pendingSession);
+        // If training completed (no longer pending), notify parent to refresh boxer data
+        if (!pendingSession && activeSession) {
+          setActiveSession(null);
+          if (onBoxerStateChanged) {
+            onBoxerStateChanged(boxer.id);
           }
+        } else {
+          setActiveSession(pendingSession);
         }
       } catch (err) {
         // Silently fail - polling will retry
@@ -141,24 +119,18 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
 
     const pollInterval = setInterval(async () => {
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxer.id}`, {
-          method: 'GET',
-        });
+        const updatedBoxer = await fetchBoxer(boxer.id);
 
-        if (response.ok) {
-          const updatedBoxer = await response.json();
-
-          // Check if rest status changed
-          if (!updatedBoxer.has_active_rest && boxer.has_active_rest) {
-            // Rest ended - notify parent to refresh all boxer data
-            if (onBoxerStateChanged) {
-              onBoxerStateChanged(boxer.id);
-            }
-          } else if (updatedBoxer.has_active_rest) {
-            // Still resting - update local boxer state with new has_active_rest and next_available_training values
-            const parentElement = document.getElementById(`boxer-card-${boxer.id}`);
-            // Parent will refresh via Dashboard's world time polling for countdown updates
+        // Check if rest status changed
+        if (!updatedBoxer.has_active_rest && boxer.has_active_rest) {
+          // Rest ended - notify parent to refresh all boxer data
+          if (onBoxerStateChanged) {
+            onBoxerStateChanged(boxer.id);
           }
+        } else if (updatedBoxer.has_active_rest) {
+          // Still resting - update local boxer state with new has_active_rest and next_available_training values
+          const parentElement = document.getElementById(`boxer-card-${boxer.id}`);
+          // Parent will refresh via Dashboard's world time polling for countdown updates
         }
       } catch (err) {
         // Silently fail - polling will retry

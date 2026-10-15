@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './FightHistory.css';
-import { fetchFightHistory, formatTimeAgo, getGroupLabel } from '../utils/fights';
+import { fetchFightHistory, formatTimeAgo, getGroupLabel } from '../api/fights';
 
 /**
  * FightEntryCard - Single fight row component (MAT-103)

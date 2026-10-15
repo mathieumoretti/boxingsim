@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './TrainingScheduler.css';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import { fetchTrainingTypes, startTrainingSession } from '../api/training';
+import { fetchWorldTime } from '../api/world';
 
 const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
@@ -18,31 +19,22 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
 
   // Fetch world time for rest countdown (only when boxer has active rest)
   useEffect(() => {
-    const loadWorldTime = async () => {
+    const loadWorldTimeData = async () => {
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/world/time`, {
-          method: 'GET',
-        });
+        const data = await fetchWorldTime();
+        setWorldTime(data);
 
-        if (response.ok) {
-          const data = await response.json();
-          setWorldTime(data);
+        // Set up periodic refresh for countdown updates
+        const interval = setInterval(async () => {
+          try {
+            const data = await fetchWorldTime();
+            setWorldTime(data);
+          } catch (err) {
+            // Silently fail - countdown will just be stale
+          }
+        }, 5000);
 
-          // Set up periodic refresh for countdown updates
-          const interval = setInterval(async () => {
-            try {
-              const resp = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
-              if (resp.ok) {
-                const data = await resp.json();
-                setWorldTime(data);
-              }
-            } catch (err) {
-              // Silently fail - countdown will just be stale
-            }
-          }, 5000);
-
-          return () => clearInterval(interval);
-        }
+        return () => clearInterval(interval);
       } catch (err) {
         console.warn('Failed to load world time:', err);
       }
@@ -50,25 +42,16 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
 
     // Load world time if boxer has active rest period
     if (boxer?.has_active_rest) {
-      loadWorldTime();
+      loadWorldTimeData();
     }
   }, [boxer?.has_active_rest]);
 
   const loadTrainingTypes = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/training-types`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTrainingTypes(Array.isArray(data) ? data : []);
-      } else {
-        setError('Failed to load training types');
-      }
+      const data = await fetchTrainingTypes();
+      setTrainingTypes(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError('Network error: ' + err.message);
+      setError('Failed to load training types');
     } finally {
       setIsLoading(false);
     }
@@ -180,47 +163,28 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
 
     try {
       console.log('TrainingScheduler: Submitting with boxerId:', boxerId, 'type of boxerId:', typeof boxerId);
-      const response = await fetch(`${API_BASE_URL}/boxers/${boxerId}/train`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          training_type_id: parseInt(selectedType),
-          duration_hours: durationHours,
-          scheduled_at: new Date().toISOString()
-        })
+      const data = await startTrainingSession(boxerId, {
+        training_type_id: parseInt(selectedType),
+        duration_hours: durationHours,
+        scheduled_at: new Date().toISOString()
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Training session scheduled successfully!');
-        setError('');
-        // Reset form after success
-        setSelectedType('');
-        setDurationHours(2);
-        // Call the refresh callback to reload boxer list in parent component
-        if (onTrainingScheduled) {
-          onTrainingScheduled();
-        }
-        // Close modal after a brief delay to show success message
-        setTimeout(() => {
-          setSuccess('');
-          if (onClose) onClose();
-        }, 1500);
-      } else {
-        setError(data.error || 'Failed to schedule training');
+      setSuccess('Training session scheduled successfully!');
+      setError('');
+      // Reset form after success
+      setSelectedType('');
+      setDurationHours(2);
+      // Call the refresh callback to reload boxer list in parent component
+      if (onTrainingScheduled) {
+        onTrainingScheduled();
       }
+      // Close modal after a brief delay to show success message
+      setTimeout(() => {
+        setSuccess('');
+        if (onClose) onClose();
+      }, 1500);
     } catch (err) {
-      if (err.message.includes('Unauthorized')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      } else {
-        setError('Network error: ' + err.message);
-      }
+      setError(err.message || 'Failed to schedule training');
     } finally {
       setIsSubmitting(false);
     }
