@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -55,7 +54,7 @@ func (h *FightHandler) BookFightForBoxer(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req BookFightForBoxerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := BindJSON(r, &req); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("invalid request body"))
 		return
 	}
@@ -102,7 +101,7 @@ type BookFightRequest struct {
 // BookFight schedules a new fight between two boxers (POST /fights/book)
 func (h *FightHandler) BookFight(w http.ResponseWriter, r *http.Request) {
 	var req BookFightRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := BindJSON(r, &req); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("invalid request body"))
 		return
 	}

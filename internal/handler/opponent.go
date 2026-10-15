@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"math/rand"
 	"net/http"
@@ -318,7 +317,7 @@ func (h *OpponentHandler) ValidateMatch(w http.ResponseWriter, r *http.Request) 
 		Boxer2ID int `json:"boxer2_id"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	if err := BindJSON(r, &request); err != nil {
 		pkgerrors.WriteError(w, pkgerrors.BadRequest("Invalid request body"))
 		return
 	}

@@ -25,8 +25,6 @@ import (
 	"github.com/mormm/boxing/internal/store"
 )
 
-const optionsMethod = "OPTIONS"
-
 func main() {
 	// Load configuration
 	cfg, err := config.Load()
@@ -159,312 +157,64 @@ func main() {
 	protectedRouter.Use(authService.RequireAuth)
 
 	// Dashboard endpoint - protected with authentication middleware
-	protectedRouter.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		dashboardHandler.GetDashboard(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/dashboard", dashboardHandler.GetDashboard).Methods("GET")
 
 	// Health check endpoint (public)
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 
-	// Authentication endpoints
+	// Authentication endpoints (CORS preflight handled by middleware)
 	router.HandleFunc("/auth/register", authHandler.RegisterUser).Methods("POST")
 	router.HandleFunc("/auth/login", authHandler.LoginUser).Methods("POST")
 
-	// Handle CORS preflight requests for auth endpoints
-	router.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		authHandler.RegisterUser(w, r)
-	}).Methods(optionsMethod, "POST")
-
-	router.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		authHandler.LoginUser(w, r)
-	}).Methods(optionsMethod, "POST")
-
 	// Boxer endpoints - protected with authentication middleware
-	protectedRouter.HandleFunc("/boxers", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.CreateBoxer(w, r)
-	}).Methods(optionsMethod, "POST")
+	protectedRouter.HandleFunc("/boxers", boxerHandler.CreateBoxer).Methods("POST")
 
 	// More specific boxer routes MUST come before /boxers/{id} (Gorilla Mux route ordering)
-	protectedRouter.HandleFunc("/boxers/{id}/fights", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.BookFightForBoxer(w, r)
-	}).Methods(optionsMethod, "POST")
-
-	protectedRouter.HandleFunc("/boxers/{id}/opponents", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		opponentHandler.GetOpponents(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/boxers/{id}/fights", fightHandler.BookFightForBoxer).Methods("POST")
+	protectedRouter.HandleFunc("/boxers/{id}/opponents", opponentHandler.GetOpponents).Methods("GET")
 
 	// Upcoming fight endpoint for a specific boxer (MAT-106)
-	protectedRouter.HandleFunc("/boxers/{id}/upcoming-fight", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.GetUpcomingFightForBoxer(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/boxers/{id}/upcoming-fight", fightHandler.GetUpcomingFightForBoxer).Methods("GET")
 
 	// Fight history endpoint with opponent names (MAT-103)
-	protectedRouter.HandleFunc("/boxers/{id}/fights-history", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.GetFightHistoryWithOpponents(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/boxers/{id}/fights-history", fightHandler.GetFightHistoryWithOpponents).Methods("GET")
 
 	// Now the catch-all boxer ID routes
-	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.GetBoxer(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/boxers/{id}", boxerHandler.GetBoxer).Methods("GET")
+	protectedRouter.HandleFunc("/boxers/{id}", boxerHandler.UpdateBoxer).Methods("PUT")
 
-	protectedRouter.HandleFunc("/boxers/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.UpdateBoxer(w, r)
-	}).Methods(optionsMethod, "PUT")
-
-	protectedRouter.HandleFunc("/users/{id}/boxers", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		boxerHandler.GetBoxersByUserID(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/users/{id}/boxers", boxerHandler.GetBoxersByUserID).Methods("GET")
 
 	// Fight endpoints - protected with authentication middleware
-	protectedRouter.HandleFunc("/fights/book", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.BookFight(w, r)
-	}).Methods(optionsMethod, "POST")
-
-	protectedRouter.HandleFunc("/fights/active", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.GetActiveFights(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	protectedRouter.HandleFunc("/fights/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		fightHandler.GetFightByID(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/fights/book", fightHandler.BookFight).Methods("POST")
+	protectedRouter.HandleFunc("/fights/active", fightHandler.GetActiveFights).Methods("GET")
+	protectedRouter.HandleFunc("/fights/{id}", fightHandler.GetFightByID).Methods("GET")
 
 	// Opponent discovery endpoints (best_match and validate)
-	protectedRouter.HandleFunc("/opponents/best_match", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		opponentHandler.GetBestMatch(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	protectedRouter.HandleFunc("/opponents/validate", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		opponentHandler.ValidateMatch(w, r)
-	}).Methods(optionsMethod, "POST")
+	protectedRouter.HandleFunc("/opponents/best_match", opponentHandler.GetBestMatch).Methods("GET")
+	protectedRouter.HandleFunc("/opponents/validate", opponentHandler.ValidateMatch).Methods("POST")
 
 	// Training types endpoint - public (reference data)
-	router.HandleFunc("/training-types", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		trainingHandler.GetAllTrainingTypes(w, r)
-	}).Methods(optionsMethod, "GET")
+	router.HandleFunc("/training-types", trainingHandler.GetAllTrainingTypes).Methods("GET")
 
 	// Training endpoints - protected with authentication middleware
-	protectedRouter.HandleFunc("/boxers/{id}/train", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		trainingHandler.ScheduleTraining(w, r)
-	}).Methods(optionsMethod, "POST")
-
-	protectedRouter.HandleFunc("/boxers/{id}/training-sessions", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		trainingHandler.GetTrainingSessionsForBoxer(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/boxers/{id}/train", trainingHandler.ScheduleTraining).Methods("POST")
+	protectedRouter.HandleFunc("/boxers/{id}/training-sessions", trainingHandler.GetTrainingSessionsForBoxer).Methods("GET")
 
 	// Training completion endpoint - protected with authentication middleware
-	protectedRouter.HandleFunc("/training/{id}/complete", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		trainingHandler.CompleteTraining(w, r)
-	}).Methods(optionsMethod, "POST")
+	protectedRouter.HandleFunc("/training/{id}/complete", trainingHandler.CompleteTraining).Methods("POST")
 
 	// Bulk training completion endpoint (development feature) - protected with authentication middleware
-	protectedRouter.HandleFunc("/training/bulk-complete", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		trainingHandler.BulkCompleteTraining(w, r)
-	}).Methods(optionsMethod, "POST")
+	protectedRouter.HandleFunc("/training/bulk-complete", trainingHandler.BulkCompleteTraining).Methods("POST")
 
 	// World clock endpoint - protected with authentication middleware
-	protectedRouter.HandleFunc("/world/time", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		worldClockHandler.GetCurrentGameTime(w, r)
-	}).Methods(optionsMethod, "GET")
+	protectedRouter.HandleFunc("/world/time", worldClockHandler.GetCurrentGameTime).Methods("GET")
 
 	// Rankings endpoints - protected with authentication middleware
-	protectedRouter.HandleFunc("/rankings", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		rankingsHandler.GetRankings(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	protectedRouter.HandleFunc("/rankings/{boxer_id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		rankingsHandler.GetRankingForBoxer(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		rankingsHandler.GetNearbyRankings(w, r)
-	}).Methods(optionsMethod, "GET")
-
-	protectedRouter.HandleFunc("/rankings/invalidate", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == optionsMethod {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		rankingsHandler.InvalidateRankings(w, r)
-	}).Methods(optionsMethod, "POST")
+	protectedRouter.HandleFunc("/rankings", rankingsHandler.GetRankings).Methods("GET")
+	protectedRouter.HandleFunc("/rankings/{boxer_id}", rankingsHandler.GetRankingForBoxer).Methods("GET")
+	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", rankingsHandler.GetNearbyRankings).Methods("GET")
+	protectedRouter.HandleFunc("/rankings/invalidate", rankingsHandler.InvalidateRankings).Methods("POST")
 
 	// Serve static files for the UI (React app)
 	// For development, we'll serve from dist/ directory if it exists
