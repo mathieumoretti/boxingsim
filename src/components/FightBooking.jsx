@@ -3,6 +3,8 @@ import './FightBooking.css';
 import OpponentList from './OpponentList.jsx';
 import { fetchBestMatch, validateFight } from '../api/opponents';
 import { bookFight } from '../api/fights';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const FightBooking = ({ boxer, onClose, onFightBooked }) => {
   const [selectedOpponent, setSelectedOpponent] = useState(null);
@@ -72,8 +74,11 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
       onFightBooked(data);
       onClose();
     } catch (err) {
-      // Extract detailed error message from API response
-      const errorMessage = err.body?.message || err.message || 'Failed to book fight';
+      // Use specific error message from utility with boxer/opponent context
+      const errorMessage = getUserErrorMessage(err, 'fightBooking', {
+        boxerName: boxer.name,
+        opponentName: selectedOpponent.opponent.boxer.name
+      });
       console.error('[FightBooking] Error booking fight:', err);
       setBookingError(errorMessage);
     } finally {
@@ -192,7 +197,7 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
           )}
 
           {bookingError && (
-            <div className="booking-error">{bookingError}</div>
+            <ErrorDisplay error={bookingError} variant="compact" icon={true} />
           )}
 
           <button

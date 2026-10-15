@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './FightDetails.css';
 import { fetchFightDetails, fetchBoxer, formatTimeAgo } from '../api/fights';
 import RoundTimeline from './RoundTimeline';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
 
 /**
  * VictoryBanner - Displays fight result prominently (MAT-104)
@@ -243,7 +245,9 @@ const FightDetails = () => {
           setWinner(null);
         }
       } catch (err) {
-        setError(`Failed to load fight details: ${err.message}`);
+        // Use specific error message based on error type
+        const errorMsg = getUserErrorMessage(err, 'general');
+        setError(errorMsg);
         console.error('Error loading fight details:', err);
       } finally {
         setIsLoading(false);
@@ -285,10 +289,13 @@ const FightDetails = () => {
   if (error) {
     return (
       <div className="fight-details-page">
-        <div className="error-state">
-          <span className="error-icon">⚠️</span>
-          <h2>Error Loading Fight</h2>
-          <p>{error}</p>
+        <ErrorDisplay
+          error={error}
+          variant="alert"
+          title={error?.includes('not found') ? 'Fight Not Found' : 'Error Loading Fight'}
+          icon={true}
+        />
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
           <button
             className="back-btn"
             onClick={() => navigate('/dashboard')}

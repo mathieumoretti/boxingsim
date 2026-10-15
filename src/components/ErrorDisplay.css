@@ -1,0 +1,247 @@
+/**
+ * ErrorDisplay Component Styles (MAT-129)
+ *
+ * Consistent error styling across the application with three variants:
+ * - alert: Full error box for main content areas
+ * - compact: Compact inline errors for cards and small spaces
+ * - inline: Minimal text-only errors for field-level feedback
+ */
+
+/* Base error container */
+.error-display {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  animation: errorSlideIn 0.3s ease-out;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error icon */
+.error-icon {
+  flex-shrink: 0;
+  color: #dc3545;
+}
+
+/* Alert Variant - Full error box */
+.error-display.error-alert {
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  margin-bottom: 16px;
+}
+
+.error-alert .error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.error-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c53030;
+}
+
+.error-message {
+  margin: 0;
+  font-size: 14px;
+  color: #2d3748;
+  line-height: 1.5;
+}
+
+.error-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: 4px;
+}
+
+.error-retry-btn:hover {
+  background-color: #c53030;
+}
+
+.error-retry-btn:active {
+  transform: scale(0.98);
+}
+
+.error-retry-btn:focus {
+  outline: 2px solid #e53e3e;
+  outline-offset: 2px;
+}
+
+/* Compact Variant - For cards and small spaces */
+.error-display.error-compact {
+  padding: 8px 12px;
+  background-color: #fffaf0;
+  border: 1px solid #ed8936;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.error-compact .error-icon {
+  color: #dd6b20;
+}
+
+.error-compact .error-message {
+  font-size: 13px;
+  color: #744210;
+  flex: 1;
+}
+
+.error-retry-text {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #c05621;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.error-retry-text:hover {
+  color: #9c4221;
+  background: none;
+}
+
+.error-retry-text:active {
+  transform: none;
+}
+
+/* Inline Variant - Text-only for field errors */
+.error-display.error-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin: 0;
+  background: none;
+  border: none;
+  animation: none;
+}
+
+.error-inline .error-icon {
+  width: 12px;
+  height: 12px;
+  color: #e53e3e;
+}
+
+.error-inline .error-message {
+  font-size: 13px;
+  color: #c53030;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Field Error - Individual form field validation */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #c53030;
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.field-error-icon {
+  flex-shrink: 0;
+}
+
+/* Error input field styling */
+.input-error {
+  border-color: #e53e3e !important;
+  background-color: #fffaf0 !important;
+}
+
+.input-error:focus {
+  border-color: #c53030 !important;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .error-display.error-alert {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .error-title {
+    font-size: 13px;
+  }
+
+  .error-message {
+    font-size: 13px;
+  }
+
+  .error-retry-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+/* Accessibility - Focus states */
+.error-display:focus-within {
+  outline: 2px solid #e53e3e;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .error-display.error-alert {
+    border-width: 2px;
+  }
+
+  .error-retry-btn {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .error-display {
+    animation: none;
+  }
+
+  .field-error {
+    animation: none;
+  }
+
+  .error-retry-btn {
+    transition: none;
+  }
+}

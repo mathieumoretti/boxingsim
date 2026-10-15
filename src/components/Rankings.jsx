@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import RankCard from './RankCard';
 import './Rankings.css';
 import { fetchRankings, RANKING_CRITERIA, getCriteriaDisplayValue } from '../api/rankings';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const DEFAULT_LIMIT = 25;
 
@@ -34,9 +36,11 @@ function Rankings() {
   const [error, setError] = useState(null);
 
   // Fetch rankings from backend (MAT-100 API)
-  const loadRankings = useCallback(async (currentPage = 1, currentCriteria = criteria) => {
+  const loadRankings = useCallback(async (currentPage = 1, currentCriteria = criteria, isRetry = false) => {
     setIsLoading(true);
-    setError(null);
+    if (isRetry) {
+      setError(null);
+    }
 
     try {
       const result = await fetchRankings({
@@ -54,12 +58,19 @@ function Rankings() {
       });
 
     } catch (err) {
-      setError(err.message);
+      const errorMsg = getUserErrorMessage(err, 'ranking');
+      setError(errorMsg);
       setRankingsData([]);
+      console.error('[Rankings] Failed to load rankings:', err);
     } finally {
       setIsLoading(false);
     }
   }, [criteria]);
+
+  // Retry handler
+  const handleRetry = useCallback(() => {
+    loadRankings(1, criteria, true);
+  }, [loadRankings, criteria]);
 
   // Initial load and when criteria changes
   useEffect(() => {
@@ -217,13 +228,12 @@ function Rankings() {
 
       {/* Error Display */}
       {error && (
-        <div className="rankings-error">
-          <span className="error-icon">⚠️</span>
-          <p>{error}</p>
-          <button onClick={() => loadRankings(page)} className="retry-btn">
-            Try Again
-          </button>
-        </div>
+        <ErrorDisplay
+          error={error}
+          onRetry={handleRetry}
+          variant="alert"
+          title="Failed to Load Rankings"
+        />
       )}
 
       {/* Rankings List - Table View */}

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import './TrainingScheduler.css';
 import { fetchTrainingTypes, startTrainingSession } from '../api/training';
 import { fetchWorldTime } from '../api/world';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [durationHours, setDurationHours] = useState(2);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +53,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
       const data = await fetchTrainingTypes();
       setTrainingTypes(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError('Failed to load training types');
+      setError(getUserErrorMessage(err, 'general'));
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +186,8 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
         if (onClose) onClose();
       }, 1500);
     } catch (err) {
-      setError(err.message || 'Failed to schedule training');
+      // Use specific error message from utility with boxer name context
+      setError(getUserErrorMessage(err, 'training', { boxerName: boxer?.name }));
     } finally {
       setIsSubmitting(false);
     }
@@ -214,7 +217,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
     <div className={`training-scheduler ${boxer?.has_active_rest ? 'has-rest' : ''}`}>
       <h2>Schedule Training</h2>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorDisplay error={error} variant="alert" title="Training Error" />}
       {success && <div className="success-message">{success}</div>}
 
       {/* Rest Period Warning */}

@@ -1,44 +1,32 @@
 import React, { useState } from 'react';
 import './Auth.css';
-import { API_BASE_URL } from '../utils/auth';
+import { registerUser } from '../api/users';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+
+    // Only clear error if we're not already loading and have valid input
+    if (!isLoading && username.trim() && email.trim() && password.trim()) {
+      setError(null);
+      setIsLoading(true);
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Registration successful - redirect to login or show success message
-        alert('Registration successful. Please login.');
-        window.location.href = '/login';
-      } else {
-        setError(data.error || 'Registration failed');
-      }
-    } catch (error) {
-      setError('Network error: ' + error.message);
-    } finally {
+      await registerUser({ username, email, password });
+      // Registration successful - redirect to login
+      window.location.href = '/login';
+    } catch (err) {
+      // Use specific error message from utility
+      setError(getUserErrorMessage(err, 'auth'));
       setIsLoading(false);
     }
   };
@@ -47,7 +35,7 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-form">
         <h2>Register</h2>
-        {error && <div className="error-message">{error}</div>}
+        {error && <ErrorDisplay error={error} variant="alert" icon={true} title="Registration Failed" />}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <input

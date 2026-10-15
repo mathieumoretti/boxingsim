@@ -44,7 +44,12 @@ module.exports = {
     port: 3000,
     hot: true,
     open: true,
-    historyApiFallback: true,
+    historyApiFallback: {
+      disableDotRule: true,
+      rewrites: [
+        { from: /^\/(fight|boxer)\/\d+$/, to: () => '/index.html' }
+      ]
+    },
     proxy: [
       {
         context: ['/api'],

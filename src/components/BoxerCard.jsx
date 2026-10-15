@@ -55,9 +55,10 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
       const pendingSession = sessions.find(s => s.status === 'pending');
       setActiveSession(pendingSession);
     } catch (err) {
-      // Silently fail - boxer card still works without training status
+      // Log for debugging - boxer card still works without training status
+      console.debug(`BoxerCard (${boxer.name}): Failed to load active training`, err);
     }
-  }, [boxer.id]);
+  }, [boxer.id, boxer.name]);
 
   useEffect(() => {
     if (boxer.id) {
@@ -78,14 +79,15 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
         const fightData = await fetchUpcomingFight(boxer.id);
         setFetchedFight(fightData);
       } catch (err) {
-        // Silently fail - boxer card still works without fight data
+        // Log for debugging - boxer card still works without fight data
+        console.debug(`BoxerCard (${boxer.name}): Failed to load upcoming fight`, err);
       }
     };
 
     if (boxer.id) {
       fetchUpcomingFightData();
     }
-  }, [boxer.id, upcomingFight]);
+  }, [boxer.id, upcomingFight, boxer.name]);
 
   // Poll for training session status when there's active training
   useEffect(() => {
@@ -107,12 +109,13 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
           setActiveSession(pendingSession);
         }
       } catch (err) {
-        // Silently fail - polling will retry
+        // Log for debugging - polling will retry
+        console.debug(`BoxerCard (${boxer.name}): Training poll failed`, err.message);
       }
     }, 5000); // Check every 5 seconds
 
     return () => clearInterval(pollInterval);
-  }, [activeSession, boxer.id, onBoxerStateChanged]);
+  }, [activeSession, boxer.id, onBoxerStateChanged, boxer.name]);
 
   // Poll for rest status changes when boxer has active rest (MAT-96)
   useEffect(() => {
@@ -134,12 +137,13 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
           // Parent will refresh via Dashboard's world time polling for countdown updates
         }
       } catch (err) {
-        // Silently fail - polling will retry
+        // Log for debugging - polling will retry
+        console.debug(`BoxerCard (${boxer.name}): Rest status poll failed`, err.message);
       }
     }, 5000); // Check every 5 seconds
 
     return () => clearInterval(pollInterval);
-  }, [boxer.has_active_rest, boxer.id, onBoxerStateChanged]);
+  }, [boxer.has_active_rest, boxer.id, onBoxerStateChanged, boxer.name]);
 
   // Calculate countdown based on scheduled_completion_time from API and world time
   useEffect(() => {
