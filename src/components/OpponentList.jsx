@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './OpponentList.css';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import { fetchOpponents, getMatchQuality } from '../api/opponents';
 
 const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
   const [opponents, setOpponents] = useState([]);
@@ -19,31 +19,17 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
 
     try {
       // Build query parameters from filters
-      const params = new URLSearchParams();
+      const filterParams = {
+        availableOnly: true,
+        ...(filters.levelRange ? {
+          minLevel: parseInt(filters.levelRange.split('-')[0]) || 1,
+          maxLevel: parseInt(filters.levelRange.split('-')[1]) || 100
+        } : {}),
+        ...(filters.minHealth ? { minHealth: filters.minHealth } : {})
+      };
 
-      if (filters.levelRange) {
-        params.append('level_range', filters.levelRange);
-      }
-      if (filters.aiOnly !== undefined) {
-        params.append('ai_only', filters.aiOnly.toString());
-      }
-      if (filters.minHealth) {
-        params.append('min_health', filters.minHealth.toString());
-      }
-      if (filters.limit) {
-        params.append('limit', filters.limit.toString());
-      }
-
-      const response = await authenticatedFetch(`${API_BASE_URL}/boxers/${boxerId}/opponents?${params.toString()}`, {
-        method: 'GET'
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load opponents: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setOpponents(data.opportunities || []);
+      const data = await fetchOpponents(boxerId, filterParams);
+      setOpponents(data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -61,11 +47,8 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
   };
 
   const getMatchQualityLabel = (score) => {
-    const scorePercent = score * 100;
-    if (scorePercent >= 70) return 'Excellent Match';
-    if (scorePercent >= 50) return 'Good Match';
-    if (scorePercent >= 30) return 'Fair Match';
-    return 'Risky Match';
+    const quality = getMatchQuality(score * 100);
+    return quality.label;
   };
 
   const levelDiff = (opportunity) => {

@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import RankCard from './RankCard';
 import './Rankings.css';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
-
-// Ranking criteria options matching MAT-100 backend
-const RANKING_CRITERIA = [
-  { value: 'win_rate', label: 'Win Rate' },
-  { value: 'total_fights', label: 'Total Fights' },
-  { value: 'level', label: 'Level' },
-  { value: 'strength', label: 'Strength' },
-  { value: 'power_score', label: 'Power Score' },
-];
+import { fetchRankings, RANKING_CRITERIA, getCriteriaDisplayValue } from '../api/rankings';
 
 const DEFAULT_LIMIT = 25;
 
@@ -43,34 +34,23 @@ function Rankings() {
   const [error, setError] = useState(null);
 
   // Fetch rankings from backend (MAT-100 API)
-  const fetchRankings = useCallback(async (currentPage = 1, currentCriteria = criteria) => {
+  const loadRankings = useCallback(async (currentPage = 1, currentCriteria = criteria) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({
+      const result = await fetchRankings({
         criteria: currentCriteria,
-        page: currentPage.toString(),
-        limit: DEFAULT_LIMIT.toString()
+        page: currentPage,
+        limit: DEFAULT_LIMIT
       });
 
-      const response = await authenticatedFetch(`/api/rankings?${params}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch rankings: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Extract boxers array from response (MAT-100 returns {boxers: [], total_count, etc.})
-      setRankingsData(data.boxers || []);
-
-      // Update pagination info
+      setRankingsData(result.boxers || []);
       setPagination({
         page: currentPage,
         limit: DEFAULT_LIMIT,
-        total: data.total_count || 0,
-        pages: Math.ceil((data.total_count || 0) / DEFAULT_LIMIT)
+        total: result.totalCount || 0,
+        pages: result.pages || 0
       });
 
     } catch (err) {
@@ -83,8 +63,8 @@ function Rankings() {
 
   // Initial load and when criteria changes
   useEffect(() => {
-    fetchRankings(1, criteria);
-  }, [fetchRankings]);
+    loadRankings(1, criteria);
+  }, [loadRankings]);
 
   // Client-side search/filter (applied on top of fetched data)
   const filteredData = React.useMemo(() => {
@@ -149,29 +129,6 @@ function Rankings() {
   const handlePageChange = (newPage) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Get display value for current criteria
-  const getCriteriaDisplayValue = (boxer) => {
-    switch (criteria) {
-      case 'win_rate':
-        const totalFights = boxer.wins + boxer.losses;
-        return totalFights > 0
-          ? `${((boxer.wins / totalFights) * 100).toFixed(1)}%`
-          : 'N/A';
-      case 'total_fights':
-        return boxer.wins + boxer.losses + (boxer.draws || 0);
-      case 'level':
-        return boxer.level;
-      case 'strength':
-        return Math.round(boxer.strength);
-      case 'power_score':
-        // Calculate power score: (wins * 2) + knockouts + (level * 3)
-        const powerScore = (boxer.wins * 2) + (boxer.knockouts || 0) + (boxer.level * 3);
-        return powerScore;
-      default:
-        return boxer.ranking_score;
-    }
   };
 
   // Criteria label for header
@@ -263,7 +220,7 @@ function Rankings() {
         <div className="rankings-error">
           <span className="error-icon">⚠️</span>
           <p>{error}</p>
-          <button onClick={() => fetchRankings(page)} className="retry-btn">
+          <button onClick={() => loadRankings(page)} className="retry-btn">
             Try Again
           </button>
         </div>

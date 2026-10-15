@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './FightDetails.css';
-import { fetchFightDetails, fetchBoxer, formatTimeAgo } from '../utils/fights';
+import { fetchFightDetails, fetchBoxer, formatTimeAgo } from '../api/fights';
 import RoundTimeline from './RoundTimeline';
 
 /**
