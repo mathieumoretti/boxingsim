@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import './CreateBoxer.css';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const CreateBoxer = ({ user }) => {
   const [name, setName] = useState('');
   const [boxerClass, setBoxerClass] = useState('heavyweight');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -14,7 +17,8 @@ const CreateBoxer = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError(null);
+    setSuccess('');
 
     // Ensure user is loaded from storage if not passed via props
     const currentUser = user || getUser();
@@ -41,16 +45,23 @@ const CreateBoxer = ({ user }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Successfully created boxer
-        alert('Boxer created successfully');
-        navigate('/dashboard');
+        // Successfully created boxer - show inline success message
+        setSuccess('Boxer created successfully! Redirecting...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       } else {
-        setError(data.error || 'Failed to create boxer');
+        // Use specific error message from utility
+        setError(getUserErrorMessage({ message: data.error }, 'boxerCreation'));
       }
     } catch (error) {
+      // Use specific error message from utility
+      const errorMsg = getUserErrorMessage(error, 'boxerCreation');
+      setError(errorMsg);
+
       // Don't show error if redirected to login (401 handled by authenticatedFetch)
-      if (!error.message.includes('Unauthorized')) {
-        setError('Network error: ' + error.message);
+      if (!errorMsg.includes('Unauthorized')) {
+        console.error('[CreateBoxer] Error creating boxer:', error);
       }
     } finally {
       setIsLoading(false);
@@ -61,7 +72,11 @@ const CreateBoxer = ({ user }) => {
     <div className="create-boxer">
       <h2>Create New Boxer</h2>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <ErrorDisplay error={error} variant="alert" icon={true} title="Creation Failed" />
+      )}
+
+      {success && <div className="success-message">{success}</div>}
 
       <form onSubmit={handleSubmit} className="boxer-form">
         <div className="form-group">
