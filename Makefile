@@ -1,4 +1,4 @@
-.PHONY: help build run dev worker test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load seed-pop
+.PHONY: help build run dev worker test lint fmt docker-up docker-down clean frontend-build frontend-dev seed db-create migrate seed-ref seed-dev world reset-dev test-db test-db-clean test-unit-only test-integration snapshot-save snapshot-load seed-pop build-worker worker-run worker-dev
 
 .DEFAULT_GOAL := help
 
@@ -6,13 +6,14 @@ help:
 	@echo "Boxing Simulator Development Commands"
 	@echo "====================================="
 	@echo "make build        - Build the application"
+	@echo "make build-worker - Build the worker application"
 	@echo "make run          - Run the application directly with Go"
 	@echo "make worker-run   - Run the world clock worker (processes scheduled events)"
 	@echo "make worker-dev   - Run worker with hot reload using air"
 	@echo "make dev          - Run server with hot reload using air (requires air to be installed)"
 	@echo "make docker-up - Start all services using Docker Compose"
 	@echo "make docker-down - Stop all Docker services"
-	@echo "make test      - Run all tests"
+	@echo "make test        - Run all tests (unit + functional with Docker PostgreSQL)"
 	@echo "make lint      - Run linters (golangci-lint)"
 	@echo "make fmt       - Format code with gofmt"
 	@echo "make clean     - Clean build artifacts"
@@ -52,6 +53,7 @@ docker-down:
 	docker-compose down
 
 test:
+	@echo "Running unit tests (functional tests excluded)..."
 	gotestsum ./...
 
 lint:

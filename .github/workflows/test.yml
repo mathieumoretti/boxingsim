@@ -47,7 +47,7 @@ jobs:
       run: |
         go mod download
 
-    - name: Run integration tests
+    - name: Run integration and functional tests
       env:
         BOXING_ENV: test
         BOXING_DATABASE_HOST: localhost
@@ -55,16 +55,30 @@ jobs:
         BOXING_DATABASE_USER: boxing_test
         BOXING_DATABASE_PASSWORD: boxing_test_pass
         BOXING_DATABASE_NAME: boxing_test
+        TEST_DB_HOST: localhost
+        TEST_DB_PORT: "5432"
+        TEST_DB_USER: boxing_test
+        TEST_DB_PASSWORD: boxing_test_pass
+        TEST_DB_NAME: boxing_test
         BOXING_REDIS_ADDR: localhost:6379
         BOXING_JWT_SECRET: test-secret-key-change-in-production
       run: |
-        # Run integration/functional tests only (with integration build tag)
-        # Note: Only targeting internal/integration package - other packages with integration tests need separate handling
-        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile test-results.json -- -tags=integration ./internal/integration/...
+        # Run integration tests (with integration build tag)
+        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile integration-results.json -- -tags=integration ./internal/integration/...
 
-    - name: Upload test results
+        # Run functional tests (with functional build tag) for MAT-139 and other DB-dependent tests
+        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile functional-results.json -- -tags=functional ./...
+
+    - name: Upload integration test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
-        path: test-results.json
+        path: integration-results.json
+
+    - name: Upload functional test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: functional-test-results
+        path: functional-results.json

@@ -80,6 +80,24 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer2ID)
 	}
 
+	// Check for zombie scheduled events (MAT-139)
+	// This prevents double-booking when events exist but fights were cleaned up
+	hasZombie1, err := s.fightStore.CheckZombieEventsForBoxer(ctx, boxer1ID, scheduledTime)
+	if err != nil {
+		return fmt.Errorf("failed to check zombie events for boxer %d: %w", boxer1ID, err)
+	}
+	if hasZombie1 {
+		return fmt.Errorf("%w: boxer %d has unresolved scheduled events that must be cleaned up first", store.ErrBoxerHasZombieEvent, boxer1ID)
+	}
+
+	hasZombie2, err := s.fightStore.CheckZombieEventsForBoxer(ctx, boxer2ID, scheduledTime)
+	if err != nil {
+		return fmt.Errorf("failed to check zombie events for boxer %d: %w", boxer2ID, err)
+	}
+	if hasZombie2 {
+		return fmt.Errorf("%w: boxer %d has unresolved scheduled events that must be cleaned up first", store.ErrBoxerHasZombieEvent, boxer2ID)
+	}
+
 	// Validate opponent match quality (MAT-102)
 	validation := s.ValidateOpponentMatch(boxer1ID, boxer2ID)
 	if !validation.Valid {
