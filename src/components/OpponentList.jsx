@@ -78,7 +78,25 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
   };
 
   if (isLoading) {
-    return <div className="opponent-list-loading">Loading opponents...</div>;
+    return (
+      <div className="opponent-list-loading">
+        <div className="opponent-skeleton">
+          <div className="skeleton-card-header"></div>
+          <div className="skeleton-card-stats"></div>
+          <div className="skeleton-card-button"></div>
+        </div>
+        <div className="opponent-skeleton">
+          <div className="skeleton-card-header"></div>
+          <div className="skeleton-card-stats"></div>
+          <div className="skeleton-card-button"></div>
+        </div>
+        <div className="opponent-skeleton">
+          <div className="skeleton-card-header"></div>
+          <div className="skeleton-card-stats"></div>
+          <div className="skeleton-card-button"></div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

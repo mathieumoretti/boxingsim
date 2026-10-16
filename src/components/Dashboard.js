@@ -7,6 +7,7 @@ import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
 import FightBooking from './FightBooking.jsx';
 import FightHistory from './FightHistory.jsx';
+import { ErrorDisplay } from './ErrorDisplay';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import { createFightMap } from '../utils/fights';
 
@@ -21,6 +22,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [worldTime, setWorldTime] = useState(null);
   const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
   const [selectedBoxerForHistory, setSelectedBoxerForHistory] = useState(null); // MAT-103
+  const [errorRefresh, setErrorRefresh] = useState(null); // For error retry tracking
 
   useEffect(() => {
     // Get user from props or localStorage
@@ -140,6 +142,71 @@ const Dashboard = ({ user, onLogout }) => {
     onLogout();
   }, [onLogout]);
 
+  // Retry handler for error state (MAT-130)
+  const handleRetry = useCallback(() => {
+    if (currentUser) {
+      setErrorRefresh(null); // Clear any previous retry tracking
+      loadUserBoxers(currentUser.id);
+    }
+  }, [currentUser, loadUserBoxers]);
+
+  // Render skeleton loader cards (MAT-130)
+  const renderSkeletonCards = () => {
+    return (
+      <div className="boxers-grid">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="boxer-card-skeleton">
+            <div className="skeleton-avatar"></div>
+            <div className="skeleton-name-section">
+              <div className="skeleton-name"></div>
+              <div className="skeleton-nickname"></div>
+            </div>
+            <div className="skeleton-stat-bar" style={{ width: '80%' }}></div>
+            <div className="skeleton-stat-bar" style={{ width: '75%' }}></div>
+            <div className="skeleton-stat-bar" style={{ width: '70%' }}></div>
+            <div className="skeleton-combat-stats">
+              <div className="skeleton-stat-item"></div>
+              <div className="skeleton-stat-item"></div>
+              <div className="skeleton-stat-item"></div>
+            </div>
+            <div className="skeleton-card-actions">
+              <div className="skeleton-btn"></div>
+              <div className="skeleton-btn"></div>
+              <div className="skeleton-btn"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Render empty state (MAT-130)
+  const renderEmptyState = () => {
+    return (
+      <div className="boxers-empty-state">
+        <div className="empty-state-icon">🥊</div>
+        <h3>No Boxers Yet</h3>
+        <p>Create your first boxer and start their journey to the championship!</p>
+        <Link to="/create-boxer" className="empty-state-cta">
+          Create Your First Boxer
+        </Link>
+      </div>
+    );
+  };
+
+  // Render error state (MAT-130)
+  const renderErrorState = () => {
+    return (
+      <ErrorDisplay
+        error={error}
+        onRetry={handleRetry}
+        variant="alert"
+        title="Failed to Load Boxers"
+        icon={true}
+      />
+    );
+  };
+
   return (
     <div className="dashboard">
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
@@ -166,11 +233,11 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
 
           {isLoading ? (
-            <div className="loading">Loading boxers...</div>
+            renderSkeletonCards()
           ) : error ? (
-            <div className="error-message">{error}</div>
+            renderErrorState()
           ) : boxers.length === 0 ? (
-            <p>No boxers created yet.</p>
+            renderEmptyState()
           ) : (
             <div className="boxers-grid">
               {boxers.map((boxer) => (
