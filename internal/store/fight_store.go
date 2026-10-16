@@ -490,6 +490,130 @@ func (s *FightStore) BoxerInFight(ctx context.Context, boxerID int) (bool, error
 	return inFight, err
 }
 
+// ZombieFight represents a fight that is stuck in scheduled state due to event processing failures.
+type ZombieFight struct {
+	FightID       int                 `json:"fight_id"`
+	Boxer1ID      int                 `json:"boxer1_id"`
+	Boxer1Name    string              `json:"boxer1_name"`
+	Boxer2ID      int                 `json:"boxer2_id"`
+	Boxer2Name    string              `json:"boxer2_name"`
+	ScheduledTime time.Time           `json:"scheduled_time"`
+	TimeOverdue   time.Duration       `json:"time_overdue"`
+	EventID       *int                `json:"event_id,omitempty"`
+	EventType     *string             `json:"event_type,omitempty"`
+	EventStatus   *string             `json:"event_status,omitempty"`
+	ErrorMessage  *string             `json:"error_message,omitempty"`
+	ZombieType    string              `json:"zombie_type"` // "failed_event", "stuck_event", "orphaned"
+}
+
+// GetZombieFights retrieves all fights that are stuck in scheduled state (MAT-138).
+// This is used for diagnostic purposes and cleanup operations.
+func (s *FightStore) GetZombieFights(ctx context.Context) ([]*ZombieFight, error) {
+	query := `
+		SELECT
+			f.id AS fight_id,
+			f.boxer1_id,
+			b1.name AS boxer1_name,
+			f.boxer2_id,
+			b2.name AS boxer2_name,
+			f.scheduled_time,
+			NOW() - f.scheduled_time AS time_overdue,
+			se.id AS event_id,
+			se.event_type,
+			se.status AS event_status,
+			se.error_message,
+			CASE
+				WHEN se.status = 'failed' THEN 'failed_event'
+				WHEN se.status IN ('pending', 'processing') AND f.scheduled_time < NOW() THEN 'stuck_event'
+				WHEN se.id IS NULL THEN 'orphaned'
+				ELSE 'unknown'
+			END AS zombie_type
+		FROM fights f
+		JOIN boxers b1 ON f.boxer1_id = b1.id
+		JOIN boxers b2 ON f.boxer2_id = b2.id
+		LEFT JOIN scheduled_events se ON f.id = (se.event_data::jsonb->>'fight_id')::int
+		WHERE f.status = 'scheduled'
+		  AND (
+			  f.scheduled_time < NOW() OR
+			  se.status = 'failed' OR
+			  se.id IS NULL
+		  )
+		ORDER BY f.scheduled_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var zombieFights []*ZombieFight
+	for rows.Next() {
+		zf := &ZombieFight{}
+		var timeOverdueInt64 int64
+		err := rows.Scan(
+			&zf.FightID,
+			&zf.Boxer1ID,
+			&zf.Boxer1Name,
+			&zf.Boxer2ID,
+			&zf.Boxer2Name,
+			&zf.ScheduledTime,
+			&timeOverdueInt64,
+			&zf.EventID,
+			&zf.EventType,
+			&zf.EventStatus,
+			&zf.ErrorMessage,
+			&zf.ZombieType,
+		)
+		if err != nil {
+			return nil, err
+		}
+		zf.TimeOverdue = time.Duration(timeOverdueInt64)
+		zombieFights = append(zombieFights, zf)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return zombieFights, nil
+}
+
+// CancelZombieFight cancels a fight that is stuck in scheduled state.
+// It sets the status to 'cancelled' and records the cancellation reason in the data field.
+func (s *FightStore) CancelZombieFight(ctx context.Context, fightID int, reason string) error {
+	query := `
+		UPDATE fights
+		SET
+			status = 'cancelled',
+			updated_at = CURRENT_TIMESTAMP,
+			data = jsonb_set(
+				COALESCE(data, '{}'::jsonb),
+				'{cancellation_reason}',
+				to_jsonb($2)
+			),
+			data = jsonb_set(
+				data,
+				'{cancelled_at}',
+				to_jsonb(CURRENT_TIMESTAMP::text)
+			)
+		WHERE id = $1 AND status = 'scheduled'`
+
+	result, err := s.db.ExecContext(ctx, query, fightID, reason)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
 // scanFight scans a single row into a Fight model.
 func (s *FightStore) scanFight(row Scanner) (*model.Fight, error) {
 	var data db.NullJSONB
