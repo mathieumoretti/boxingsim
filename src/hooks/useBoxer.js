@@ -1,9 +1,10 @@
 /**
- * useBoxer Hook - React hook for fetching and managing boxer data (MAT-120)
+ * useBoxer Hook - React hook for fetching and managing boxer data (MAT-120, MAT-129)
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchBoxer as apiFetchBoxer, fetchUpcomingFight as apiFetchUpcomingFight } from '../api/fights';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 /**
  * Custom hook to fetch and manage boxer data.
@@ -17,11 +18,13 @@ export function useBoxer(boxerId) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (isRetry = false) => {
     if (!boxerId) return;
 
     setIsLoading(true);
-    setError(null);
+    if (isRetry) {
+      setError(null);
+    }
 
     try {
       // Fetch boxer data and upcoming fight in parallel
@@ -33,12 +36,23 @@ export function useBoxer(boxerId) {
       setBoxer(boxerData);
       setUpcomingFight(fightData);
     } catch (err) {
-      setError(err.message || 'Failed to fetch boxer data');
+      // Use structured error message from utility
+      const errorMsg = getUserErrorMessage(err, 'boxerDetails');
+      setError({
+        message: errorMsg,
+        raw: err, // Full ApiError for debugging
+        code: err.status || 0
+      });
       console.error('Error in useBoxer:', err);
     } finally {
       setIsLoading(false);
     }
   }, [boxerId]);
+
+  // Retry handler exposed to components
+  const retry = useCallback(() => {
+    refresh(true);
+  }, [refresh]);
 
   // Initial fetch and when boxerId changes
   useEffect(() => {
@@ -50,7 +64,8 @@ export function useBoxer(boxerId) {
     upcomingFight,
     isLoading,
     error,
-    refresh
+    refresh,
+    retry
   };
 }
 

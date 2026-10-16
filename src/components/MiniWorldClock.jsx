@@ -1,43 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import './MiniWorldClock.css';
-import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
+import { fetchWorldTime } from '../api/world';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const MiniWorldClock = () => {
   const [timeData, setTimeData] = useState(null);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadTime = async (isRetry = false) => {
+    if (isRetry) {
+      setError(null);
+    }
+
+    try {
+      const data = await fetchWorldTime();
+      setTimeData(data);
+      setIsLoading(false);
+    } catch (err) {
+      console.warn('MiniWorldClock: Failed to load world time:', err);
+      setError(getUserErrorMessage(err, 'general'));
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadTime = async () => {
-      try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
-        if (response.ok) {
-          const data = await response.json();
-          setTimeData(data);
-
-          // Refresh every second to show live countdown
-          const interval = setInterval(async () => {
-            try {
-              const resp = await authenticatedFetch(`${API_BASE_URL}/world/time`, { method: 'GET' });
-              if (resp.ok) {
-                const data = await resp.json();
-                setTimeData(data);
-              }
-            } catch (err) {
-              // Silently fail - time display will just be stale
-            }
-          }, 1000);
-
-          return () => clearInterval(interval);
-        }
-      } catch (err) {
-        // Silently fail - component will show loading state
-      }
-    };
-
     loadTime();
+
+    // Refresh every second to show live countdown
+    const interval = setInterval(async () => {
+      try {
+        const data = await fetchWorldTime();
+        setTimeData(data);
+      } catch (err) {
+        // Silently fail on refresh - time display will be stale but don't spam user with errors
+        console.debug('MiniWorldClock: Poll update failed:', err.message);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  if (!timeData) {
+  if (isLoading) {
     return <div className="mini-world-clock mini-world-clock-loading">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <ErrorDisplay
+        error={error}
+        onRetry={() => loadTime(true)}
+        variant="compact"
+        title="Clock Unavailable"
+      />
+    );
   }
 
   const statusClass = timeData.status === 'running' ? 'status-running' :

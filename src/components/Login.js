@@ -1,42 +1,32 @@
 import React, { useState } from 'react';
 import './Auth.css';
-import { API_BASE_URL } from '../utils/auth';
+import { login } from '../api/users';
+import { ErrorDisplay, FieldError } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+
+    // Only clear error if we're not already loading and have valid input
+    if (!isLoading && username.trim() && password.trim()) {
+      setError(null);
+      setIsLoading(true);
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username,
-          password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Pass the token and user data to the parent component
-        // The parent will handle storing it in localStorage
-        onLogin(data.user, data.accessToken || data.token);
-      } else {
-        setError(data.message || data.error || 'Login failed');
-      }
-    } catch (error) {
-      setError('Network error: ' + error.message);
-    } finally {
+      const data = await login({ username, password });
+      // Pass the token and user data to the parent component
+      // The parent will handle storing it in localStorage
+      onLogin(data.user, data.accessToken || data.token);
+    } catch (err) {
+      // Use specific error message from utility
+      setError(getUserErrorMessage(err, 'auth'));
       setIsLoading(false);
     }
   };
@@ -45,7 +35,7 @@ const Login = ({ onLogin }) => {
     <div className="auth-container">
       <div className="auth-form">
         <h2>Login</h2>
-        {error && <div className="error-message">{error}</div>}
+        {error && <ErrorDisplay error={error} variant="alert" icon={true} title="Login Failed" />}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <input

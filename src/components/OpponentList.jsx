@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './OpponentList.css';
 import { fetchOpponents, getMatchQuality } from '../api/opponents';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
 
 const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
   const [opponents, setOpponents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadOpponents();
   }, [boxerId, filters]);
 
-  const loadOpponents = async () => {
+  const loadOpponents = async (isRetry = false) => {
     if (!boxerId) return;
 
     setIsLoading(true);
-    setError('');
+    if (isRetry) {
+      setError(null);
+    }
 
     try {
       // Build query parameters from filters
@@ -33,10 +37,17 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
       console.log('[OpponentList] Received', data.length, 'opponents');
       setOpponents(data || []);
     } catch (err) {
-      setError(err.message);
+      const errorMsg = getUserErrorMessage(err, 'opponents', { boxerName: boxer?.name });
+      setError(errorMsg);
+      console.error('[OpponentList] Failed to load opponents:', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Retry handler
+  const handleRetry = () => {
+    loadOpponents(true);
   };
 
   const getMatchQualityColor = (score) => {
@@ -71,13 +82,21 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
   }
 
   if (error) {
-    return <div className="opponent-list-error">Error: {error}</div>;
+    return (
+      <ErrorDisplay
+        error={error}
+        onRetry={handleRetry}
+        variant="compact"
+        title="No Opponents"
+      />
+    );
   }
 
   if (opponents.length === 0) {
     return (
       <div className="opponent-list-empty">
         <p>No opponents found matching your criteria.</p>
+        <p className="empty-hint">Try adjusting the level range or health filters.</p>
       </div>
     );
   }

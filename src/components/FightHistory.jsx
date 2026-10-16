@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './FightHistory.css';
 import { fetchFightHistory, formatTimeAgo, getGroupLabel } from '../api/fights';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
 
 /**
  * FightEntryCard - Single fight row component (MAT-103)
@@ -188,11 +190,13 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
 
   // Fetch fight history
   useEffect(() => {
-    const loadFightHistory = async () => {
+    const loadFightHistory = async (isRetry = false) => {
       if (!boxerId) return;
 
       setIsLoading(true);
-      setError(null);
+      if (isRetry) {
+        setError(null);
+      }
 
       try {
         const data = await fetchFightHistory(boxerId);
@@ -207,7 +211,9 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
           setGroupedFights(groups);
         }
       } catch (err) {
-        setError('Failed to load fight history');
+        // Use specific error message based on error type
+        const errorMsg = getUserErrorMessage(err, 'fightHistory');
+        setError(errorMsg);
         console.error('Error loading fight history:', err);
       } finally {
         setIsLoading(false);
@@ -233,7 +239,9 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
       }
       setError(null);
     } catch (err) {
-      setError('Failed to refresh fight history');
+      // Use specific error message based on error type
+      const errorMsg = getUserErrorMessage(err, 'fightHistory');
+      setError(errorMsg);
       console.error('Error refreshing fight history:', err);
     } finally {
       setIsLoading(false);
@@ -282,10 +290,12 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
 
     if (error) {
       return (
-        <div className="error-state">
-          <p>⚠️ {error}</p>
-          <button onClick={handleRefresh} className="retry-btn">Try Again</button>
-        </div>
+        <ErrorDisplay
+          error={error}
+          onRetry={handleRefresh}
+          variant="alert"
+          title="Fight History Unavailable"
+        />
       );
     }
 
