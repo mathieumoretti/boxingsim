@@ -63,6 +63,9 @@ jobs:
         BOXING_REDIS_ADDR: localhost:6379
         BOXING_JWT_SECRET: test-secret-key-change-in-production
       run: |
+        # Run database migrations for functional tests
+        go run ./cmd/migrate up
+
         # Run integration tests (with integration build tag)
         go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile integration-results.json -- -tags=integration ./internal/integration/...
 

@@ -9,15 +9,27 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	t.Run("Loads configuration with default values", func(t *testing.T) {
-		// Save and clear BOXING_ENV to use a non-existent environment so no YAML file loads
-		// This tests the applyDefaults() function behavior
-		savedEnv := os.Getenv("BOXING_ENV")
-		_ = os.Setenv("BOXING_ENV", "nonexistent-for-test")
+		// Save and clear all BOXING_* env vars to test pure defaults
+		savedEnv := map[string]string{}
+		boxingVars := []string{
+			"BOXING_ENV", "BOXING_DATABASE_HOST", "BOXING_DATABASE_PORT",
+			"BOXING_DATABASE_USER", "BOXING_DATABASE_PASSWORD", "BOXING_DATABASE_NAME",
+			"BOXING_REDIS_ADDR", "BOXING_REDIS_PASSWORD",
+			"BOXING_JWT_SECRET", "BOXING_SERVER_PORT", "BOXING_SERVER_HOST",
+			"BOXING_LOGGING_LEVEL",
+		}
+
+		for _, v := range boxingVars {
+			if val := os.Getenv(v); val != "" {
+				savedEnv[v] = val
+			}
+			_ = os.Unsetenv(v)
+		}
+
 		defer func() {
-			if savedEnv != "" {
-				_ = os.Setenv("BOXING_ENV", savedEnv)
-			} else {
-				_ = os.Unsetenv("BOXING_ENV")
+			// Restore all saved env vars
+			for k, v := range savedEnv {
+				_ = os.Setenv(k, v)
 			}
 		}()
 
@@ -384,7 +396,7 @@ func TestLoadConfigFromYAMLFile(t *testing.T) {
 		// Values NOT in YAML get defaults from applyDefaults()
 		assert.Equal(t, "localhost", cfg.Database.Host)     // from test.yaml
 		assert.Equal(t, "boxing", cfg.Database.User)        // from test.yaml
-		assert.Equal(t, "boxing123", cfg.Database.Password) // default (not in test.yaml)
+		assert.Equal(t, "boxing123", cfg.Database.Password) // from test.yaml (updated)
 	})
 }
 

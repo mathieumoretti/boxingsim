@@ -56,10 +56,29 @@ func TestNewPostgresDB(t *testing.T) {
 	})
 
 	t.Run("Creates database connection with default values", func(t *testing.T) {
-		// Set BOXING_ENV to a non-existent environment so no YAML file loads
-		// This tests the applyDefaults() function behavior
-		_ = os.Setenv("BOXING_ENV", "nonexistent-for-database-test")
-		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+		// Save and clear all BOXING_* env vars to test pure defaults
+		savedEnv := map[string]string{}
+		boxingVars := []string{
+			"BOXING_ENV", "BOXING_DATABASE_HOST", "BOXING_DATABASE_PORT",
+			"BOXING_DATABASE_USER", "BOXING_DATABASE_PASSWORD", "BOXING_DATABASE_NAME",
+			"BOXING_REDIS_ADDR", "BOXING_REDIS_PASSWORD",
+			"BOXING_JWT_SECRET", "BOXING_SERVER_PORT", "BOXING_SERVER_HOST",
+			"BOXING_LOGGING_LEVEL",
+		}
+
+		for _, v := range boxingVars {
+			if val := os.Getenv(v); val != "" {
+				savedEnv[v] = val
+			}
+			_ = os.Unsetenv(v)
+		}
+
+		defer func() {
+			// Restore all saved env vars
+			for k, v := range savedEnv {
+				_ = os.Setenv(k, v)
+			}
+		}()
 
 		// Load config using the actual Load function to ensure defaults are properly set
 		cfg, err := config.Load()
@@ -165,10 +184,29 @@ func TestDatabasePoolSettings(t *testing.T) {
 
 func TestDatabaseIntegration(t *testing.T) {
 	t.Run("Database configuration structure", func(t *testing.T) {
-		// Set BOXING_ENV to a non-existent environment so no YAML file loads
-		// This tests the applyDefaults() function behavior
-		_ = os.Setenv("BOXING_ENV", "nonexistent-for-integration-test")
-		defer func() { _ = os.Unsetenv("BOXING_ENV") }()
+		// Save and clear all BOXING_* env vars to test pure defaults
+		savedEnv := map[string]string{}
+		boxingVars := []string{
+			"BOXING_ENV", "BOXING_DATABASE_HOST", "BOXING_DATABASE_PORT",
+			"BOXING_DATABASE_USER", "BOXING_DATABASE_PASSWORD", "BOXING_DATABASE_NAME",
+			"BOXING_REDIS_ADDR", "BOXING_REDIS_PASSWORD",
+			"BOXING_JWT_SECRET", "BOXING_SERVER_PORT", "BOXING_SERVER_HOST",
+			"BOXING_LOGGING_LEVEL",
+		}
+
+		for _, v := range boxingVars {
+			if val := os.Getenv(v); val != "" {
+				savedEnv[v] = val
+			}
+			_ = os.Unsetenv(v)
+		}
+
+		defer func() {
+			// Restore all saved env vars
+			for k, v := range savedEnv {
+				_ = os.Setenv(k, v)
+			}
+		}()
 
 		cfg, err := config.Load()
 		if err != nil {
