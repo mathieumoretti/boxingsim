@@ -11,9 +11,10 @@ database:
   host: "localhost"
   port: 5432
   user: "boxing"
-  name: "boxing_test"
-  # password comes from BOXING_DATABASE_PASSWORD env var
-  # Integration tests override with TEST_* env vars
+  password: "boxing123"
+  name: "boxing"
+  # These defaults match applyDefaults() in config.go
+  # Tests override with BOXING_DATABASE_* or TEST_DB_* env vars
 
 redis:
   addr: "localhost:6380"
