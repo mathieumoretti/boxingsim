@@ -1,4 +1,4 @@
-package config
+﻿package config
 
 import (
 	"os"
@@ -25,6 +25,9 @@ func TestLoadConfig(t *testing.T) {
 			}
 			_ = os.Unsetenv(v)
 		}
+
+		// Set BOXING_ENV to non-existent so no YAML file loads - only applyDefaults() values used
+		_ = os.Setenv("BOXING_ENV", "nonexistent-for-test-defaults")
 
 		defer func() {
 			// Restore all saved env vars
@@ -529,3 +532,4 @@ func TestLoadTestDBConfig_MissingEnvVars(t *testing.T) {
 		assert.Equal(t, "testpass", cfg.Password)
 	})
 }
+

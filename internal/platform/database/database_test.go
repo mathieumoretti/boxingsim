@@ -1,4 +1,4 @@
-package database
+﻿package database
 
 import (
 	"context"
@@ -72,6 +72,9 @@ func TestNewPostgresDB(t *testing.T) {
 			}
 			_ = os.Unsetenv(v)
 		}
+
+		// Set BOXING_ENV to non-existent so no YAML file loads - only applyDefaults() values used
+		_ = os.Setenv("BOXING_ENV", "nonexistent-for-database-test")
 
 		defer func() {
 			// Restore all saved env vars
@@ -200,6 +203,9 @@ func TestDatabaseIntegration(t *testing.T) {
 			}
 			_ = os.Unsetenv(v)
 		}
+
+		// Set BOXING_ENV to non-existent so no YAML file loads - only applyDefaults() values used
+		_ = os.Setenv("BOXING_ENV", "nonexistent-for-integration-test")
 
 		defer func() {
 			// Restore all saved env vars
