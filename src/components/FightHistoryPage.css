@@ -1,0 +1,187 @@
+/**
+ * FightHistoryPage - Dedicated page wrapper styles (MAT-121)
+ *
+ * Provides full-page layout for fight history with navigation header.
+ */
+
+/* Page Container */
+.fight-history-page {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding-top: calc(64px + 24px); /* Account for TopBar height + spacing */
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Navigation Header */
+.page-nav {
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.back-btn:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.back-btn:active {
+  transform: translateY(0);
+}
+
+.back-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* FightHistory Component Container Override for Page Mode */
+.fight-history-page .fight-history-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+/* Fight History Header - Adjust for page context */
+.fight-history-page .fight-history-header {
+  margin-bottom: 20px;
+}
+
+.fight-history-page .fight-history-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Loading State */
+.fight-history-page .loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+/* Empty State - Enhanced for page mode */
+.fight-history-page .empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 2px dashed #cbd5e0;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.fight-history-page .empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.fight-history-page .empty-state p {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  color: #64748b;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Timeline Sections - Spacing adjustment for page mode */
+.fight-history-page .timeline-section {
+  margin-bottom: 24px;
+}
+
+.fight-history-page .timeline-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fight-history-page {
+    padding-top: calc(64px + 16px);
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .back-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .fight-history-page .fight-history-container {
+    padding: 16px;
+  }
+
+  .fight-history-page .fight-history-header h2 {
+    font-size: 20px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+  }
+
+  .fight-history-page .empty-state h3 {
+    font-size: 18px;
+  }
+}
+
+/* Mobile - Extra small screens */
+@media (max-width: 480px) {
+  .fight-history-page {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 24px;
+  }
+
+  .fight-history-page .fight-history-container {
+    padding: 12px;
+    border-radius: 12px;
+  }
+}
+
+/* Accessibility - Focus states */
+.back-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .back-btn {
+    transition: none;
+  }
+
+  .back-btn:hover {
+    transform: none;
+  }
+}

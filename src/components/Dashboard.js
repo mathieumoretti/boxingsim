@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import TopBar from './TopBar.jsx';
 import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
 import FightBooking from './FightBooking.jsx';
-import FightHistory from './FightHistory.jsx';
 import { ErrorDisplay } from './ErrorDisplay';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import { createFightMap } from '../utils/fights';
 
 const Dashboard = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [boxers, setBoxers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +21,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [selectedBoxerForFight, setSelectedBoxerForFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
   const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
-  const [selectedBoxerForHistory, setSelectedBoxerForHistory] = useState(null); // MAT-103
   const [errorRefresh, setErrorRefresh] = useState(null); // For error retry tracking
 
   useEffect(() => {
@@ -248,7 +247,7 @@ const Dashboard = ({ user, onLogout }) => {
                   upcomingFight={fightData[boxer.id]}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
                   onOpenFightBooking={() => setSelectedBoxerForFight(boxer)}
-                  onOpenFightHistory={() => setSelectedBoxerForHistory(boxer)}
+                  onOpenFightHistory={() => navigate(`/boxer/${boxer.id}/fights`)}
                   onBoxerStateChanged={handleBoxerStateChanged}
                 />
               ))}
@@ -288,20 +287,6 @@ const Dashboard = ({ user, onLogout }) => {
               setSelectedBoxerForFight(null);
             }}
           />
-        )}
-
-        {/* Fight History Modal (MAT-103) */}
-        {selectedBoxerForHistory && (
-          <div className="training-modal-overlay" onClick={() => setSelectedBoxerForHistory(null)}>
-            <div className="training-modal fight-history-modal" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="modal-close"
-                onClick={() => setSelectedBoxerForHistory(null)}
-                aria-label="Close modal"
-              >×</button>
-              <FightHistory boxerId={selectedBoxerForHistory.id} currentGameTime={worldTime?.current_game_time} />
-            </div>
-          </div>
         )}
 
         {/* Training Control Panel - Development Only */}
