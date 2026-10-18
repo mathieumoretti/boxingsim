@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import CreateBoxer from './components/CreateBoxer';
 import FightDetails from './components/FightDetails';
 import Rankings from './components/Rankings';
+import FightHistoryPage from './components/FightHistoryPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -89,6 +90,16 @@ function App() {
           element={
             <ProtectedRoute>
               <Rankings />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fight History Page (MAT-121 quick-win) */}
+        <Route
+          path="/boxer/:id/fights"
+          element={
+            <ProtectedRoute>
+              <FightHistoryPage />
             </ProtectedRoute>
           }
         />
