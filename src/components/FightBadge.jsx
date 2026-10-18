@@ -39,27 +39,27 @@ const FightBadge = ({ fight, currentGameTime }) => {
     }
   };
 
-  // Determine countdown color based on time remaining
+  // Determine countdown color based on time remaining (adjusted for faster testing)
   const getCountdownColorClass = () => {
     const diffMs = fightTime - gameTime;
     const diffHours = diffMs / (1000 * 60 * 60);
 
     if (diffHours <= 0) return 'countdown-immediate';
-    if (diffHours < 1) return 'countdown-critical';
-    if (diffHours < 24) return 'countdown-urgent';
+    if (diffHours < 0.5) return 'countdown-critical'; // Under 30 mins
+    if (diffHours < 2) return 'countdown-urgent'; // Under 2 hours
     return 'countdown-normal';
   };
 
-  // Determine if fight is within 24 hours for pulse animation
-  const isWithin24Hours = () => {
+  // Determine if fight is within pulse window for animation
+  const isWithinPulseWindow = () => {
     const diffHours = (fightTime - gameTime) / (1000 * 60 * 60);
 
-    return diffHours > 0 && diffHours < 24;
+    return diffHours > 0 && diffHours < 2;
   };
 
   const countdownText = calculateRemainingTime();
   const countdownColorClass = getCountdownColorClass();
-  const pulseClass = isWithin24Hours() ? 'pulse-animation' : '';
+  const pulseClass = isWithinPulseWindow() ? 'pulse-animation' : '';
 
   // Format date for tooltip
   const formatDateTooltip = () => {

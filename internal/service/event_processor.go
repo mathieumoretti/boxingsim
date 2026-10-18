@@ -55,15 +55,15 @@ func NewEventProcessor(
 func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model.ScheduledEvent) error {
 	startTime := time.Now()
 
-	p.logger.Info("Event state transition ID=%d: %s -> processing", event.ID, event.Status)
+	p.logger.Info("Event state transition", "event_id", event.ID, "from", event.Status, "to", "processing")
 
 	// Mark event as processing for crash recovery tracking
 	if err := p.eventStore.MarkAsProcessing(ctx, event.ID); err != nil {
 		if errors.Is(err, store.ErrAlreadyProcessed) {
-			p.logger.Warn("Event already processed or failed ID=%d status=%s", event.ID, event.Status)
+			p.logger.Warn("Event already processed or failed", "event_id", event.ID, "status", event.Status)
 			return nil // Idempotent: event was already handled
 		}
-		p.logger.Error("Failed to mark event as processing ID=%d error=%v", event.ID, err)
+		p.logger.Error("Failed to mark event as processing", "event_id", event.ID, "error", err)
 		return fmt.Errorf("failed to mark event as processing: %w", err)
 	}
 
@@ -84,40 +84,47 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 	processingDuration := time.Since(startTime)
 
 	if processErr != nil {
-		p.logger.Error("Event processing failed ID=%d type=%s boxer_id=%d duration=%v error=%v",
-			event.ID, event.EventType, event.BoxerID, processingDuration, processErr)
+		p.logger.Error("Event processing failed",
+			"event_id", event.ID,
+			"type", event.EventType,
+			"boxer_id", event.BoxerID,
+			"duration_ms", processingDuration.Milliseconds(),
+			"error", processErr)
 
 		// Mark as failed with error message for visibility
 		if err := p.eventStore.MarkAsFailed(ctx, event.ID, processErr.Error()); err != nil {
 			if !errors.Is(err, store.ErrAlreadyProcessed) {
-				p.logger.Error("Failed to mark event as failed ID=%d error=%v", event.ID, err)
+				p.logger.Error("Failed to mark event as failed", "event_id", event.ID, "error", err)
 			}
 		}
 
-		p.logger.Info("Event state transition ID=%d: processing -> failed (duration=%v)", event.ID, processingDuration)
+		p.logger.Info("Event state transition", "event_id", event.ID, "from", "processing", "to", "failed", "duration_ms", processingDuration.Milliseconds())
 		return processErr
 	}
 
 	// Mark event as completed only after successful handling (idempotent)
 	if err := p.eventStore.MarkAsCompleted(ctx, event.ID); err != nil {
 		if errors.Is(err, store.ErrAlreadyProcessed) {
-			p.logger.Info("Event already marked as completed ID=%d", event.ID)
+			p.logger.Info("Event already marked as completed", "event_id", event.ID)
 			return nil
 		}
-		p.logger.Error("Failed to mark event as completed ID=%d error=%v", event.ID, err)
+		p.logger.Error("Failed to mark event as completed", "event_id", event.ID, "error", err)
 		return fmt.Errorf("failed to mark event as completed: %w", err)
 	}
 
-	p.logger.Info("Event state transition ID=%d: processing -> completed (duration=%v)", event.ID, processingDuration)
-	p.logger.Info("Event processed successfully ID=%d type=%s boxer_id=%d duration=%v",
-		event.ID, event.EventType, event.BoxerID, processingDuration)
+	p.logger.Info("Event state transition", "event_id", event.ID, "from", "processing", "to", "completed", "duration_ms", processingDuration.Milliseconds())
+	p.logger.Info("Event processed successfully",
+		"event_id", event.ID,
+		"type", event.EventType,
+		"boxer_id", event.BoxerID,
+		"duration_ms", processingDuration.Milliseconds())
 	return nil
 }
 
 // processTrainingComplete handles training completion events.
 // It applies stat gains based on the training data (strength_gain, defense_gain, agility_gain).
 func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *model.ScheduledEvent) error {
-	p.logger.Debug("Processing training event ID=%d boxer_id=%d", event.ID, event.BoxerID)
+	p.logger.Info("Processing training event", "event_id", event.ID, "boxer_id", event.BoxerID)
 
 	// Unmarshal training data
 	var data map[string]any
@@ -151,26 +158,33 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 		return fmt.Errorf("failed to update boxer %d after training: %w", boxer.ID, err)
 	}
 
-	p.logger.Info("Training applied to boxer ID=%d strength_gain=%.2f defense_gain=%.2f agility_gain=%.2f",
-		boxer.ID, strengthGain, defenseGain, agilityGain)
+	p.logger.Info("Training applied to boxer",
+		"boxer_id", boxer.ID,
+		"strength_gain", strengthGain,
+		"defense_gain", defenseGain,
+		"agility_gain", agilityGain)
 	return nil
 }
 
 // processRecovery handles rest/recovery events.
 // It delegates to FatigueService.ApplyRecovery for comprehensive recovery handling.
 func (p *EventProcessor) processRecovery(ctx context.Context, event *model.ScheduledEvent) error {
-	p.logger.Debug("Processing recovery event ID=%d boxer_id=%d", event.ID, event.BoxerID)
+	p.logger.Info("Processing recovery event", "event_id", event.ID, "boxer_id", event.BoxerID)
 
 	// Unmarshal recovery data with defensive null/empty check
 	var data map[string]any
 	if len(event.EventData) > 0 {
 		// Log the raw bytes for debugging unmarshal issues
-		p.logger.Debug("Event %d EventData bytes: %s (length=%d)", event.ID, string(event.EventData), len(event.EventData))
+		p.logger.Info("Recovery event data",
+			"event_id", event.ID,
+			"raw_data", string(event.EventData),
+			"data_length", len(event.EventData))
 		if err := json.Unmarshal(event.EventData, &data); err != nil {
+			p.logger.Error("JSON unmarshal failed", "event_id", event.ID, "raw_data", string(event.EventData), "error", err)
 			return fmt.Errorf("%w: failed to unmarshal recovery data: %w (raw=%q)", ErrInvalidEventData, err, string(event.EventData))
 		}
 	} else {
-		p.logger.Debug("Event %d has empty EventData, using defaults", event.ID)
+		p.logger.Info("Event has empty EventData, using defaults", "event_id", event.ID)
 		data = map[string]any{} // Empty map, not nil
 	}
 
@@ -186,7 +200,7 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 		return fmt.Errorf("failed to apply recovery for boxer %d: %w", event.BoxerID, err)
 	}
 
-	p.logger.Info("Recovery applied to boxer ID=%d rest_hours=%d", event.BoxerID, restHours)
+	p.logger.Info("Recovery applied", "boxer_id", event.BoxerID, "rest_hours", restHours)
 	return nil
 }
 
@@ -194,7 +208,7 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 // Currently a placeholder for future fight/competition processing.
 func (p *EventProcessor) processCompetition(ctx context.Context, event *model.ScheduledEvent) error {
 	_ = ctx // Unused for now, will be used when competition logic is implemented
-	p.logger.Info("Competition event received for boxer ID=%d (not yet implemented)", event.BoxerID)
+	p.logger.Info("Competition event received (not yet implemented)", "boxer_id", event.BoxerID)
 	return nil
 }
 
@@ -203,35 +217,48 @@ func (p *EventProcessor) processCompetition(ctx context.Context, event *model.Sc
 func (p *EventProcessor) processFightSimulate(ctx context.Context, event *model.ScheduledEvent) error {
 	_ = ctx // Reserved for future use (e.g., cancellation, timeouts)
 
-	p.logger.Debug("Processing fight simulation event ID=%d", event.ID)
+	p.logger.Info("Starting fight simulation", "event_id", event.ID, "boxer_id", event.BoxerID)
 
 	// Unmarshal fight event data
 	var data map[string]any
 	if len(event.EventData) > 0 {
-		p.logger.Debug("Event %d raw EventData bytes: %s (length=%d, first byte=%d)",
-			event.ID, string(event.EventData), len(event.EventData), event.EventData[0])
+		p.logger.Info("Event data received",
+			"event_id", event.ID,
+			"raw_data", string(event.EventData),
+			"data_length", len(event.EventData))
 		if err := json.Unmarshal(event.EventData, &data); err != nil {
+			p.logger.Error("JSON unmarshal failed", "event_id", event.ID, "error", err)
 			return fmt.Errorf("%w: failed to unmarshal fight event data: %w", ErrInvalidEventData, err)
 		}
+		p.logger.Info("Event data parsed", "event_id", event.ID, "parsed_data", data)
+	} else {
+		p.logger.Warn("Event has empty EventData", "event_id", event.ID)
+		data = map[string]any{}
 	}
 
 	// Extract fight_id from data
 	fightID := getIntField(data, "fight_id", 0)
+	p.logger.Info("Extracted fight_id", "event_id", event.ID, "fight_id", fightID)
 	if fightID <= 0 {
-		return fmt.Errorf("%w: invalid fight_id in event data", ErrFightNotFound)
+		return fmt.Errorf("%w: invalid fight_id in event data (got %d)", ErrFightNotFound, fightID)
 	}
 
 	// Check if fight service is initialized
 	if p.fightService == nil {
+		p.logger.Error("fightService is nil")
 		return fmt.Errorf("fightService is nil, cannot simulate fight")
 	}
+	p.logger.Info("Calling SimulateFight", "fight_id", fightID)
 
 	// Simulate the fight (handles status check internally - won't re-simulate completed fights)
+	startTime := time.Now()
 	if err := p.fightService.SimulateFight(fightID); err != nil {
+		elapsed := time.Since(startTime)
+		p.logger.Error("SimulateFight failed", "fight_id", fightID, "elapsed_ms", elapsed.Milliseconds(), "error", err)
 		return fmt.Errorf("failed to simulate fight %d: %w", fightID, err)
 	}
-
-	p.logger.Info("Fight simulation completed ID=%d", fightID)
+	elapsed := time.Since(startTime)
+	p.logger.Info("Fight simulation completed", "fight_id", fightID, "elapsed_ms", elapsed.Milliseconds())
 	return nil
 }
 

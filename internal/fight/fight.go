@@ -90,7 +90,7 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 
 		if err := s.eventStore.Create(ctx, event); err != nil {
 			// Log the error but don't fail the fight scheduling
-			s.logger.Error("Failed to create scheduled event for fight %d: %v", id, err)
+			s.logger.Error("Failed to create scheduled event for fight", "fight_id", id, "error", err)
 		} else {
 			s.logger.Info("Created scheduled event for fight", "fight_id", id, "event_time", scheduledTime)
 		}
@@ -291,7 +291,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 	// Begin transaction with serializable isolation for maximum consistency
 	tx, err := s.fightStore.BeginFightTx(ctx)
 	if err != nil {
-		s.logger.Error("Failed to begin transaction for fight %d: %v", fightID, err)
+		s.logger.Error("Failed to begin transaction", "fight_id", fightID, "error", err)
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
@@ -301,30 +301,30 @@ func (s *FightService) SimulateFight(fightID int) error {
 	// Lock the fight row for update (prevents concurrent simulations of same fight)
 	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, fightID)
 	if err != nil {
-		s.logger.Error("Failed to lock fight %d: %v", fightID, err)
+		s.logger.Error("Failed to lock fight", "fight_id", fightID, "error", err)
 		return fmt.Errorf("failed to lock fight: %w", err)
 	}
 
 	// Verify fight is scheduled before processing
 	if string(fight.Status) != "scheduled" {
-		s.logger.Debug("Fight %d is not scheduled (status=%s), skipping", fightID, fight.Status)
+		s.logger.Debug("Fight not scheduled, skipping", "fight_id", fightID, "status", fight.Status)
 		return nil
 	}
 
 	// Lock both boxer rows for update (prevents concurrent training/fights)
 	boxer1, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer1ID)
 	if err != nil {
-		s.logger.Error("Failed to lock boxer %d: %v", fight.Boxer1ID, err)
+		s.logger.Error("Failed to lock boxer1", "boxer_id", fight.Boxer1ID, "error", err)
 		return fmt.Errorf("failed to lock boxer1: %w", err)
 	}
 
 	boxer2, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer2ID)
 	if err != nil {
-		s.logger.Error("Failed to lock boxer %d: %v", fight.Boxer2ID, err)
+		s.logger.Error("Failed to lock boxer2", "boxer_id", fight.Boxer2ID, "error", err)
 		return fmt.Errorf("failed to lock boxer2: %w", err)
 	}
 
-	s.logger.Info("Simulating fight: %s vs %s", boxer1.Name, boxer2.Name)
+	s.logger.Info("Simulating fight", "boxer1", boxer1.Name, "boxer2", boxer2.Name)
 
 	// Update fight status to in_progress within transaction
 	if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "in_progress"); err != nil {
@@ -374,18 +374,17 @@ func (s *FightService) SimulateFight(fightID int) error {
 			return fmt.Errorf("failed to set fight data: %w", err)
 		}
 
-		s.logger.Debug("Round %d completed: %s %.1fHP vs %s %.1fHP",
-			currentRound, boxer1.Name, boxer1.Health, boxer2.Name, boxer2.Health)
+		s.logger.Debug("Round completed", "round", currentRound, "boxer1", boxer1.Name, "boxer1_hp", boxer1.Health, "boxer2", boxer2.Name, "boxer2_hp", boxer2.Health)
 	}
 
 	// Determine winner and finalize fight (within transaction)
 	var winnerID *int
 	if boxer1.Health > boxer2.Health {
 		winnerID = &fight.Boxer1ID
-		s.logger.Info("Fight winner: %s", boxer1.Name)
+		s.logger.Info("Fight winner", "winner", boxer1.Name)
 	} else if boxer2.Health > boxer1.Health {
 		winnerID = &fight.Boxer2ID
-		s.logger.Info("Fight winner: %s", boxer2.Name)
+		s.logger.Info("Fight winner", "winner", boxer2.Name)
 	}
 
 	if winnerID != nil {
@@ -407,7 +406,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 		newLevel := int(boxerToUpdate.Experience/100.0) + 1
 		if newLevel > oldLevel {
 			boxerToUpdate.Level = newLevel
-			s.logger.Info("Boxer %s leveled up from %d to %d", boxerToUpdate.Name, oldLevel, newLevel)
+			s.logger.Info("Boxer leveled up", "boxer", boxerToUpdate.Name, "old_level", oldLevel, "new_level", newLevel)
 		}
 
 		// Update winner boxer stats (within transaction)
@@ -424,11 +423,11 @@ func (s *FightService) SimulateFight(fightID int) error {
 
 	// Commit the entire transaction - all updates happen atomically
 	if err := tx.Commit(); err != nil {
-		s.logger.Error("Failed to commit fight transaction: %v", err)
+		s.logger.Error("Failed to commit fight transaction", "error", err)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	s.logger.Info("Fight %d simulation completed successfully", fightID)
+	s.logger.Info("Fight simulation completed successfully", "fight_id", fightID)
 	return nil
 }
 

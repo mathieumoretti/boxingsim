@@ -21,28 +21,74 @@ const (
 // EventData wraps json.RawMessage for proper null handling from JSONB.
 type EventData json.RawMessage
 
-func (e *EventData) Scan(value interface{}) error {
+func (e *EventData) Scan(value any) error {
 	if value == nil {
 		*e = EventData([]byte("{}")) // Empty object instead of nil
 		return nil
 	}
 
-	// Handle string representation of null from PostgreSQL jsonb NULLIF
+	// Handle string representation from PostgreSQL JSONB
 	if str, ok := value.(string); ok {
 		if str == "null" || str == "" {
 			*e = EventData([]byte("{}")) // Empty object instead of nil
 			return nil
 		}
-		*e = EventData([]byte(str))
+		// Validate it's actually valid JSON before accepting
+		var temp any
+		if err := json.Unmarshal([]byte(str), &temp); err != nil {
+			// If string is not valid JSON, treat as empty (corrupted data protection)
+			// This handles cases where the database has invalid/corrupted event_data
+			*e = EventData([]byte("{}"))
+			return nil // Don't fail - just use empty data
+		}
+		*e = EventData(append([]byte(nil), []byte(str)...)) // Defensive copy to prevent lib/pq buffer reuse
 		return nil
 	}
 
+	// Handle []byte from PostgreSQL JSONB (most common)
+	if b, ok := value.([]byte); ok {
+		if len(b) == 0 {
+			*e = EventData([]byte("{}")) // Empty bytes treated as empty object
+			return nil
+		}
+		// Validate bytes are valid JSON before accepting
+		var temp any
+		if err := json.Unmarshal(b, &temp); err != nil {
+			// Invalid JSON - treat as empty (corrupted data protection)
+			*e = EventData([]byte("{}"))
+			return nil // Don't fail - just use empty data
+		}
+		*e = EventData(append([]byte(nil), b...)) // Defensive copy to prevent lib/pq buffer reuse
+		return nil
+	}
+
+	// Handle json.RawMessage directly (some drivers return this)
+	if raw, ok := value.(json.RawMessage); ok {
+		if len(raw) == 0 {
+			*e = EventData([]byte("{}"))
+			return nil
+		}
+		*e = EventData(raw)
+		return nil
+	}
+
+	// Fallback: try to convert any other type to bytes
 	b, ok := value.([]byte)
 	if !ok {
-		// Log what type we actually received for debugging
-		return fmt.Errorf("failed to scan []byte: received type %T with value %#v", value, value)
+		// Convert unknown types to string representation for debugging
+		typeName := fmt.Sprintf("%T", value)
+		return fmt.Errorf("failed to scan EventData: unsupported type %s (value: %#v)", typeName, value)
 	}
-	*e = EventData(b)
+	if len(b) == 0 {
+		*e = EventData([]byte("{}"))
+		return nil
+	}
+	var temp any
+	if err := json.Unmarshal(b, &temp); err != nil {
+		*e = EventData([]byte("{}"))
+		return nil
+	}
+	*e = EventData(append([]byte(nil), b...)) // Defensive copy to prevent lib/pq buffer reuse
 	return nil
 }
 
@@ -54,12 +100,12 @@ func (e EventData) Value() (driver.Value, error) {
 	return []byte(e), nil
 }
 
-// ToMap converts EventData to a map[string]interface{} for API responses.
-func (e *EventData) ToMap() map[string]interface{} {
+// ToMap converts EventData to a map[string]any for API responses.
+func (e *EventData) ToMap() map[string]any {
 	if e == nil || len(*e) == 0 {
 		return nil
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal(*e, &m); err != nil {
 		return nil
 	}
@@ -93,26 +139,26 @@ type ScheduledEvent struct {
 
 // ScheduledEventCreate represents a request to create a new scheduled event.
 type ScheduledEventCreate struct {
-	BoxerID   int                    `json:"boxer_id" binding:"required"`
-	EventType EventType              `json:"event_type" binding:"required"`
-	EventTime time.Time              `json:"event_time" binding:"required"`
-	Data      map[string]interface{} `json:"data"`
+	BoxerID   int                 `json:"boxer_id" binding:"required"`
+	EventType EventType           `json:"event_type" binding:"required"`
+	EventTime time.Time           `json:"event_time" binding:"required"`
+	Data      map[string]any      `json:"data"`
 }
 
 // ScheduledEventUpdate represents a request to update an existing scheduled event.
 type ScheduledEventUpdate struct {
-	EventType *EventType              `json:"event_type,omitempty"`
-	EventTime *time.Time              `json:"event_time,omitempty"`
-	Data      *map[string]interface{} `json:"data,omitempty"`
+	EventType *EventType            `json:"event_type,omitempty"`
+	EventTime *time.Time            `json:"event_time,omitempty"`
+	Data      *map[string]any       `json:"data,omitempty"`
 }
 
 // ScheduledEventResponse represents a scheduled event for API responses.
 type ScheduledEventResponse struct {
-	ID        int                    `json:"id"`
-	BoxerID   int                    `json:"boxer_id"`
-	EventType string                 `json:"event_type"`
-	EventTime time.Time              `json:"event_time"`
-	Data      map[string]interface{} `json:"data"`
+	ID        int                 `json:"id"`
+	BoxerID   int                 `json:"boxer_id"`
+	EventType string              `json:"event_type"`
+	EventTime time.Time           `json:"event_time"`
+	Data      map[string]any      `json:"data"`
 
 	CreatedAt time.Time `json:"created_at"`
 }
