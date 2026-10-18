@@ -5,7 +5,6 @@ import TopBar from './TopBar.jsx';
 import BoxerCard from './BoxerCard.jsx';
 import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
-import FightBooking from './FightBooking.jsx';
 import { ErrorDisplay } from './ErrorDisplay';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import { createFightMap } from '../utils/fights';
@@ -18,7 +17,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
   const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
-  const [selectedBoxerForFight, setSelectedBoxerForFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
   const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
   const [errorRefresh, setErrorRefresh] = useState(null); // For error retry tracking
@@ -246,7 +244,7 @@ const Dashboard = ({ user, onLogout }) => {
                   worldTime={worldTime}
                   upcomingFight={fightData[boxer.id]}
                   onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
-                  onOpenFightBooking={() => setSelectedBoxerForFight(boxer)}
+                  onOpenFightBooking={() => navigate(`/boxer/${boxer.id}/book-fight`)}
                   onOpenFightHistory={() => navigate(`/boxer/${boxer.id}/fights`)}
                   onBoxerStateChanged={handleBoxerStateChanged}
                 />
@@ -275,18 +273,6 @@ const Dashboard = ({ user, onLogout }) => {
               />
             </div>
           </div>
-        )}
-
-        {/* Fight Booking Modal */}
-        {selectedBoxerForFight && (
-          <FightBooking
-            boxer={selectedBoxerForFight}
-            onClose={() => setSelectedBoxerForFight(null)}
-            onFightBooked={() => {
-              loadUserBoxers(currentUser.id);
-              setSelectedBoxerForFight(null);
-            }}
-          />
         )}
 
         {/* Training Control Panel - Development Only */}

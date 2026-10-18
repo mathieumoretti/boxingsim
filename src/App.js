@@ -7,6 +7,7 @@ import CreateBoxer from './components/CreateBoxer';
 import FightDetails from './components/FightDetails';
 import Rankings from './components/Rankings';
 import FightHistoryPage from './components/FightHistoryPage';
+import FightBookingPage from './components/FightBookingPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -100,6 +101,16 @@ function App() {
           element={
             <ProtectedRoute>
               <FightHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fight Booking Page (MAT-145) */}
+        <Route
+          path="/boxer/:id/book-fight"
+          element={
+            <ProtectedRoute>
+              <FightBookingPage user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
