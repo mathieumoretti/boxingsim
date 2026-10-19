@@ -478,3 +478,153 @@ func (s *TrainingSessionStore) GetAllPending(ctx context.Context) ([]*model.Trai
 func (s *TrainingSessionStore) MarkAsCancelled(ctx context.Context, id int) error {
 	return s.UpdateStatus(ctx, id, model.TrainingSessionCancelled)
 }
+
+// GetCompletedHistoryWithTypes retrieves completed training sessions with training type details for a boxer
+// This is used by the MAT-147 Training History feature
+func (s *TrainingSessionStore) GetCompletedHistoryWithTypes(ctx context.Context, boxerID int) ([]model.TrainingHistoryResponse, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+		SELECT
+			ts.id,
+			ts.boxer_id,
+			tt.name as training_type,
+			ts.duration_hours,
+			tt.energy_cost * CAST(ts.duration_hours AS INTEGER) as energy_cost,
+			ts.planned_strength_gain as strength_gain,
+			ts.planned_defense_gain as defense_gain,
+			ts.planned_agility_gain as agility_gain,
+			CAST((ts.planned_strength_gain + ts.planned_defense_gain + ts.planned_agility_gain) * ts.duration_hours * 10 AS INTEGER) as xp_gained,
+			ts.completed_at
+		FROM training_sessions ts
+		JOIN training_types tt ON ts.training_type_id = tt.id
+		WHERE ts.boxer_id = $1
+		  AND ts.status = 'completed'
+		ORDER BY ts.completed_at DESC`
+
+	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var history []model.TrainingHistoryResponse
+	for rows.Next() {
+		var h model.TrainingHistoryResponse
+		err := rows.Scan(
+			&h.ID,
+			&h.BoxerID,
+			&h.TrainingType,
+			&h.DurationHours,
+			&h.EnergyCost,
+			&h.StrengthGain,
+			&h.DefenseGain,
+			&h.AgilityGain,
+			&h.XPGained,
+			&h.CompletedAt)
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, h)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Return empty slice instead of nil for consistent JSON serialization
+	if history == nil {
+		return []model.TrainingHistoryResponse{}, nil
+	}
+
+	return history, nil
+}
+
+// GetStatProgression retrieves stat progression data points for a boxer's chart (MAT-147)
+// Returns cumulative stat values over time based on completed training sessions
+func (s *TrainingSessionStore) GetStatProgression(ctx context.Context, boxerID int) (*model.StatProgressionResponse, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	// Get boxer's initial stats and creation time
+	boxerQuery := `
+		SELECT strength, defense, agility, created_at
+		FROM boxers WHERE id = $1`
+
+	var baseStrength, baseDefense, baseAgility float64
+	var createdAt time.Time
+	err := s.db.QueryRowContext(ctx, boxerQuery, boxerID).Scan(
+		&baseStrength, &baseDefense, &baseAgility, &createdAt)
+	if err == sql.ErrNoRows {
+		return &model.StatProgressionResponse{Points: []model.StatProgressionPoint{}}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Get all completed training sessions ordered by completion time
+	query := `
+		SELECT
+			ts.planned_strength_gain,
+			ts.planned_defense_gain,
+			ts.planned_agility_gain,
+			ts.completed_at
+		FROM training_sessions ts
+		WHERE ts.boxer_id = $1
+		  AND ts.status = 'completed'
+		ORDER BY ts.completed_at ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	// Build cumulative stat progression points
+	var points []model.StatProgressionPoint
+
+	// Add initial point (boxer creation)
+	points = append(points, model.StatProgressionPoint{
+		Date:     createdAt,
+		Strength: baseStrength,
+		Defense:  baseDefense,
+		Agility:  baseAgility,
+	})
+
+	// Accumulate gains from each completed session
+	cumulativeSTR := baseStrength
+	cumulativeDEF := baseDefense
+	cumulativeAGI := baseAgility
+
+	for rows.Next() {
+		var strGain, defGain, agiGain float64
+		var completedAt time.Time
+
+		err := rows.Scan(&strGain, &defGain, &agiGain, &completedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update cumulative stats
+		cumulativeSTR += strGain
+		cumulativeDEF += defGain
+		cumulativeAGI += agiGain
+
+		// Add point for this training session
+		points = append(points, model.StatProgressionPoint{
+			Date:     completedAt,
+			Strength: cumulativeSTR,
+			Defense:  cumulativeDEF,
+			Agility:  cumulativeAGI,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &model.StatProgressionResponse{Points: points}, nil
+}

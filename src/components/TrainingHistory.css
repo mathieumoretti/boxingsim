@@ -1,0 +1,207 @@
+/* Training History Component (MAT-147) */
+
+.training-history {
+  width: 100%;
+}
+
+.history-loading {
+  text-align: center;
+  padding: 24px;
+  color: #a0aec0;
+  font-size: 1rem;
+}
+
+/* Empty State */
+.history-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.history-empty-state h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 8px;
+}
+
+.history-empty-state p {
+  font-size: 0.9375rem;
+  color: #a0aec0;
+  margin: 0;
+}
+
+/* History List */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* History Item */
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border-left: 4px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background: rgba(0, 0, 0, 0.4);
+  transform: translateX(4px);
+}
+
+/* Training Type Colors */
+.history-item.training-strength {
+  border-left-color: #fc8181;
+}
+
+.history-item.training-defense {
+  border-left-color: #63b3ed;
+}
+
+.history-item.training-agility {
+  border-left-color: #f6ad55;
+}
+
+.history-item.training-recovery {
+  border-left-color: #f687b3;
+}
+
+.history-item.training-default {
+  border-left-color: #a0aec0;
+}
+
+/* Icon */
+.history-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Content */
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.history-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.history-date {
+  font-size: 0.8125rem;
+  color: #718096;
+  white-space: nowrap;
+}
+
+/* Details */
+.history-details {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  font-size: 0.875rem;
+  color: #a0aec0;
+}
+
+.detail-item strong {
+  color: #cbd5e0;
+}
+
+/* Gains */
+.history-gains {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gain-item {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gain-item.strength {
+  color: #fc8181;
+  background: rgba(252, 129, 129, 0.1);
+}
+
+.gain-item.defense {
+  color: #63b3ed;
+  background: rgba(99, 179, 237, 0.1);
+}
+
+.gain-item.agility {
+  color: #f6ad55;
+  background: rgba(246, 173, 85, 0.1);
+}
+
+.gain-item.xp {
+  color: #4fd1c5;
+  background: rgba(79, 209, 197, 0.1);
+}
+
+/* Chevron */
+.history-chevron {
+  font-size: 1.25rem;
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .history-item {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .history-icon {
+    font-size: 2rem;
+  }
+
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .history-details {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .history-gains {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .history-chevron {
+    display: none;
+  }
+}

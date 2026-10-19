@@ -146,10 +146,10 @@ export async function apiRequest(url, options = {}, config = {}) {
         // Try to parse error body for more details
         let body = null;
         try {
-          body = await response.json();
+          body = await response.clone().json();
         } catch (e) {
           // Response might not be JSON, use text
-          body = { message: await response.text() || response.statusText };
+          body = { message: await response.clone().text() || response.statusText };
         }
 
         if (throwOnHttpError) {

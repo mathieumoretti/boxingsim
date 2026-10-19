@@ -57,3 +57,30 @@ type TrainingSessionUpdate struct {
 	Status      *TrainingSessionStatus `json:"status,omitempty"`
 	CompletedAt *time.Time             `json:"completed_at,omitempty"`
 }
+
+// TrainingHistoryResponse represents a completed training session with all relevant data for the UI
+type TrainingHistoryResponse struct {
+	ID            int       `json:"id"`
+	BoxerID       int       `json:"boxer_id"`
+	TrainingType  string    `json:"training_type"` // e.g., "Strength", "Defense"
+	DurationHours float64   `json:"duration_hours"`
+	EnergyCost    int       `json:"energy_cost"`
+	StrengthGain  float64   `json:"strength_gain"`
+	DefenseGain   float64   `json:"defense_gain"`
+	AgilityGain   float64   `json:"agility_gain"`
+	XPGained      int       `json:"xp_gained"`
+	CompletedAt   time.Time `json:"completed_at"`
+}
+
+// StatProgressionPoint represents a single data point in the stat progression chart
+type StatProgressionPoint struct {
+	Date     time.Time `json:"date"`
+	Strength float64   `json:"strength"`
+	Defense  float64   `json:"defense"`
+	Agility  float64   `json:"agility"`
+}
+
+// StatProgressionResponse represents the full stat progression data for a boxer
+type StatProgressionResponse struct {
+	Points []StatProgressionPoint `json:"points"`
+}

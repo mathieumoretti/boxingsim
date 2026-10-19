@@ -83,3 +83,25 @@ export function calculateTrainingProgress(session) {
     percentComplete: Math.round(percent * 100) / 100
   };
 }
+
+/**
+ * Fetch training history (completed sessions) for a boxer.
+ *
+ * @param {number} boxerId - The boxer's ID
+ * @returns {Promise<Array>} Array of completed training session objects with gains
+ */
+export async function fetchTrainingHistory(boxerId) {
+  const data = await apiGetJson(`/api/boxers/${boxerId}/training-history`);
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Fetch stat progression data for a boxer (time-series of STR/DEF/AGI values).
+ *
+ * @param {number} boxerId - The boxer's ID
+ * @returns {Promise<Object>} Object with points array containing date and stat values
+ */
+export async function fetchStatProgression(boxerId) {
+  const data = await apiGetJson(`/api/boxers/${boxerId}/stat-progression`);
+  return data || { points: [] };
+}
