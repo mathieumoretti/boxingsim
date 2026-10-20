@@ -41,7 +41,7 @@ const formatCountdown = (remainingSeconds) => {
   }
 };
 
-const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerStateChanged, onOpenFightBooking, onOpenFightHistory }) => {
+const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenProfile, onOpenTraining, onBoxerStateChanged, onOpenFightBooking, onOpenFightHistory }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [fetchedFight, setFetchedFight] = useState(upcomingFight || null);
@@ -259,8 +259,8 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenTraining, onBoxerSta
         </div>
       )}
 
-      {/* Avatar & Name Section */}
-      <div className="card-header">
+      {/* Avatar & Name Section - Clickable to view profile (MAT-148) */}
+      <div className="card-header" onClick={onOpenProfile} title="Click to view profile">
         <div className="avatar-circle">{avatar}</div>
         <div className="name-section">
           <h3 className="boxer-name">{boxer.name}</h3>

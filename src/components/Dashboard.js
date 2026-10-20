@@ -241,6 +241,7 @@ const Dashboard = ({ user, onLogout }) => {
                   boxer={boxer}
                   worldTime={worldTime}
                   upcomingFight={fightData[boxer.id]}
+                  onOpenProfile={() => navigate(`/boxer/${boxer.id}`)}
                   onOpenTraining={() => navigate(`/boxer/${boxer.id}/train`)}
                   onOpenFightBooking={() => navigate(`/boxer/${boxer.id}/book-fight`)}
                   onOpenFightHistory={() => navigate(`/boxer/${boxer.id}/fights`)}
