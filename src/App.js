@@ -9,6 +9,7 @@ import Rankings from './components/Rankings';
 import FightHistoryPage from './components/FightHistoryPage';
 import FightBookingPage from './components/FightBookingPage';
 import TrainingPage from './components/TrainingPage';
+import BoxerProfile from './components/BoxerProfile';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -92,6 +93,16 @@ function App() {
           element={
             <ProtectedRoute>
               <Rankings />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Boxer Profile Page (MAT-148) */}
+        <Route
+          path="/boxer/:id"
+          element={
+            <ProtectedRoute>
+              <BoxerProfile user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
