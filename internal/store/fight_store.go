@@ -492,18 +492,18 @@ func (s *FightStore) BoxerInFight(ctx context.Context, boxerID int) (bool, error
 
 // ZombieFight represents a fight that is stuck in scheduled state due to event processing failures.
 type ZombieFight struct {
-	FightID       int                 `json:"fight_id"`
-	Boxer1ID      int                 `json:"boxer1_id"`
-	Boxer1Name    string              `json:"boxer1_name"`
-	Boxer2ID      int                 `json:"boxer2_id"`
-	Boxer2Name    string              `json:"boxer2_name"`
-	ScheduledTime time.Time           `json:"scheduled_time"`
-	TimeOverdue   time.Duration       `json:"time_overdue"`
-	EventID       *int                `json:"event_id,omitempty"`
-	EventType     *string             `json:"event_type,omitempty"`
-	EventStatus   *string             `json:"event_status,omitempty"`
-	ErrorMessage  *string             `json:"error_message,omitempty"`
-	ZombieType    string              `json:"zombie_type"` // "failed_event", "stuck_event", "orphaned"
+	FightID       int           `json:"fight_id"`
+	Boxer1ID      int           `json:"boxer1_id"`
+	Boxer1Name    string        `json:"boxer1_name"`
+	Boxer2ID      int           `json:"boxer2_id"`
+	Boxer2Name    string        `json:"boxer2_name"`
+	ScheduledTime time.Time     `json:"scheduled_time"`
+	TimeOverdue   time.Duration `json:"time_overdue"`
+	EventID       *int          `json:"event_id,omitempty"`
+	EventType     *string       `json:"event_type,omitempty"`
+	EventStatus   *string       `json:"event_status,omitempty"`
+	ErrorMessage  *string       `json:"error_message,omitempty"`
+	ZombieType    string        `json:"zombie_type"` // "failed_event", "stuck_event", "orphaned"
 }
 
 // GetZombieFights retrieves all fights that are stuck in scheduled state (MAT-138).

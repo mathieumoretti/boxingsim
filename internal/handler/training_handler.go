@@ -368,3 +368,92 @@ func (h *TrainingHandler) BulkCompleteTraining(w http.ResponseWriter, r *http.Re
 		Message:   fmt.Sprintf("Completed %d training session(s)", completed),
 	})
 }
+
+// GetTrainingHistoryRequest returns the request structure for training history
+// GET /boxers/{id}/training-history
+func (h *TrainingHandler) GetTrainingHistory(w http.ResponseWriter, r *http.Request) {
+	// Get authenticated user from context
+	user := auth.UserFromRequest(r)
+	if user == nil {
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
+		return
+	}
+
+	// Parse boxer ID from URL path
+	idStr := mux.Vars(r)["id"]
+	boxerID, parseErr := strconv.Atoi(idStr)
+	if parseErr != nil {
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer ID"))
+		return
+	}
+
+	// Check if stores are available
+	if h.boxerStore == nil || h.trainingSessionStore == nil {
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
+		return
+	}
+
+	ctx := r.Context()
+
+	// Validate boxer exists and belongs to user
+	boxer, err := h.boxerStore.GetByID(ctx, boxerID)
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
+		return
+	}
+
+	if boxer.UserID != user.ID {
+		pkgerrors.WriteError(w, pkgerrors.Forbidden("You don't own this boxer"))
+		return
+	}
+
+	// Fetch completed training sessions with training type details
+	history, err := h.trainingSessionStore.GetCompletedHistoryWithTypes(ctx, boxerID)
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve training history"))
+		return
+	}
+
+	// Ensure we return empty array instead of null
+	if history == nil {
+		history = []model.TrainingHistoryResponse{}
+	}
+
+	pkgerrors.WriteJSON(w, http.StatusOK, history)
+}
+
+// GetStatProgression returns stat progression data for a boxer (time-series)
+// GET /boxers/{id}/stat-progression
+func (h *TrainingHandler) GetStatProgression(w http.ResponseWriter, r *http.Request) {
+	// Get authenticated user from context
+	user := auth.UserFromRequest(r)
+	if user == nil {
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
+		return
+	}
+
+	// Parse boxer ID from URL path
+	idStr := mux.Vars(r)["id"]
+	boxerID, parseErr := strconv.Atoi(idStr)
+	if parseErr != nil {
+		pkgerrors.WriteError(w, pkgerrors.Validation("boxer_id", "Invalid boxer ID"))
+		return
+	}
+
+	// Check if store is available
+	if h.trainingSessionStore == nil {
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
+		return
+	}
+
+	ctx := r.Context()
+
+	// Fetch stat progression data (points array with date and STR/DEF/AGI values)
+	progression, err := h.trainingSessionStore.GetStatProgression(ctx, boxerID)
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve stat progression"))
+		return
+	}
+
+	pkgerrors.WriteJSON(w, http.StatusOK, progression)
+}

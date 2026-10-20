@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import TopBar from './TopBar.jsx';
 import BoxerCard from './BoxerCard.jsx';
-import TrainingScheduler from './TrainingScheduler.jsx';
 import TrainingControlPanel from './TrainingControlPanel.jsx';
 import { ErrorDisplay } from './ErrorDisplay';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
@@ -15,7 +14,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedBoxerForTraining, setSelectedBoxerForTraining] = useState(null);
   const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
   const [worldTime, setWorldTime] = useState(null);
   const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
@@ -243,7 +241,7 @@ const Dashboard = ({ user, onLogout }) => {
                   boxer={boxer}
                   worldTime={worldTime}
                   upcomingFight={fightData[boxer.id]}
-                  onOpenTraining={() => setSelectedBoxerForTraining(boxer)}
+                  onOpenTraining={() => navigate(`/boxer/${boxer.id}/train`)}
                   onOpenFightBooking={() => navigate(`/boxer/${boxer.id}/book-fight`)}
                   onOpenFightHistory={() => navigate(`/boxer/${boxer.id}/fights`)}
                   onBoxerStateChanged={handleBoxerStateChanged}
@@ -252,28 +250,6 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
           )}
         </section>
-
-        {/* Centralized Training Modal */}
-        {selectedBoxerForTraining && (
-          <div className="training-modal-overlay" onClick={() => setSelectedBoxerForTraining(null)}>
-            <div className="training-modal" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="modal-close"
-                onClick={() => setSelectedBoxerForTraining(null)}
-                aria-label="Close modal"
-              >×</button>
-              <TrainingScheduler
-                boxerId={selectedBoxerForTraining.id}
-                boxer={selectedBoxerForTraining}
-                onClose={() => setSelectedBoxerForTraining(null)}
-                onTrainingScheduled={() => {
-                  loadUserBoxers(currentUser.id);
-                  setSelectedBoxerForTraining(null);
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Training Control Panel - Development Only */}
         {showTrainingControlPanel && (

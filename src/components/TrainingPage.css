@@ -1,0 +1,186 @@
+/* Training Page - Dedicated page for boxer training management (MAT-147) */
+
+.training-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding-top: calc(64px + 24px); /* Account for TopBar height + spacing */
+}
+
+.training-page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Energy Status Section */
+.energy-status-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.energy-status-section h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 16px;
+}
+
+.energy-status-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.energy-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.energy-label {
+  font-size: 1rem;
+  color: #a0aec0;
+}
+
+.energy-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4fd1c5;
+}
+
+.energy-value.low {
+  color: #fc8181;
+}
+
+.energy-value.medium {
+  color: #f6ad55;
+}
+
+.energy-bar-wrapper {
+  height: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.energy-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #4fd1c5 0%, #38b2ac 100%);
+  border-radius: 12px;
+  transition: width 0.3s ease;
+}
+
+.energy-progress.low {
+  background: linear-gradient(90deg, #fc8181 0%, #f56565 100%);
+}
+
+.rest-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(236, 72, 153, 0.1);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #f687b3;
+}
+
+.rest-icon {
+  font-size: 1.25rem;
+}
+
+/* Section Styles */
+.training-scheduler-section,
+.stat-progression-section,
+.training-history-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.training-scheduler-section h2,
+.stat-progression-section h2,
+.training-history-section h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 8px;
+}
+
+.section-description {
+  font-size: 0.9375rem;
+  color: #a0aec0;
+  margin: 0 0 20px;
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: #ffffff;
+  font-size: 1.125rem;
+}
+
+/* Back Button */
+.back-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a0aec0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .training-page-content {
+    padding: 0 16px 32px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .energy-status-section,
+  .training-scheduler-section,
+  .stat-progression-section,
+  .training-history-section {
+    padding: 16px;
+  }
+}

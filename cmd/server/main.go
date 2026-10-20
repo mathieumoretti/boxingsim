@@ -179,6 +179,14 @@ func main() {
 	// Fight history endpoint with opponent names (MAT-103)
 	protectedRouter.HandleFunc("/boxers/{id}/fights-history", fightHandler.GetFightHistoryWithOpponents).Methods("GET")
 
+	// Training history and progression endpoints (MAT-147) - must be before /boxers/{id} catch-all
+	protectedRouter.HandleFunc("/boxers/{id}/training-history", trainingHandler.GetTrainingHistory).Methods("GET")
+	protectedRouter.HandleFunc("/boxers/{id}/stat-progression", trainingHandler.GetStatProgression).Methods("GET")
+
+	// Training endpoints (MAT-147) - must be before /boxers/{id} catch-all
+	protectedRouter.HandleFunc("/boxers/{id}/train", trainingHandler.ScheduleTraining).Methods("POST")
+	protectedRouter.HandleFunc("/boxers/{id}/training-sessions", trainingHandler.GetTrainingSessionsForBoxer).Methods("GET")
+
 	// Now the catch-all boxer ID routes
 	protectedRouter.HandleFunc("/boxers/{id}", boxerHandler.GetBoxer).Methods("GET")
 	protectedRouter.HandleFunc("/boxers/{id}", boxerHandler.UpdateBoxer).Methods("PUT")
@@ -196,10 +204,6 @@ func main() {
 
 	// Training types endpoint - public (reference data)
 	router.HandleFunc("/training-types", trainingHandler.GetAllTrainingTypes).Methods("GET")
-
-	// Training endpoints - protected with authentication middleware
-	protectedRouter.HandleFunc("/boxers/{id}/train", trainingHandler.ScheduleTraining).Methods("POST")
-	protectedRouter.HandleFunc("/boxers/{id}/training-sessions", trainingHandler.GetTrainingSessionsForBoxer).Methods("GET")
 
 	// Training completion endpoint - protected with authentication middleware
 	protectedRouter.HandleFunc("/training/{id}/complete", trainingHandler.CompleteTraining).Methods("POST")
