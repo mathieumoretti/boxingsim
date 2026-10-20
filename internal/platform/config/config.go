@@ -137,7 +137,7 @@ func applyDefaults(cfg *Config) {
 
 	// Fight scheduling defaults
 	if cfg.Fight.MinScheduleHours == 0 {
-		cfg.Fight.MinScheduleHours = 24 // Minimum 24 hours from game time for fight scheduling
+		cfg.Fight.MinScheduleHours = 12 // Minimum 12 hours from game time for fight scheduling
 	}
 }
 

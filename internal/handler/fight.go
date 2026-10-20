@@ -72,7 +72,7 @@ func (h *FightHandler) BookFightForBoxer(w http.ResponseWriter, r *http.Request)
 	}
 
 	minScheduleHours := h.cfg.Fight.MinScheduleHours
-	scheduledTime := gameTime.Add(time.Duration(minScheduleHours)*time.Hour + (72 * time.Hour)) // 3 days = 72 hours buffer
+	scheduledTime := gameTime.Add(time.Duration(minScheduleHours+1)*time.Hour) // minScheduleHours + 1 hour buffer for testing
 
 	err = h.fightService.BookFight(r.Context(), boxerID, req.OpponentID, scheduledTime, 0)
 	if err != nil {

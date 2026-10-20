@@ -51,7 +51,7 @@ const FightBooking = ({ boxer, onClose, onFightBooked }) => {
       const validation = await validateFight({
         boxerId: boxer.id,
         opponentId: opponentId,
-        scheduledTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Tomorrow
+        scheduledTime: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString() // 12 hours ahead
       });
       setMatchValidation(validation);
     } catch (err) {
