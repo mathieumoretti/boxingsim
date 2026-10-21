@@ -49,12 +49,12 @@ func (s *FightStore) Create(ctx context.Context, boxer1ID, boxer2ID int, schedul
 func (s *FightStore) GetByID(ctx context.Context, id int) (*model.Fight, error) {
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE id = $1`
 
 	row := s.db.QueryRowContext(ctx, query, id)
-	fight, err := s.scanFight(row)
+	fight, err := s.scanFightWithVersion(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrFightNotFound
@@ -71,13 +71,13 @@ func (s *FightStore) GetByID(ctx context.Context, id int) (*model.Fight, error) 
 func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight, error) {
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE id = $1
 		FOR UPDATE`
 
 	row := s.db.QueryRowContext(ctx, query, id)
-	fight, err := s.scanFight(row)
+	fight, err := s.scanFightWithVersion(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrFightNotFound
@@ -93,13 +93,13 @@ func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight,
 func (s *FightStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.Fight, error) {
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE id = $1
 		FOR UPDATE SKIP LOCKED`
 
 	row := tx.QueryRowContext(ctx, query, id)
-	fight, err := s.scanFightTx(tx, row)
+	fight, err := s.scanFightWithVersionTx(tx, row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrFightNotFound
@@ -118,7 +118,7 @@ func (s *FightStore) GetActiveFights(ctx context.Context, statuses []string) ([]
 
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE status = ANY($1)
 		ORDER BY scheduled_time ASC`
@@ -129,14 +129,14 @@ func (s *FightStore) GetActiveFights(ctx context.Context, statuses []string) ([]
 	}
 	defer func() { _ = rows.Close() }()
 
-	return s.scanFights(rows)
+	return s.scanFightsWithVersion(rows)
 }
 
 // GetByBoxer retrieves fights involving a specific boxer.
 func (s *FightStore) GetByBoxer(ctx context.Context, boxerID int, limit int) ([]*model.Fight, error) {
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE boxer1_id = $1 OR boxer2_id = $1
 		ORDER BY scheduled_time DESC
@@ -148,14 +148,14 @@ func (s *FightStore) GetByBoxer(ctx context.Context, boxerID int, limit int) ([]
 	}
 	defer func() { _ = rows.Close() }()
 
-	return s.scanFights(rows)
+	return s.scanFightsWithVersion(rows)
 }
 
 // GetCompleted retrieves completed fights ordered by end time.
 func (s *FightStore) GetCompleted(ctx context.Context, limit int) ([]*model.Fight, error) {
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
-		       winner_id, round, data, created_at, updated_at
+		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE status = 'completed'
 		ORDER BY end_time DESC
@@ -167,7 +167,7 @@ func (s *FightStore) GetCompleted(ctx context.Context, limit int) ([]*model.Figh
 	}
 	defer func() { _ = rows.Close() }()
 
-	return s.scanFights(rows)
+	return s.scanFightsWithVersion(rows)
 }
 
 // GetUpcomingFightForBoxer retrieves the next upcoming fight for a specific boxer (MAT-106).
@@ -401,6 +401,47 @@ func (s *FightStore) SetWinnerTx(ctx context.Context, tx *sql.Tx, id, winnerID i
 	}
 
 	return nil
+}
+
+// SetSimulationVersion sets the simulation version of a fight (MAT-114).
+func (s *FightStore) SetSimulationVersionTx(ctx context.Context, tx *sql.Tx, id int, version string) error {
+	query := `UPDATE fights SET simulation_version = $1 WHERE id = $2`
+	result, err := tx.ExecContext(ctx, query, version, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightNotFound
+	}
+
+	return nil
+}
+
+// GetByIDs retrieves multiple fights by their IDs.
+func (s *FightStore) GetByIDs(ctx context.Context, ids []int) ([]*model.Fight, error) {
+	if len(ids) == 0 {
+		return []*model.Fight{}, nil
+	}
+
+	query := `
+		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
+		       winner_id, round, simulation_version, data, created_at, updated_at
+		FROM fights
+		WHERE id = ANY($1)
+		ORDER BY created_at DESC`
+
+	rows, err := s.db.QueryContext(ctx, query, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	return s.scanFightsWithVersion(rows)
 }
 
 // SetData updates the data field of a fight (used for storing fight simulation results).
@@ -697,4 +738,59 @@ func (s *FightStore) scanFightTx(_ *sql.Tx, row Scanner) (*model.Fight, error) {
 // Scanner is an interface for types that can scan database rows.
 type Scanner interface {
 	Scan(dest ...interface{}) error
+}
+
+// scanFightWithVersion scans a single row into a Fight model (includes simulation_version).
+func (s *FightStore) scanFightWithVersion(row Scanner) (*model.Fight, error) {
+	var data db.NullJSONB
+	fight := &model.Fight{}
+
+	err := row.Scan(
+		&fight.ID,
+		&fight.Boxer1ID,
+		&fight.Boxer2ID,
+		&fight.Status,
+		&fight.ScheduledTime,
+		&fight.StartTime,
+		&fight.EndTime,
+		&fight.WinnerID,
+		&fight.Round,
+		&fight.SimulationVersion,
+		&data,
+		&fight.CreatedAt,
+		&fight.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set Data field from NullJSONB if valid
+	if data.IsValid {
+		fight.Data = data.Value
+	}
+
+	return fight, nil
+}
+
+// scanFightWithVersionTx scans a single row from a transaction query into a Fight model (includes simulation_version).
+func (s *FightStore) scanFightWithVersionTx(_ *sql.Tx, row Scanner) (*model.Fight, error) {
+	return s.scanFightWithVersion(row)
+}
+
+// scanFightsWithVersion scans multiple rows into a slice of Fight models (includes simulation_version).
+func (s *FightStore) scanFightsWithVersion(rows *sql.Rows) ([]*model.Fight, error) {
+	var fights []*model.Fight
+	for rows.Next() {
+		fight, err := s.scanFightWithVersion(rows)
+		if err != nil {
+			return nil, err
+		}
+		fights = append(fights, fight)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return fights, nil
 }

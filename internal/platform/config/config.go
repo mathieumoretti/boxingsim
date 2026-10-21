@@ -56,9 +56,20 @@ type WorkerConfig struct {
 	GameSpeedFactor    float64 `mapstructure:"game_speed_factor"`
 }
 
-// FightConfig holds fight scheduling settings.
+// FightSimulationConfig holds fight simulation parameters.
+type FightSimulationConfig struct {
+	Version          string  `mapstructure:"version"`
+	MaxRounds        int     `mapstructure:"max_rounds"`
+	DamageMultiplier float64 `mapstructure:"damage_multiplier"`
+	EvasionThreshold float64 `mapstructure:"evasion_threshold"`
+	EnergyDrain      float64 `mapstructure:"energy_drain"`
+	ExperienceGain   float64 `mapstructure:"experience_gain"`
+}
+
+// FightConfig holds fight scheduling and simulation settings.
 type FightConfig struct {
-	MinScheduleHours int `mapstructure:"min_schedule_hours"`
+	MinScheduleHours int                   `mapstructure:"min_schedule_hours"`
+	Simulation       FightSimulationConfig `mapstructure:"simulation"`
 }
 
 // TestDBConfig represents test database configuration for integration tests.
@@ -138,6 +149,26 @@ func applyDefaults(cfg *Config) {
 	// Fight scheduling defaults
 	if cfg.Fight.MinScheduleHours == 0 {
 		cfg.Fight.MinScheduleHours = 12 // Minimum 12 hours from game time for fight scheduling
+	}
+
+	// Fight simulation defaults (MAT-114)
+	if cfg.Fight.Simulation.Version == "" {
+		cfg.Fight.Simulation.Version = "1.0.0"
+	}
+	if cfg.Fight.Simulation.MaxRounds == 0 {
+		cfg.Fight.Simulation.MaxRounds = 12
+	}
+	if cfg.Fight.Simulation.DamageMultiplier == 0 {
+		cfg.Fight.Simulation.DamageMultiplier = 0.1
+	}
+	if cfg.Fight.Simulation.EvasionThreshold == 0 {
+		cfg.Fight.Simulation.EvasionThreshold = 0.4
+	}
+	if cfg.Fight.Simulation.EnergyDrain == 0 {
+		cfg.Fight.Simulation.EnergyDrain = 10.0
+	}
+	if cfg.Fight.Simulation.ExperienceGain == 0 {
+		cfg.Fight.Simulation.ExperienceGain = 50.0
 	}
 }
 

@@ -139,26 +139,26 @@ type ScheduledEvent struct {
 
 // ScheduledEventCreate represents a request to create a new scheduled event.
 type ScheduledEventCreate struct {
-	BoxerID   int                 `json:"boxer_id" binding:"required"`
-	EventType EventType           `json:"event_type" binding:"required"`
-	EventTime time.Time           `json:"event_time" binding:"required"`
-	Data      map[string]any      `json:"data"`
+	BoxerID   int            `json:"boxer_id" binding:"required"`
+	EventType EventType      `json:"event_type" binding:"required"`
+	EventTime time.Time      `json:"event_time" binding:"required"`
+	Data      map[string]any `json:"data"`
 }
 
 // ScheduledEventUpdate represents a request to update an existing scheduled event.
 type ScheduledEventUpdate struct {
-	EventType *EventType            `json:"event_type,omitempty"`
-	EventTime *time.Time            `json:"event_time,omitempty"`
-	Data      *map[string]any       `json:"data,omitempty"`
+	EventType *EventType      `json:"event_type,omitempty"`
+	EventTime *time.Time      `json:"event_time,omitempty"`
+	Data      *map[string]any `json:"data,omitempty"`
 }
 
 // ScheduledEventResponse represents a scheduled event for API responses.
 type ScheduledEventResponse struct {
-	ID        int                 `json:"id"`
-	BoxerID   int                 `json:"boxer_id"`
-	EventType string              `json:"event_type"`
-	EventTime time.Time           `json:"event_time"`
-	Data      map[string]any      `json:"data"`
+	ID        int            `json:"id"`
+	BoxerID   int            `json:"boxer_id"`
+	EventType string         `json:"event_type"`
+	EventTime time.Time      `json:"event_time"`
+	Data      map[string]any `json:"data"`
 
 	CreatedAt time.Time `json:"created_at"`
 }
