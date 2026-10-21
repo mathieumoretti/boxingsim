@@ -14,9 +14,10 @@ import StatsOverview from './StatsOverview';
 import CurrentStatus from './CurrentStatus';
 import RecentActivity from './RecentActivity';
 import { ErrorDisplay } from './ErrorDisplay';
-import { fetchBoxer } from '../api/fights';
+import { fetchBoxer, fetchUpcomingFight } from '../api/fights';
 import { fetchWorldTime } from '../api/world';
 import { getUserErrorMessage } from '../utils/errorMessages';
+import NextFight from './NextFight';
 import './BoxerProfile.css';
 
 const BoxerProfile = ({ user, onLogout }) => {
@@ -24,6 +25,7 @@ const BoxerProfile = ({ user, onLogout }) => {
   const navigate = useNavigate();
 
   const [boxer, setBoxer] = useState(null);
+  const [upcomingFight, setUpcomingFight] = useState(null);
   const [worldTime, setWorldTime] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +37,7 @@ const BoxerProfile = ({ user, onLogout }) => {
     const refreshInterval = setInterval(() => {
       if (boxerIdParam) {
         loadBoxerData(boxerIdParam);
+        loadUpcomingFight(boxerIdParam);
         loadWorldTime();
       }
     }, 10000); // Refresh every 10 seconds
@@ -53,9 +56,10 @@ const BoxerProfile = ({ user, onLogout }) => {
     setError(null);
 
     try {
-      // Load boxer and world time in parallel
+      // Load boxer, upcoming fight, and world time in parallel
       await Promise.all([
         loadBoxerData(boxerIdParam),
+        loadUpcomingFight(boxerIdParam),
         loadWorldTime()
       ]);
     } catch (err) {
@@ -89,6 +93,18 @@ const BoxerProfile = ({ user, onLogout }) => {
     } catch (err) {
       // World time is optional - log but don't fail
       console.debug('Failed to load world time:', err.message);
+    }
+  };
+
+  const loadUpcomingFight = async (id) => {
+    try {
+      const fightData = await fetchUpcomingFight(id);
+      setUpcomingFight(fightData);
+    } catch (err) {
+      // 404 means no upcoming fight - that's fine, just log
+      if (err.status !== 404) {
+        console.debug('Failed to load upcoming fight:', err.message);
+      }
     }
   };
 
@@ -166,6 +182,9 @@ const BoxerProfile = ({ user, onLogout }) => {
         {/* Career Record - W/L/D/KO */}
         <CareerRecord boxer={boxer} />
 
+        {/* Next Fight Card (only shows when there's an upcoming fight) */}
+        <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+
         {/* Stats Overview - STR/DEF/AGI */}
         <StatsOverview boxer={boxer} />
 
@@ -173,7 +192,7 @@ const BoxerProfile = ({ user, onLogout }) => {
         <CurrentStatus boxer={boxer} worldTime={worldTime} />
 
         {/* Recent Activity Timeline */}
-        <RecentActivity boxerId={boxer.id} />
+        <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
 
         {/* Action Buttons */}
         <div className="profile-actions">
