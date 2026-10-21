@@ -713,6 +713,15 @@
   border-left-color: #6b7280;
 }
 
+.activity-item.bg-activity-upcoming {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.activity-item.bg-activity-upcoming:hover {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(255, 255, 255, 0.06));
+}
+
 .activity-icon {
   font-size: 1.5rem;
   min-width: 40px;
@@ -736,6 +745,11 @@
   font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.activity-upcoming .activity-time {
+  color: #a78bfa; /* Purple for upcoming */
+  font-weight: 600;
 }
 
 .activity-title {

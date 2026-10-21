@@ -10,14 +10,14 @@ import { fetchFightHistory } from '../api/fights';
 import { fetchTrainingHistory } from '../api/training';
 import './BoxerProfile.css';
 
-const RecentActivity = ({ boxerId }) => {
+const RecentActivity = ({ boxerId, gameTime }) => {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     loadRecentActivity();
-  }, [boxerId]);
+  }, [boxerId, gameTime]);
 
   const loadRecentActivity = async () => {
     if (!boxerId) {
@@ -45,14 +45,15 @@ const RecentActivity = ({ boxerId }) => {
       const fightActivities = fightsData.map(fight => ({
         type: 'fight',
         id: fight.id,
-        date: fight.fight_date || fight.scheduled_time,
+        date: fight.end_time || fight.scheduled_time,
         title: getFightTitle(fight),
-        description: getFightDescription(fight),
-        icon: getFightIcon(fight.outcome),
-        colorClass: getFightColorClass(fight.outcome),
-        outcome: fight.outcome,
+        description: getFightDescription(fight.data),
+        icon: getFightIcon(fight.winner_id, fight.boxer1_id, fight.boxer2_id, fight.data),
+        colorClass: getFightColorClass(fight.winner_id, fight.boxer1_id, fight.boxer2_id),
+        outcome: deriveOutcome(fight.winner_id, fight.boxer1_id, fight.boxer2_id, fight.status),
         opponentName: fight.opponent_name,
-        rounds: fight.rounds_fought || fight.rounds
+        rounds: fight.round || '?',
+        isScheduled: fight.status === 'scheduled' && !fight.end_time // Scheduled but not completed
       }));
 
       // Transform training into activity format
@@ -81,29 +82,43 @@ const RecentActivity = ({ boxerId }) => {
     }
   };
 
+  // Derive outcome from winner_id and boxer IDs
+  const deriveOutcome = (winnerId, boxer1Id, boxer2Id) => {
+    if (!winnerId) return null;
+    if (winnerId === boxer1Id) return 'win';
+    if (winnerId === boxer2Id) return 'loss';
+    return 'draw';
+  };
+
   // Helper functions for fight activities
-  const getFightIcon = (outcome) => {
-    switch (outcome?.toLowerCase()) {
+  const getFightIcon = (winnerId, boxer1Id, boxer2Id, data) => {
+    const outcome = deriveOutcome(winnerId, boxer1Id, boxer2Id);
+    switch (outcome) {
       case 'win': return '🥊';
       case 'loss': return '☠️';
       case 'draw': return '🤝';
-      default: return '📜';
+      default: return '📅'; // Scheduled/upcoming fight
     }
   };
 
-  const getFightColorClass = (outcome) => {
-    switch (outcome?.toLowerCase()) {
+  const getFightColorClass = (winnerId, boxer1Id, boxer2Id) => {
+    const outcome = deriveOutcome(winnerId, boxer1Id, boxer2Id);
+    switch (outcome) {
       case 'win': return 'bg-activity-win';
       case 'loss': return 'bg-activity-loss';
       case 'draw': return 'bg-activity-draw';
-      default: return 'bg-activity-neutral';
+      default: return 'bg-activity-upcoming';
     }
   };
 
   const getFightTitle = (fight) => {
-    const outcome = fight.outcome?.toLowerCase();
+    const outcome = deriveOutcome(fight.winner_id, fight.boxer1_id, fight.boxer2_id);
     const opponent = fight.opponent_name || 'Opponent';
-    const rounds = fight.rounds_fought || fight.rounds || '?';
+    const rounds = fight.round || '?';
+
+    if (outcome === null && fight.status === 'scheduled') {
+      return `vs "${opponent}"`;
+    }
 
     switch (outcome) {
       case 'win':
@@ -117,11 +132,10 @@ const RecentActivity = ({ boxerId }) => {
     }
   };
 
-  const getFightDescription = (fight) => {
-    // Check for KO in outcome details
-    if (fight.outcome && fight.outcome.toLowerCase().includes('ko')) {
-      const round = fight.knockout_round || fight.rounds_fought;
-      return `KO at Round ${round}`;
+  const getFightDescription = (data) => {
+    // Check for KO in fight data (JSONB field from backend)
+    if (data && data.knockout_round) {
+      return `KO at Round ${data.knockout_round}`;
     }
     return null;
   };
@@ -163,13 +177,32 @@ const RecentActivity = ({ boxerId }) => {
     return null;
   };
 
-  // Format relative time
-  const formatTimeAgo = (dateString) => {
+  // Format relative time using game time for scheduled events
+  const formatTimeAgo = (dateString, isFutureEvent = false) => {
     if (!dateString) return '';
 
-    const now = new Date();
     const date = new Date(dateString);
-    const diffMs = now - date;
+
+    // Use game time if available, otherwise fall back to real time
+    const referenceTime = gameTime ? new Date(gameTime) : new Date();
+
+    // For future events (scheduled fights), show "in X days/hours"
+    if (isFutureEvent && date > referenceTime) {
+      const diffMs = date - referenceTime;
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffDays > 0) {
+        return `in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+      } else if (diffHours > 0) {
+        return `in ${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+      } else {
+        return 'Today';
+      }
+    }
+
+    // For past events, show "X days/hours ago"
+    const diffMs = referenceTime - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -226,12 +259,12 @@ const RecentActivity = ({ boxerId }) => {
         {activities.map((activity, index) => (
           <div
             key={`${activity.type}-${activity.id}`}
-            className={`activity-item ${activity.colorClass || ''}`}
+            className={`activity-item ${activity.colorClass || ''} ${activity.isScheduled ? 'activity-upcoming' : ''}`}
           >
             <div className="activity-icon">{activity.icon}</div>
             <div className="activity-content">
               <div className="activity-header">
-                <span className="activity-time">{formatTimeAgo(activity.date)}</span>
+                <span className="activity-time">{formatTimeAgo(activity.date, activity.isScheduled)}</span>
                 <span className="activity-title">{activity.title}</span>
               </div>
               {activity.description && (

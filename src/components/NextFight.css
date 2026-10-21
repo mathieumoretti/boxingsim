@@ -1,0 +1,195 @@
+/**
+ * NextFight Component Styles (MAT-123)
+ *
+ * Matches the styling of other BoxerProfile sections.
+ */
+
+/* ============================================
+   CARD CONTAINER - matches other sections
+   ============================================ */
+
+.next-fight-section {
+  background: linear-gradient(145deg, rgba(30, 30, 50, 0.8), rgba(20, 20, 40, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: visible;
+}
+
+/* Purple accent bar on left for scheduled fights */
+.next-fight-section::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: 4px;
+  height: calc(100% - 32px);
+  background: #8b5cf6;
+  border-radius: 2px;
+}
+
+/* Red pulsing for imminent fights */
+.next-fight-section.next-fight-imminent {
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.15);
+}
+
+.next-fight-section.next-fight-imminent::before {
+  background: #dc2626;
+  width: 6px;
+}
+
+/* ============================================
+   CONTENT LAYOUT
+   ============================================ */
+
+.next-fight-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.opponent-display {
+  display: flex;
+  align-items: center;
+}
+
+.opponent-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.2;
+}
+
+/* ============================================
+   FIGHT DETAILS ROW
+   ============================================ */
+
+.fight-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rounds-badge {
+  padding: 6px 12px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.schedule-countdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.schedule-date {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   VIEW FIGHT LINK
+   ============================================ */
+
+.view-fight-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  border-radius: 20px;
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-left: auto; /* Push to right */
+}
+
+.view-fight-link:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: #a78bfa;
+  color: #e9d5ff;
+}
+
+.next-fight-imminent .view-fight-link {
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #fecaca;
+}
+
+.next-fight-imminent .view-fight-link:hover {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: #dc2626;
+  color: #fee2e2;
+}
+
+/* ============================================
+   LIVE BADGE
+   ============================================ */
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 12px;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (min-width: 768px) {
+  .next-fight-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .opponent-name {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .next-fight-section {
+    padding: 16px;
+  }
+
+  .opponent-name {
+    font-size: 1.25rem;
+  }
+
+  .fight-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .view-fight-link {
+    margin-left: 0;
+  }
+}
