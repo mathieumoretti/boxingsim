@@ -2,21 +2,19 @@
  * BoxerProfile Styles (MAT-148)
  *
  * Comprehensive styling for boxer profile page and sub-components.
+ * Standard page layout handled by PageLayout component (MAT-152).
  */
 
 /* ============================================
    Main Profile Page Layout
    ============================================ */
 
-.boxer-profile {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-}
+/* Note: .boxer-profile background moved to PageLayout.css for centralized styling */
 
 .boxer-profile-content {
   max-width: 1000px;
   margin: 0 auto;
-  padding: calc(64px + 24px) 20px 40px; /* Account for TopBar */
+  padding: 0 20px 40px;
 }
 
 /* Loading State */
@@ -56,27 +54,6 @@
 .profile-not-found p {
   color: #9ca3af;
   font-size: 1.1rem;
-}
-
-/* Navigation */
-.profile-nav {
-  margin-bottom: 24px;
-}
-
-.back-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fbbf24;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateX(-4px);
 }
 
 /* ============================================
@@ -830,7 +807,7 @@
 
 @media (max-width: 768px) {
   .boxer-profile-content {
-    padding: calc(64px + 16px) 16px 24px;
+    padding: 0 16px 24px;
   }
 
   .header-avatar-section {

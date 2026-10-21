@@ -1,58 +1,9 @@
 /**
- * FightBookingPage - Dedicated page wrapper styles (MAT-145)
+ * FightBookingPage - Page-specific styles (MAT-145)
  *
- * Provides full-page layout for fight booking with navigation header.
- * Follows the same pattern as FightHistoryPage.css (MAT-121).
+ * Contains only booking container and page-specific styling.
+ * Standard page layout handled by PageLayout component (MAT-152).
  */
-
-/* Page Container */
-.fight-booking-page {
-  min-height: 100vh;
-  background-color: #f5f7fa;
-  padding-top: calc(64px + 24px); /* Account for TopBar height + spacing */
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Navigation Header */
-.page-nav {
-  margin-bottom: 24px;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.back-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn:active {
-  transform: translateY(0);
-}
-
-.back-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
 
 /* Booking Container */
 .booking-container {
@@ -340,27 +291,12 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .fight-booking-page {
-    max-width: 95%;
-  }
-
   .booking-container {
     padding: 20px;
   }
 }
 
 @media (max-width: 768px) {
-  .fight-booking-page {
-    padding-top: calc(64px + 16px);
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .back-btn {
-    padding: 8px 16px;
-    font-size: 13px;
-  }
-
   .booking-header h1 {
     font-size: 22px;
   }
@@ -401,12 +337,6 @@
 
 /* Mobile - Extra small screens */
 @media (max-width: 480px) {
-  .fight-booking-page {
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-bottom: 24px;
-  }
-
   .booking-header h1 {
     font-size: 20px;
   }
@@ -422,11 +352,6 @@
 }
 
 /* Accessibility - Focus states */
-.back-btn:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
 .book-fight-btn:focus-visible {
   outline: 2px solid #dc2626;
   outline-offset: 2px;
@@ -439,14 +364,6 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .back-btn {
-    transition: none;
-  }
-
-  .back-btn:hover {
-    transform: none;
-  }
-
   .book-fight-btn {
     transition: none;
   }
@@ -467,11 +384,6 @@
   .booking-actions,
   .filter-controls {
     display: none;
-  }
-
-  .fight-booking-page {
-    padding: 0;
-    background: #fff;
   }
 
   .booking-container {

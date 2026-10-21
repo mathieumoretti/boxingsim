@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './FightBookingPage.css';
+import TopBar from './TopBar';
 import OpponentList from './OpponentList.jsx';
+import PageLayout from './PageLayout';
 import { fetchBestMatch } from '../api/opponents';
 import { bookFight } from '../api/fights';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
-import TopBar from './TopBar.jsx';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 
 /**
@@ -146,65 +147,57 @@ const FightBookingPage = ({ user, onLogout }) => {
     matchValidation.warnings && matchValidation.warnings.length > 0
   );
 
-  const handleBack = () => {
-    navigate('/dashboard');
-  };
-
   // Loading state for boxer data
   if (isLoadingBoxer) {
     return (
-      <div className="fight-booking-page">
-        <TopBar currentUser={currentUser} onLogout={onLogout} />
-        <div className="page-nav">
-          <button className="back-btn" onClick={handleBack}>
-            ← Back to Dashboard
-          </button>
-        </div>
-        <div className="loading-boxer">
-          <div className="loading-spinner"></div>
-          <p>Loading boxer details...</p>
-        </div>
-      </div>
+      <>
+        <TopBar currentUser={user} onLogout={onLogout} />
+        <PageLayout
+          onBack={() => navigate('/dashboard')}
+          backButtonLabel="← Back to Dashboard"
+        >
+          <div className="loading-boxer">
+            <div className="loading-spinner"></div>
+            <p>Loading boxer details...</p>
+          </div>
+        </PageLayout>
+      </>
     );
   }
 
   // Error state for boxer data
   if (boxerError || !boxer) {
     return (
-      <div className="fight-booking-page">
-        <TopBar currentUser={currentUser} onLogout={onLogout} />
-        <div className="page-nav">
-          <button className="back-btn" onClick={handleBack}>
-            ← Back to Dashboard
-          </button>
-        </div>
-        <ErrorDisplay
-          error={boxerError || 'Boxer not found'}
-          onRetry={loadBoxer}
-          title="Failed to Load Boxer"
-          icon={true}
-        />
-      </div>
+      <>
+        <TopBar currentUser={user} onLogout={onLogout} />
+        <PageLayout
+          onBack={() => navigate('/dashboard')}
+          backButtonLabel="← Back to Dashboard"
+        >
+          <ErrorDisplay
+            error={boxerError || 'Boxer not found'}
+            onRetry={loadBoxer}
+            title="Failed to Load Boxer"
+            icon={true}
+          />
+        </PageLayout>
+      </>
     );
   }
 
   return (
-    <div className="fight-booking-page">
-      <TopBar currentUser={currentUser} onLogout={onLogout} />
-
-      {/* Navigation Header */}
-      <div className="page-nav">
-        <button className="back-btn" onClick={handleBack}>
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <div className="booking-container">
-        {/* Header */}
-        <div className="booking-header">
-          <h1>Book a Fight for {boxer.name}</h1>
-        </div>
+    <>
+      <TopBar currentUser={user} onLogout={onLogout} />
+      <PageLayout
+        onBack={() => navigate('/dashboard')}
+        backButtonLabel="← Back to Dashboard"
+      >
+        {/* Main Content */}
+        <div className="booking-container">
+          {/* Header */}
+          <div className="booking-header">
+            <h1>Book a Fight for {boxer.name}</h1>
+          </div>
 
         {/* Boxer Summary */}
         <div className="boxer-summary">
@@ -306,7 +299,8 @@ const FightBookingPage = ({ user, onLogout }) => {
           </button>
         </div>
       </div>
-    </div>
+      </PageLayout>
+    </>
   );
 };
 

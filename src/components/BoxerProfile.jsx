@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import TopBar from './TopBar';
+import PageLayout from './PageLayout';
 import BoxerHeader from './BoxerHeader';
 import CareerRecord from './CareerRecord';
 import StatsOverview from './StatsOverview';
@@ -108,20 +109,18 @@ const BoxerProfile = ({ user, onLogout }) => {
     }
   };
 
-  const handleBack = () => {
-    navigate('/dashboard');
-  };
-
   if (isLoading) {
     return (
       <div className="boxer-profile">
         <TopBar currentUser={user} onLogout={onLogout} />
-        <main className="boxer-profile-content">
-          <div className="profile-loading">
-            <div className="loading-spinner"></div>
-            <p>Loading boxer profile...</p>
+        <PageLayout>
+          <div className="boxer-profile-content">
+            <div className="profile-loading">
+              <div className="loading-spinner"></div>
+              <p>Loading boxer profile...</p>
+            </div>
           </div>
-        </main>
+        </PageLayout>
       </div>
     );
   }
@@ -130,19 +129,16 @@ const BoxerProfile = ({ user, onLogout }) => {
     return (
       <div className="boxer-profile">
         <TopBar currentUser={user} onLogout={onLogout} />
-        <main className="boxer-profile-content">
+        <PageLayout
+          onBack={() => navigate('/dashboard')}
+        >
           <ErrorDisplay
             error={error}
             variant="alert"
             title="Failed to Load Profile"
             icon={true}
           />
-          <div className="profile-actions-error">
-            <button onClick={handleBack} className="back-btn">
-              ← Back to Dashboard
-            </button>
-          </div>
-        </main>
+        </PageLayout>
       </div>
     );
   }
@@ -151,15 +147,16 @@ const BoxerProfile = ({ user, onLogout }) => {
     return (
       <div className="boxer-profile">
         <TopBar currentUser={user} onLogout={onLogout} />
-        <main className="boxer-profile-content">
-          <div className="profile-not-found">
-            <h2>Boxer Not Found</h2>
-            <p>The boxer you're looking for doesn't exist.</p>
+        <PageLayout
+          onBack={() => navigate('/dashboard')}
+        >
+          <div className="boxer-profile-content">
+            <div className="profile-not-found">
+              <h2>Boxer Not Found</h2>
+              <p>The boxer you're looking for doesn't exist.</p>
+            </div>
           </div>
-          <button onClick={handleBack} className="back-btn">
-            ← Back to Dashboard
-          </button>
-        </main>
+        </PageLayout>
       </div>
     );
   }
@@ -167,46 +164,42 @@ const BoxerProfile = ({ user, onLogout }) => {
   return (
     <div className="boxer-profile">
       <TopBar currentUser={user} onLogout={onLogout} />
+      <PageLayout
+        onBack={() => navigate('/dashboard')}
+      >
+        <div className="boxer-profile-content">
+          {/* Boxer Header - Avatar, Name, Level, XP */}
+          <BoxerHeader boxer={boxer} />
 
-      <main className="boxer-profile-content">
-        {/* Navigation Header */}
-        <div className="profile-nav">
-          <button onClick={handleBack} className="back-btn" aria-label="Back to dashboard">
-            ← Back to Dashboard
-          </button>
+          {/* Career Record - W/L/D/KO */}
+          <CareerRecord boxer={boxer} />
+
+          {/* Next Fight Card (only shows when there's an upcoming fight) */}
+          <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+
+          {/* Stats Overview - STR/DEF/AGI */}
+          <StatsOverview boxer={boxer} />
+
+          {/* Current Status - Health/Energy/Fatigue */}
+          <CurrentStatus boxer={boxer} worldTime={worldTime} />
+
+          {/* Recent Activity Timeline */}
+          <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+
+          {/* Action Buttons */}
+          <div className="profile-actions">
+            <Link to={`/boxer/${boxer.id}/fights`} className="action-btn action-primary">
+              📜 View Fight History
+            </Link>
+            <Link to={`/boxer/${boxer.id}/train`} className="action-btn action-secondary">
+              🏋️ Train Boxer
+            </Link>
+            <Link to={`/boxer/${boxer.id}/book-fight`} className="action-btn action-accent">
+              🥊 Book Fight
+            </Link>
+          </div>
         </div>
-
-        {/* Boxer Header - Avatar, Name, Level, XP */}
-        <BoxerHeader boxer={boxer} />
-
-        {/* Career Record - W/L/D/KO */}
-        <CareerRecord boxer={boxer} />
-
-        {/* Next Fight Card (only shows when there's an upcoming fight) */}
-        <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
-
-        {/* Stats Overview - STR/DEF/AGI */}
-        <StatsOverview boxer={boxer} />
-
-        {/* Current Status - Health/Energy/Fatigue */}
-        <CurrentStatus boxer={boxer} worldTime={worldTime} />
-
-        {/* Recent Activity Timeline */}
-        <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
-
-        {/* Action Buttons */}
-        <div className="profile-actions">
-          <Link to={`/boxer/${boxer.id}/fights`} className="action-btn action-primary">
-            📜 View Fight History
-          </Link>
-          <Link to={`/boxer/${boxer.id}/train`} className="action-btn action-secondary">
-            🏋️ Train Boxer
-          </Link>
-          <Link to={`/boxer/${boxer.id}/book-fight`} className="action-btn action-accent">
-            🥊 Book Fight
-          </Link>
-        </div>
-      </main>
+      </PageLayout>
     </div>
   );
 };

@@ -1,0 +1,108 @@
+/* src/components/PageLayout.css */
+
+/**
+ * PageLayout - Standardized page wrapper styling
+ *
+ * Provides consistent layout structure for dedicated pages with:
+ * - TopBar height compensation
+ * - Max-width container
+ * - Back button navigation
+ * - Responsive breakpoints
+ *
+ * @see MAT-152: https://linear.app/mathieu-moretti/issue/MAT-152/page-layout-wrapper-component
+ */
+
+/* Main Layout Container */
+.page-layout {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding-top: calc(64px + 24px); /* TopBar height + spacing */
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page-Specific Background Overrides */
+/* BoxerProfile navy blue gradient background */
+.boxer-profile {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+/* TrainingPage navy blue gradient background */
+.training-page {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Navigation Bar */
+.page-nav {
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.back-btn:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.back-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Content Wrapper */
+.page-content {
+  /* Inherit layout from page-layout */
+}
+
+/* Responsive Breakpoints - Tablet */
+@media (max-width: 1024px) {
+  .page-layout {
+    max-width: 95%;
+  }
+}
+
+/* Responsive Breakpoints - Mobile */
+@media (max-width: 768px) {
+  .page-layout {
+    padding-top: calc(64px + 16px);
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .back-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Responsive Breakpoints - Small Mobile */
+@media (max-width: 480px) {
+  .page-layout {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 24px;
+  }
+}

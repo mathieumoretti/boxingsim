@@ -1,29 +1,13 @@
-/* Training Page - Dedicated page for boxer training management (MAT-147) */
+/* Training Page - Dedicated page for boxer training management (MAT-147)
+ * Standard page layout handled by PageLayout component (MAT-152).
+ */
 
-.training-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  padding-top: calc(64px + 24px); /* Account for TopBar height + spacing */
-}
+/* Note: .training-page background moved to PageLayout.css for centralized styling */
 
 .training-page-content {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px 48px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
 }
 
 /* Energy Status Section */
@@ -143,38 +127,10 @@
   font-size: 1.125rem;
 }
 
-/* Back Button */
-.back-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #a0aec0;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.9375rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .training-page-content {
     padding: 0 16px 32px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .page-header h1 {
-    font-size: 1.75rem;
   }
 
   .energy-status-section,
