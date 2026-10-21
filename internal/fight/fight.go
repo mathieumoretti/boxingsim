@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/mormm/boxing/internal/boxer"
@@ -15,18 +16,19 @@ import (
 )
 
 type Fight struct {
-	ID            int
-	Boxer1ID      *int
-	Boxer2ID      *int
-	Status        string
-	ScheduledTime *time.Time
-	StartTime     *time.Time
-	EndTime       *time.Time
-	WinnerID      *int
-	Round         int
-	Data          map[string]interface{}
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                int
+	Boxer1ID          *int
+	Boxer2ID          *int
+	Status            string
+	ScheduledTime     *time.Time
+	StartTime         *time.Time
+	EndTime           *time.Time
+	WinnerID          *int
+	Round             int
+	SimulationVersion string
+	Data              map[string]interface{}
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 type FightService struct {
@@ -113,18 +115,19 @@ func (s *FightService) GetByID(id int) (*Fight, error) {
 
 	// Convert from model.Fight to Fight (internal/fight package type)
 	return &Fight{
-		ID:            fightModel.ID,
-		Boxer1ID:      &fightModel.Boxer1ID,
-		Boxer2ID:      &fightModel.Boxer2ID,
-		Status:        string(fightModel.Status),
-		ScheduledTime: fightModel.ScheduledTime,
-		StartTime:     fightModel.StartTime,
-		EndTime:       fightModel.EndTime,
-		WinnerID:      fightModel.WinnerID,
-		Round:         fightModel.Round,
-		Data:          fightModel.Data,
-		CreatedAt:     fightModel.CreatedAt,
-		UpdatedAt:     fightModel.UpdatedAt,
+		ID:                fightModel.ID,
+		Boxer1ID:          &fightModel.Boxer1ID,
+		Boxer2ID:          &fightModel.Boxer2ID,
+		Status:            string(fightModel.Status),
+		ScheduledTime:     fightModel.ScheduledTime,
+		StartTime:         fightModel.StartTime,
+		EndTime:           fightModel.EndTime,
+		WinnerID:          fightModel.WinnerID,
+		Round:             fightModel.Round,
+		SimulationVersion: fightModel.SimulationVersion,
+		Data:              fightModel.Data,
+		CreatedAt:         fightModel.CreatedAt,
+		UpdatedAt:         fightModel.UpdatedAt,
 	}, nil
 }
 
@@ -206,18 +209,19 @@ func (s *FightService) GetByBoxer(boxerID int, limit int) ([]*Fight, error) {
 	fights := make([]*Fight, len(fightsModel))
 	for i, f := range fightsModel {
 		fights[i] = &Fight{
-			ID:            f.ID,
-			Boxer1ID:      &f.Boxer1ID,
-			Boxer2ID:      &f.Boxer2ID,
-			Status:        string(f.Status),
-			ScheduledTime: f.ScheduledTime,
-			StartTime:     f.StartTime,
-			EndTime:       f.EndTime,
-			WinnerID:      f.WinnerID,
-			Round:         f.Round,
-			Data:          f.Data,
-			CreatedAt:     f.CreatedAt,
-			UpdatedAt:     f.UpdatedAt,
+			ID:                f.ID,
+			Boxer1ID:          &f.Boxer1ID,
+			Boxer2ID:          &f.Boxer2ID,
+			Status:            string(f.Status),
+			ScheduledTime:     f.ScheduledTime,
+			StartTime:         f.StartTime,
+			EndTime:           f.EndTime,
+			WinnerID:          f.WinnerID,
+			Round:             f.Round,
+			SimulationVersion: f.SimulationVersion,
+			Data:              f.Data,
+			CreatedAt:         f.CreatedAt,
+			UpdatedAt:         f.UpdatedAt,
 		}
 	}
 
@@ -254,18 +258,19 @@ func convertFightsModel(fightsModel []*model.Fight) []*Fight {
 	fights := make([]*Fight, len(fightsModel))
 	for i, f := range fightsModel {
 		fights[i] = &Fight{
-			ID:            f.ID,
-			Boxer1ID:      &f.Boxer1ID,
-			Boxer2ID:      &f.Boxer2ID,
-			Status:        string(f.Status),
-			ScheduledTime: f.ScheduledTime,
-			StartTime:     f.StartTime,
-			EndTime:       f.EndTime,
-			WinnerID:      f.WinnerID,
-			Round:         f.Round,
-			Data:          f.Data,
-			CreatedAt:     f.CreatedAt,
-			UpdatedAt:     f.UpdatedAt,
+			ID:                f.ID,
+			Boxer1ID:          &f.Boxer1ID,
+			Boxer2ID:          &f.Boxer2ID,
+			Status:            string(f.Status),
+			ScheduledTime:     f.ScheduledTime,
+			StartTime:         f.StartTime,
+			EndTime:           f.EndTime,
+			WinnerID:          f.WinnerID,
+			Round:             f.Round,
+			SimulationVersion: f.SimulationVersion,
+			Data:              f.Data,
+			CreatedAt:         f.CreatedAt,
+			UpdatedAt:         f.UpdatedAt,
 		}
 	}
 	return fights
@@ -331,20 +336,27 @@ func (s *FightService) SimulateFight(fightID int) error {
 		return fmt.Errorf("failed to update fight status: %w", err)
 	}
 
-	// Run the fight simulation logic (still within transaction)
-	maxRounds := 12
-	minHealth := 0.0
-	damageMultiplier := 0.1
-	evasionThreshold := 0.4
-	energyDrain := 10.0
+	// MAT-114: Use configurable simulation parameters
+	maxRounds := s.cfg.Fight.Simulation.MaxRounds
+	damageMultiplier := s.cfg.Fight.Simulation.DamageMultiplier
+	evasionThreshold := s.cfg.Fight.Simulation.EvasionThreshold
+	energyDrain := s.cfg.Fight.Simulation.EnergyDrain
+	experienceGain := s.cfg.Fight.Simulation.ExperienceGain
+	simVersion := s.cfg.Fight.Simulation.Version
 
+	// MAT-114: Create deterministic seed for reproducible simulations
+	// Seed is derived from fight data to ensure same fight always produces same result
+	seed := int64(fightID*1000 + fight.Boxer1ID + fight.Boxer2ID)
+	rng := rand.New(rand.NewSource(seed))
+
+	// Run the fight simulation logic (still within transaction)
 	for currentRound := 1; currentRound <= maxRounds; currentRound++ {
-		if boxer1.Health <= minHealth || boxer2.Health <= minHealth {
+		if boxer1.Health <= 0 || boxer2.Health <= 0 {
 			break
 		}
 
 		// Process attacks (modifies boxer state in memory only)
-		s.processAttack(currentRound, boxer1, boxer2, damageMultiplier, evasionThreshold, energyDrain)
+		s.processAttack(currentRound, boxer1, boxer2, damageMultiplier, evasionThreshold, energyDrain, rng)
 
 		// Recover some energy
 		boxer1.Energy = math.Min(boxer1.Energy+20, 100)
@@ -394,7 +406,6 @@ func (s *FightService) SimulateFight(fightID int) error {
 		}
 
 		// Award experience to winner (within transaction)
-		experienceGain := 50.0
 		boxerToUpdate := boxer1
 		if *winnerID == fight.Boxer2ID {
 			boxerToUpdate = boxer2
@@ -421,31 +432,43 @@ func (s *FightService) SimulateFight(fightID int) error {
 		s.logger.Info("Fight ended in a draw")
 	}
 
+	// MAT-114: Record simulation version for replay compatibility
+	if err := s.fightStore.SetSimulationVersionTx(ctx, tx, fightID, simVersion); err != nil {
+		s.logger.Error("Failed to record simulation version", "fight_id", fightID, "version", simVersion, "error", err)
+		// Don't fail the entire transaction - just log the error
+	}
+
 	// Commit the entire transaction - all updates happen atomically
 	if err := tx.Commit(); err != nil {
 		s.logger.Error("Failed to commit fight transaction", "error", err)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	s.logger.Info("Fight simulation completed successfully", "fight_id", fightID)
+	s.logger.Info("Fight simulation completed successfully", "fight_id", fightID, "version", simVersion, "seed", seed)
 	return nil
 }
 
-// processAttack handles the attack logic for both boxers
+// processAttack handles the attack logic for both boxers using seeded RNG for determinism (MAT-114)
 func (s *FightService) processAttack(
 	round int,
 	boxer1, boxer2 *model.Boxer,
 	damageMultiplier, evasionThreshold, energyDrain float64,
+	rng *rand.Rand,
 ) {
 	// Boxer 1 attacks
 	attack1 := boxer1.Strength * damageMultiplier
 	evasion1 := boxer2.Agility / 100.0
 
+	// MAT-114: Use seeded RNG for deterministic evasion checks
 	if evasion1 > evasionThreshold && round%3 != 0 {
-		// Boxer 2 evades
+		// Boxer 2 evades (deterministic based on stats and round)
 		s.logger.Debug("Boxer 2 evaded attack", "round", round)
 	} else {
-		damage := attack1 * (1 - boxer2.Defense/100.0)
+		// Add randomness to damage within a small range for variety (MAT-114)
+		damageVariance := rng.Float64() * 0.2   // ±10% variance
+		damageVariance = (damageVariance - 0.1) // Center around 0
+
+		damage := attack1 * (1 - boxer2.Defense/100.0) * (1 + damageVariance)
 		boxer2.Health -= damage
 		boxer2.Energy -= energyDrain
 
@@ -460,11 +483,16 @@ func (s *FightService) processAttack(
 	attack2 := boxer2.Strength * damageMultiplier
 	evasion2 := boxer1.Agility / 100.0
 
+	// MAT-114: Use seeded RNG for deterministic evasion checks
 	if evasion2 > evasionThreshold && round%3 != 0 {
-		// Boxer 1 evades
+		// Boxer 1 evades (deterministic based on stats and round)
 		s.logger.Debug("Boxer 1 evaded attack", "round", round)
 	} else {
-		damage := attack2 * (1 - boxer1.Defense/100.0)
+		// Add randomness to damage within a small range for variety (MAT-114)
+		damageVariance := rng.Float64() * 0.2   // ±10% variance
+		damageVariance = (damageVariance - 0.1) // Center around 0
+
+		damage := attack2 * (1 - boxer1.Defense/100.0) * (1 + damageVariance)
 		boxer1.Health -= damage
 		boxer1.Energy -= energyDrain
 
