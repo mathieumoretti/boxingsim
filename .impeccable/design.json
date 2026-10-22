@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "colors": {
+    "primary": {
+      "main": "#3b82f6",
+      "light": "#60a5fa",
+      "dark": "#2563eb"
+    },
+    "navy": {
+      "dark": "#0f0f23",
+      "medium": "#1a1a2e",
+      "light": "#16213e"
+    },
+    "success": {
+      "main": "#10b981",
+      "light": "#34d399"
+    },
+    "danger": {
+      "main": "#ef4444",
+      "dark": "#dc2626"
+    },
+    "warning": {
+      "main": "#f59e0b",
+      "dark": "#d97706"
+    },
+    "victory": {
+      "gold": "#ffd700",
+      "light": "#ffed4e"
+    },
+    "neutral": {
+      "gray-100": "#f5f7fa",
+      "gray-200": "#f5f5f5",
+      "gray-300": "#d1d5db",
+      "gray-600": "#718096",
+      "gray-700": "#4a5568"
+    },
+    "stats": {
+      "strength": "#ef4444",
+      "defense": "#3b82f6",
+      "agility": "#eab308",
+      "health": "#10b981",
+      "energy": "#eab308"
+    }
+  },
+  "typography": {
+    "fontFamily": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    "scale": {
+      "xs": "0.65rem",
+      "sm": "0.875rem",
+      "md": "1rem",
+      "lg": "1.25rem",
+      "xl": "1.5rem",
+      "xxl": "2rem"
+    },
+    "weights": [400, 500, 600, 700, 800],
+    "lineHeight": {
+      "tight": "1.2",
+      "normal": "1.6"
+    }
+  },
+  "spacing": {
+    "unit": "4px",
+    "scale": [4, 8, 12, 16, 20, 24, 32, 40, 48]
+  },
+  "rounded": {
+    "values": [6, 8, 10, 12, 16, 20],
+    "unit": "px"
+  },
+  "shadows": {
+    "subtle": "0 1px 3px rgba(0,0,0,0.1)",
+    "card": "0 4px 20px rgba(0,0,0,0.08)",
+    "elevated": "0 8px 30px rgba(0,0,0,0.12)",
+    "glowRed": "0 0 10px rgba(239,68,68,0.5)",
+    "glowBlue": "0 0 10px rgba(59,130,246,0.5)",
+    "glowGold": "0 0 10px rgba(234,179,8,0.5)"
+  },
+  "breakpoints": {
+    "mobile": "480px",
+    "tablet": "768px",
+    "desktop": "1024px"
+  },
+  "components": {
+    "button": {
+      "variants": ["primary", "secondary", "danger"]
+    },
+    "badge": {
+      "variants": ["level-1", "level-2", "level-3", "level-4", "level-5", "training"],
+      "levelColors": {
+        "level-1": {"from": "#718096", "to": "#4a5568"},
+        "level-2": {"from": "#38b2ac", "to": "#319795"},
+        "level-3": {"from": "#dd6b20", "to": "#c05621"},
+        "level-4": {"from": "#805ad5", "to": "#704ada"},
+        "level-5": {"from": "#d69e2e", "to": "#fbbf24"}
+      }
+    },
+    "card": {
+      "variants": ["default", "profile", "fight-details", "comparison"]
+    }
+  },
+  "creativeNorthStar": "Professional Boxing Management Dashboard",
+  "mode": "Operate",
+  "aestheticVoice": ["refined", "precise", "open-minded", "efficient", "eye-opening"],
+  "evidenceSource": "Scanned 26 CSS files (~5000+ lines) from src/components/ including PageLayout.css, BoxerCard.css, BoxerProfile.css, FightDetails.css, Dashboard.css, TrainingPage.css"
+}

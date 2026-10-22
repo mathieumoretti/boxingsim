@@ -10,18 +10,18 @@
    BOXER SECTION
    ======================================== */
 .dashboard-content {
-  padding: 24px 30px calc(80px + env(safe-area-inset-bottom, 0));
+  padding: 24px 24px calc(80px + env(safe-area-inset-bottom, 0));
   max-width: 1400px;
 }
 
 .boxer-section {
   background-color: rgba(255, 255, 255, 0.7); /* softer card feel without box-shadow/borders */
-  padding: 28px;
+  padding: 24px;
   border-radius: 16px;
 }
 
 .boxer-section h2 {
-  font-size: 20px;
+  font-size: 1.25rem;
   color: #344054; /* slate-700 equivalent (softer than pure black) */
   margin-bottom: 24px;
   letter-spacing: -0.2px;
@@ -35,20 +35,20 @@
 }
 
 .create-boxer-btn {
-  background-color: rgba(59, 130, 246, 1); /* blue-500 base for button (no gradient needed) */
+  background-color: #3b82f6; /* primary blue */
   color: #ffffff;
   border: none;
-  padding: 12px 28px;
+  padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: -0.25px; /* tighter fit for button text */
+  letter-spacing: -0.25px;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .create-boxer-btn:hover {
-  background-color: rgba(37, 99, 235, 1); /* blue-600 hover */
+  background-color: #2563eb; /* primary dark hover */
   transform: translateY(-2px);
 }
 
@@ -61,20 +61,20 @@
 
 /* Development control button for training panel */
 .dev-control-btn {
-  background-color: rgba(107, 114, 128, 0.9); /* slate-500 base */
+  background-color: #64748b; /* slate-500 neutral */
   color: #ffffff;
   border: none;
   padding: 12px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: -0.25px;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .dev-control-btn:hover {
-  background-color: rgba(71, 85, 105, 1); /* slate-600 hover */
+  background-color: #475569; /* slate-600 hover */
   transform: translateY(-2px);
 }
 
@@ -83,8 +83,8 @@
    ======================================== */
 .boxers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(315px, 340px)); /* wider minimum for new card width */
-  row-gap: 28px; /* increased vertical spacing to account for shadows without overlap */
+  grid-template-columns: repeat(auto-fill, minmax(315px, 340px));
+  row-gap: 24px;
 }
 
 /* ========================================
@@ -94,7 +94,7 @@
   text-align: center;
   padding: 40px;
   color: #374151;
-  font-size: 16px;
+  font-size: 1rem;
   border-radius: 8px;
 }
 
@@ -214,7 +214,7 @@
    ======================================== */
 .boxers-empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 48px 16px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 16px;
   border: 2px dashed #cbd5e0;
@@ -228,33 +228,33 @@
 
 .boxers-empty-state h3 {
   margin: 0 0 8px 0;
-  font-size: 20px;
+  font-size: 1.25rem;
   color: #344054;
   font-weight: 600;
 }
 
 .boxers-empty-state p {
   margin: 0 0 20px 0;
-  font-size: 15px;
+  font-size: 0.875rem;
   color: #64748b;
 }
 
 .empty-state-cta {
   display: inline-block;
-  background-color: rgba(59, 130, 246, 1);
+  background-color: #3b82f6;
   color: #ffffff;
   border: none;
-  padding: 12px 28px;
+  padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .empty-state-cta:hover {
-  background-color: rgba(37, 99, 235, 1);
+  background-color: #2563eb;
   transform: translateY(-2px);
 }
 

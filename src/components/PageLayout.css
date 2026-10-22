@@ -39,6 +39,13 @@
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
+/* FightBookingPage navy blue gradient background */
+.fight-booking-page {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
 /* Navigation Bar */
 .page-nav {
   margin-bottom: 24px;
@@ -53,7 +60,7 @@
   color: #374151;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -70,6 +77,24 @@
 .back-btn:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+/* Dark mode variants for navy background pages */
+.boxer-profile .back-btn,
+.training-page .back-btn,
+.fight-booking-page .back-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.boxer-profile .back-btn:hover,
+.training-page .back-btn:hover,
+.fight-booking-page .back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Content Wrapper */

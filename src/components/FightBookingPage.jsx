@@ -189,6 +189,7 @@ const FightBookingPage = ({ user, onLogout }) => {
     <>
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
+        variant="fight-booking-page"
         onBack={() => navigate('/dashboard')}
         backButtonLabel="← Back to Dashboard"
       >
