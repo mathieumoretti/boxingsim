@@ -1,85 +1,143 @@
 /**
- * FightBookingPage - Page-specific styles (MAT-145)
+ * FightBookingPage - Boxing Arena Redesign
  *
- * Contains only booking container and page-specific styling.
- * Standard page layout handled by PageLayout component (MAT-152).
+ * Dramatic fight night aesthetic with theatrical lighting effects,
+ * ring-inspired visual language, and high-contrast boxing poster energy.
  */
 
-/* Booking Container */
+/* ========================================
+   ROOT VARIABLES - Arena Color System
+   Navy-aligned with TopBar aesthetic
+   ======================================== */
+:root {
+  /* Navy family from TopBar (#1a1a2e → #16213e) */
+  --arena-navy-dark: #0f0f23;
+  --arena-navy-medium: #1a1a2e;
+  --arena-navy-light: #16213e;
+  --arena-charcoal: #151520;
+
+  /* Fight Night Accents */
+  --fight-red: #dc2626;
+  --fight-red-bright: #ef4444;
+  --fight-red-dark: #991b1b;
+
+  --spotlight-gold: #fbbf24;
+  --spotlight-gold-dim: #f59e0b;
+
+  --rope-white: #f5f7fa;
+
+  /* Gradients */
+  --gradient-ring-dark: linear-gradient(180deg, var(--arena-navy-dark) 0%, var(--arena-charcoal) 50%, var(--arena-navy-dark) 100%);
+  --gradient-fight-night: linear-gradient(135deg, #2a0a0a 0%, #1a1a1a 50%, #2a0a0a 100%);
+  --gradient-spotlight: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
+
+  /* Shadows & Glows */
+  --shadow-dramatic: 0 8px 40px rgba(0, 0, 0, 0.6);
+  --glow-red: 0 0 20px rgba(220, 38, 38, 0.6);
+  --glow-gold: 0 0 20px rgba(251, 191, 36, 0.5);
+
+  /* Border colors */
+  --border-gray: #2a2a40;
+}
+
+/* ========================================
+   BOOKING CONTAINER - The Arena Stage
+   ======================================== */
 .booking-container {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, var(--arena-navy-medium) 0%, var(--arena-charcoal) 50%, var(--arena-navy-medium) 100%);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow-dramatic);
+  border: 1px solid var(--border-gray);
+  position: relative;
 }
 
-/* Booking Header */
-.booking-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e5e7eb;
+.booking-container > * {
+  position: relative;
+  z-index: 1;
 }
 
-.booking-header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin: 0;
-}
-
-/* Boxer Summary */
+/* ========================================
+   BOXER SUMMARY - Fighter Card Display (Header)
+   ======================================== */
 .boxer-summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: #f8f9fa;
-  border-radius: 12px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, var(--arena-navy-dark) 0%, var(--arena-charcoal) 100%);
+  border-radius: 10px;
   margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-gray);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .boxer-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .boxer-info .label {
-  font-size: 0.85rem;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: 0.7rem;
+  color: var(--spotlight-gold-dim);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .boxer-info .value {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--rope-white);
+  letter-spacing: 0.02em;
 }
 
-.boxer-stats-preview {
+.boxer-meta {
   display: flex;
-  gap: 12px;
-  font-size: 0.875rem;
-  color: #4b5563;
+  align-items: center;
+  gap: 16px;
 }
 
-.boxer-stats-preview span {
-  background: #fff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.level-badge {
+  background: linear-gradient(135deg, var(--spotlight-gold) 0%, var(--spotlight-gold-dim) 100%);
+  color: var(--arena-navy-dark);
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stats-mini {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
-/* Filter Controls */
+.stats-mini span {
+  padding: 4px 10px;
+  background: var(--arena-navy-dark);
+  border: 1px solid var(--border-gray);
+  border-radius: 4px;
+  color: var(--rope-white);
+}
+
+.stats-mini span:first-child { color: var(--fight-red-bright); }
+.stats-mini span:nth-child(2) { color: #60a5fa; }
+.stats-mini span:last-child { color: var(--spotlight-gold); }
+
+/* ========================================
+   FILTER CONTROLS - Matchmaker Panel
+   ======================================== */
 .filter-controls {
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 12px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--arena-navy-dark) 0%, var(--arena-charcoal) 100%);
+  border-radius: 10px;
   margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-gray);
 }
 
 .filter-group {
@@ -88,17 +146,19 @@
 
 .filter-group label {
   display: block;
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
+  color: var(--spotlight-gold-dim);
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .level-range-slider {
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: #d1d5db;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--arena-navy-dark);
   outline: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -109,29 +169,30 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--fight-red-bright) 0%, var(--fight-red) 100%);
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+  border: 2px solid var(--arena-charcoal);
 }
 
 .level-range-slider::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--fight-red-bright) 0%, var(--fight-red) 100%);
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+  border: 2px solid var(--arena-charcoal);
 }
 
 .slider-markers {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 6px;
+  font-size: 0.7rem;
+  color: var(--spotlight-gold-dim);
+  margin-top: 8px;
   font-weight: 500;
+  letter-spacing: 0.03em;
 }
 
 /* Filter Toggles */
@@ -139,81 +200,113 @@
   display: flex;
   gap: 24px;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-gray);
 }
 
 .toggle-checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #374151;
+  font-size: 0.85rem;
+  color: var(--rope-white);
   padding: 4px 0;
+  transition: color 0.2s ease;
+}
+
+.toggle-checkbox:hover {
+  color: var(--spotlight-gold);
 }
 
 .toggle-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: var(--fight-red-bright);
+  border: 2px solid var(--border-gray);
+  border-radius: 4px;
 }
 
 .toggle-label {
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
-/* Opponent Section */
+/* ========================================
+   OPPONENT SECTION - Card Room
+   ======================================== */
 .opponent-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-/* Match Validation Warnings */
+/* ========================================
+   MATCH VALIDATION WARNINGS - Concern Alert
+   ======================================== */
 .match-validation-warnings {
-  padding: 16px 20px;
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid var(--spotlight-gold-dim);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  box-shadow: inset 0 0 20px rgba(251, 191, 36, 0.05);
 }
 
 .match-validation-warnings h4 {
-  margin: 0 0 8px;
-  font-size: 0.95rem;
-  color: #d97706;
-  font-weight: 600;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: var(--spotlight-gold);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .match-validation-warnings ul {
   margin: 0;
   padding-left: 20px;
-  font-size: 0.875rem;
-  color: #92400e;
+  font-size: 0.85rem;
+  color: #fef3c7;
 }
 
 .match-validation-warnings li {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
-/* Booking Actions */
+/* ========================================
+   BOOKING ACTIONS - Final Bell Control
+   ======================================== */
 .booking-actions {
-  padding: 20px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border-top: 2px solid #e5e7eb;
-  margin-top: 20px;
+  padding: 24px 28px;
+  background: var(--gradient-fight-night);
+  border-radius: 10px;
+  margin-top: 28px;
+  box-shadow: var(--shadow-dramatic);
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-actions::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--fight-red-bright), var(--fight-red), var(--fight-red-bright), transparent);
 }
 
 .selection-summary {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #4b5563;
-  padding: 12px;
-  background: #fff;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: var(--rope-white);
+  padding: 14px 18px;
+  background: var(--arena-charcoal);
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-gray);
+  letter-spacing: 0.02em;
 }
 
 .selection-summary span {
@@ -221,62 +314,93 @@
 }
 
 .selection-summary strong {
-  color: #1f2937;
+  color: var(--spotlight-gold);
   font-weight: 700;
 }
 
-/* Book Fight Button */
+/* ========================================
+   BOOK FIGHT BUTTON - The Bell
+   ======================================== */
 .book-fight-btn {
   width: 100%;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: #fff;
+  padding: 18px 28px;
+  background: linear-gradient(135deg, var(--fight-red-bright) 0%, var(--fight-red) 50%, var(--fight-red-dark) 100%);
+  color: var(--rope-white);
   border: none;
-  border-radius: 10px;
-  font-size: 1.125rem;
-  font-weight: 700;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: var(--glow-red),
+    0 6px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.book-fight-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+}
+
+.book-fight-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .book-fight-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+  background: linear-gradient(135deg, #ff4444 0%, var(--fight-red-bright) 50%, var(--fight-red) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.8),
+    0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 .book-fight-btn:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(-1px);
 }
 
 .book-fight-btn:disabled {
-  background: #d1d5db;
+  background: var(--border-gray);
+  color: #6b7280;
   cursor: not-allowed;
   box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* Loading Boxer State */
+/* ========================================
+   LOADING BOXER STATE - Ring Waiting
+   ======================================== */
 .loading-boxer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  background: #fff;
+  padding: 80px 20px;
+  background: linear-gradient(180deg, var(--arena-navy-medium) 0%, var(--arena-charcoal) 50%, var(--arena-navy-medium) 100%);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-dramatic);
+  border: 1px solid var(--border-gray);
 }
 
 .loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  width: 64px;
+  height: 64px;
+  border: 4px solid var(--border-gray);
+  border-top-color: var(--fight-red-bright);
+  border-right-color: var(--spotlight-gold);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 20px;
+  box-shadow: var(--glow-red),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes spin {
@@ -284,27 +408,43 @@
 }
 
 .loading-boxer p {
-  color: #6b7280;
+  color: var(--spotlight-gold-dim);
   font-size: 1rem;
   margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* Responsive Design */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
 @media (max-width: 1024px) {
   .booking-container {
-    padding: 20px;
+    padding: 24px;
+  }
+
+  .booking-header h1 {
+    font-size: 1.75rem;
   }
 }
 
 @media (max-width: 768px) {
   .booking-header h1 {
-    font-size: 22px;
+    font-size: 1.5rem;
   }
 
-  .boxing-summary {
+  .booking-header h1::before,
+  .booking-header h1::after {
+    margin: 0 12px;
+    font-size: 1.2rem;
+  }
+
+  .boxer-summary {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
+    padding: 18px 20px;
   }
 
   .boxer-stats-preview {
@@ -320,65 +460,87 @@
 
   .selection-summary {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .booking-container {
-    padding: 16px;
+    padding: 20px;
   }
 
   .boxer-summary,
   .filter-controls,
   .match-validation-warnings,
   .booking-actions {
-    padding: 16px;
+    padding: 18px 20px;
   }
 }
 
 /* Mobile - Extra small screens */
 @media (max-width: 480px) {
   .booking-header h1 {
-    font-size: 20px;
+    font-size: 1.3rem;
+  }
+
+  .booking-header h1::before,
+  .booking-header h1::after {
+    display: none;
   }
 
   .boxer-info .value {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
   }
 
   .book-fight-btn {
-    padding: 14px 20px;
+    padding: 16px 20px;
     font-size: 1rem;
+  }
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
   }
 }
 
-/* Accessibility - Focus states */
+/* ========================================
+   ACCESSIBILITY - Focus States
+   ======================================== */
 .book-fight-btn:focus-visible {
-  outline: 2px solid #dc2626;
-  outline-offset: 2px;
+  outline: 3px solid var(--spotlight-gold);
+  outline-offset: 3px;
 }
 
 .toggle-checkbox input[type="checkbox"]:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--spotlight-gold);
   outline-offset: 2px;
 }
 
-/* Reduced motion support */
+.level-range-slider:focus-visible {
+  outline: 2px solid var(--spotlight-gold);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   REDUCED MOTION SUPPORT
+   ======================================== */
 @media (prefers-reduced-motion: reduce) {
-  .book-fight-btn {
+  .book-fight-btn,
+  .loading-spinner {
     transition: none;
+    animation: none;
   }
 
   .book-fight-btn:hover:not(:disabled) {
     transform: none;
   }
 
-  .loading-spinner {
-    animation: none;
-    border-top-color: #3b82f6;
+  .book-fight-btn::before {
+    display: none;
   }
 }
 
-/* Print styles */
+/* ========================================
+   PRINT STYLES
+   ======================================== */
 @media print {
   .page-nav,
   .booking-actions,
@@ -389,5 +551,12 @@
   .booking-container {
     box-shadow: none;
     border: none;
+    background: white;
+    color: black;
+  }
+
+  .booking-container::before,
+  .booking-container::after {
+    display: none;
   }
 }
