@@ -5,46 +5,43 @@ import { fetchActiveTrainingSessions } from '../api/training';
 import RestingBadge from './RestingBadge';
 import FightBadge from './FightBadge';
 
-const trainingTypeIcons = {
-  strength_training: '💪',
-  speed_training: '⚡',
-  defense_training: '🛡️',
-  technique_training: '🥊',
-  endurance_training: '🏃',
+// Training type mapping with enhanced icons
+const trainingTypeConfig = {
+  strength_training: { icon: '💪', label: 'Strength' },
+  speed_training: { icon: '⚡', label: 'Speed' },
+  defense_training: { icon: '🛡️', label: 'Defense' },
+  technique_training: { icon: '🥊', label: 'Technique' },
+  endurance_training: { icon: '🏃', label: 'Endurance' },
 };
 
-const getTrainingTypeName = (typeId) => {
-  const mapping = {
-    1: 'strength_training',
-    2: 'speed_training',
-    3: 'defense_training',
-    4: 'technique_training',
-    5: 'endurance_training',
-  };
-  return mapping[typeId] || 'training';
-};
-
-const formatCountdown = (remainingSeconds) => {
-  // Don't show "Ready!" on countdown - that's for completed training which shouldn't be here
-  if (remainingSeconds <= 0) return '';
-
-  const hours = Math.floor(remainingSeconds / 3600);
-  const minutes = Math.floor((remainingSeconds % 3600) / 60);
-  const seconds = remainingSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  } else {
-    return `${seconds}s`;
-  }
+const trainingTypeIds = {
+  1: 'strength_training',
+  2: 'speed_training',
+  3: 'defense_training',
+  4: 'technique_training',
+  5: 'endurance_training',
 };
 
 const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenProfile, onOpenTraining, onBoxerStateChanged, onOpenFightBooking, onOpenFightHistory }) => {
   const [activeSession, setActiveSession] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [fetchedFight, setFetchedFight] = useState(upcomingFight || null);
+
+  // Get training type name from ID
+  const getTrainingTypeName = (typeId) => trainingTypeIds[typeId] || 'strength_training';
+
+  // Format countdown display
+  const formatCountdown = (remainingSeconds) => {
+    if (remainingSeconds <= 0) return '';
+
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
+
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+  };
 
   // Fetch active training session for this boxer
   const loadActiveTraining = useCallback(async () => {
@@ -219,7 +216,7 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenProfile, onOpenTrain
   const maxHealth = 100;
 
   // Get training icon based on session type
-  const trainingIcon = activeSession ? (trainingTypeIcons[getTrainingTypeName(activeSession.training_type_id)] || '🏋️') : null;
+  const trainingIcon = activeSession ? (trainingTypeConfig[getTrainingTypeName(activeSession.training_type_id)]?.icon || '🏋️') : null;
 
   // Button disabled state: health < 50, energy < 15, fatigue >= 80 (exhaustion), or already has pending training
   // Use !activeSession to handle both null and undefined (falsy values mean no active session)
