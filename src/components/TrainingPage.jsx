@@ -97,57 +97,30 @@ const TrainingPage = ({ user, onLogout }) => {
       <PageLayout
         onBack={() => navigate('/dashboard')}
       >
-        {/* Energy Status Section */}
-          <section className="energy-status-section">
-            <h2>Current Energy</h2>
-            <div className="energy-status-card">
-              <div className="energy-info">
-                <span className="energy-label">Energy Available:</span>
-                <span className={`energy-value ${boxer.energy <= 10 ? 'low' : boxer.energy <= 30 ? 'medium' : ''}`}>
-                  {Math.round(boxer.energy || 0)} / 100
-                </span>
-              </div>
-              <div className="energy-bar-wrapper">
-                <div
-                  className="energy-progress"
-                  style={{ width: `${Math.min((boxer.energy || 0), 100)}%` }}
-                ></div>
-              </div>
-              {boxer.has_active_rest && (
-                <div className="rest-status">
-                  <span className="rest-icon">{boxer.forced_rest_until ? '🚑' : '🏥'}</span>
-                  <span>Currently resting — cannot schedule new training</span>
-                </div>
-              )}
-            </div>
-          </section>
+        {/* Training Scheduler Section */}
+        <section className="training-scheduler-section">
+          <h3>Schedule Training</h3>
+          <TrainingScheduler
+            boxerId={boxer.id}
+            boxer={boxer}
+            onClose={() => navigate('/dashboard')}
+            onTrainingScheduled={handleTrainingScheduled}
+          />
+        </section>
 
-          {/* Training Scheduler Section */}
-          <section className="training-scheduler-section">
-            <h2>Schedule New Training</h2>
-            <TrainingScheduler
-              boxerId={boxer.id}
-              boxer={boxer}
-              onClose={() => navigate('/dashboard')}
-              onTrainingScheduled={handleTrainingScheduled}
-            />
-          </section>
+        {/* Stat Progression Chart Section */}
+        <section className="stat-progression-section">
+          <h3>Stat Progression</h3>
+          <StatProgressionChart boxerId={boxer.id} compact />
+        </section>
 
-          {/* Stat Progression Chart Section */}
-          <section className="stat-progression-section">
-            <h2>Stat Progression</h2>
-            <p className="section-description">Track how {boxer.nickname || boxer.name}'s stats have evolved over time through training sessions.</p>
-            <StatProgressionChart boxerId={boxer.id} />
-          </section>
-
-          {/* Training History Section */}
-          <section className="training-history-section">
-            <h2>Training History</h2>
-            <p className="section-description">Past training sessions completed by {boxer.name}.</p>
-            <TrainingHistory boxerId={boxer.id} />
-          </section>
-        </PageLayout>
-      </div>
+        {/* Training History Section */}
+        <section className="training-history-section">
+          <h3>Training History</h3>
+          <TrainingHistory boxerId={boxer.id} compact />
+        </section>
+      </PageLayout>
+    </div>
   );
 };
 

@@ -4,7 +4,7 @@ import { fetchStatProgression } from '../api/training';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
-const StatProgressionChart = ({ boxerId }) => {
+const StatProgressionChart = ({ boxerId, compact = false }) => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,9 +31,11 @@ const StatProgressionChart = ({ boxerId }) => {
   };
 
   // Chart dimensions
-  const chartWidth = 600;
-  const chartHeight = 300;
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const chartWidth = compact ? 500 : 600;
+  const chartHeight = compact ? 200 : 300;
+  const padding = compact
+    ? { top: 10, right: 0, bottom: 0, left: 50 }
+    : { top: 20, right: 20, bottom: 40, left: 60 };
   const chartInnerWidth = chartWidth - padding.left - padding.right;
   const chartInnerHeight = chartHeight - padding.top - padding.bottom;
 
@@ -62,15 +64,15 @@ const StatProgressionChart = ({ boxerId }) => {
 
   if (isLoading) {
     return (
-      <div className="stat-progression-chart">
-        <div className="chart-loading">Loading stat progression...</div>
+      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
+        <div className="chart-loading">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="stat-progression-chart">
+      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
         <ErrorDisplay error={error} variant="alert" title="Failed to Load Chart" />
       </div>
     );
@@ -78,11 +80,9 @@ const StatProgressionChart = ({ boxerId }) => {
 
   if (!data || !data.points || data.points.length === 0) {
     return (
-      <div className="stat-progression-chart">
+      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
         <div className="chart-empty-state">
-          <div className="empty-icon">📊</div>
-          <h4>No Stat Data Available</h4>
-          <p>Stat progression data will appear after your boxer completes training sessions.</p>
+          No stat data yet.
         </div>
       </div>
     );
@@ -123,7 +123,7 @@ const StatProgressionChart = ({ boxerId }) => {
   };
 
   return (
-    <div className="stat-progression-chart">
+    <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
       <svg
         width={chartWidth}
         height={chartHeight}
@@ -312,19 +312,19 @@ const StatProgressionChart = ({ boxerId }) => {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="chart-legend">
+      {/* Legend - inline and compact */}
+      <div className={`chart-legend ${compact ? 'inline' : ''}`}>
         <div className="legend-item">
           <span className="legend-color" style={{ backgroundColor: statConfig.strength.color }}></span>
-          <span>{statConfig.strength.fullLabel}</span>
+          <span>STR</span>
         </div>
         <div className="legend-item">
           <span className="legend-color" style={{ backgroundColor: statConfig.defense.color }}></span>
-          <span>{statConfig.defense.fullLabel}</span>
+          <span>DEF</span>
         </div>
         <div className="legend-item">
           <span className="legend-color" style={{ backgroundColor: statConfig.agility.color }}></span>
-          <span>{statConfig.agility.fullLabel}</span>
+          <span>AGI</span>
         </div>
       </div>
     </div>

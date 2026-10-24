@@ -4,7 +4,7 @@ import { fetchTrainingHistory } from '../api/training';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
-const TrainingHistory = ({ boxerId }) => {
+const TrainingHistory = ({ boxerId, compact = false }) => {
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -85,15 +85,15 @@ const TrainingHistory = ({ boxerId }) => {
 
   if (isLoading) {
     return (
-      <div className="training-history">
-        <div className="history-loading">Loading training history...</div>
+      <div className={`training-history ${compact ? 'compact' : ''}`}>
+        <div className="history-loading">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="training-history">
+      <div className={`training-history ${compact ? 'compact' : ''}`}>
         <ErrorDisplay error={error} variant="alert" title="Failed to Load History" />
       </div>
     );
@@ -101,67 +101,42 @@ const TrainingHistory = ({ boxerId }) => {
 
   if (history.length === 0) {
     return (
-      <div className="training-history">
+      <div className={`training-history ${compact ? 'compact' : ''}`}>
         <div className="history-empty-state">
-          <div className="empty-icon">📝</div>
-          <h4>No Training History Yet</h4>
-          <p>This boxer hasn't completed any training sessions yet. Schedule their first session above!</p>
+          No training sessions yet.
         </div>
       </div>
     );
   }
 
   return (
-    <div className="training-history">
+    <div className={`training-history ${compact ? 'compact' : ''}`}>
       <div className="history-list">
         {history.map((session) => (
-          <div key={session.id} className={`history-item ${getTrainingTypeColor(session.training_type)}`}>
-            <div className="history-icon">
-              {getTrainingTypeIcon(session.training_type)}
-            </div>
-
-            <div className="history-content">
-              <div className="history-header">
-                <h4>{session.training_type || 'Unknown'} Training</h4>
-                <span className="history-date">{formatDateTime(session.completed_at)}</span>
+          <div key={session.id} className={`history-item ${getTrainingTypeColor(session.training_type)} ${compact ? 'compact' : ''}`}>
+            <div className="history-left">
+              <span className="history-icon">{getTrainingTypeIcon(session.training_type)}</span>
+              <div className="history-content-compact">
+                <div className="history-header-compact">
+                  <strong>{session.training_type || 'Unknown'} Training</strong>
+                  <span className="history-date">{formatDateTime(session.completed_at)}</span>
+                </div>
+                <div className="history-gains-compact">
+                  {formatGain(session.strength_gain) && (
+                    <span className="gain-tag strength">STR {formatGain(session.strength_gain)}</span>
+                  )}
+                  {formatGain(session.defense_gain) && (
+                    <span className="gain-tag defense">DEF {formatGain(session.defense_gain)}</span>
+                  )}
+                  {formatGain(session.agility_gain) && (
+                    <span className="gain-tag agility">AGI {formatGain(session.agility_gain)}</span>
+                  )}
+                  {session.xp_gained > 0 && (
+                    <span className="gain-tag xp">+{session.xp_gained} XP</span>
+                  )}
+                  <span className="history-duration">{session.duration_hours}h • {session.energy_cost || 0}E</span>
+                </div>
               </div>
-
-              <div className="history-details">
-                <span className="detail-item">
-                  <strong>Duration:</strong> {session.duration_hours} hour{session.duration_hours !== 1 ? 's' : ''}
-                </span>
-                <span className="detail-item">
-                  <strong>Energy Cost:</strong> {session.energy_cost || 0}
-                </span>
-              </div>
-
-              {/* Stat Gains */}
-              <div className="history-gains">
-                {formatGain(session.strength_gain) && (
-                  <span className="gain-item strength">
-                    💪 STR {formatGain(session.strength_gain)}
-                  </span>
-                )}
-                {formatGain(session.defense_gain) && (
-                  <span className="gain-item defense">
-                    🛡️ DEF {formatGain(session.defense_gain)}
-                  </span>
-                )}
-                {formatGain(session.agility_gain) && (
-                  <span className="gain-item agility">
-                    ⚡ AGI {formatGain(session.agility_gain)}
-                  </span>
-                )}
-                {session.xp_gained > 0 && (
-                  <span className="gain-item xp">
-                    📊 +{session.xp_gained} XP
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="history-chevron">
-              →
             </div>
           </div>
         ))}
