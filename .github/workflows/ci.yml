@@ -39,8 +39,9 @@ jobs:
 
     - name: Run unit tests with gotestsum
       run: |
-        # Run unit tests only (exclude integration tests via build tags)
-        # Integration tests are excluded by default since they have //go:build integration tag
+        # Run unit tests only (exclude functional/integration tests via build tags)
+        # Functional tests with //go:build functional tag are excluded here
+        # Run "make test-with-docker" locally or use .github/workflows/test.yml for functional tests
         go run gotest.tools/gotestsum@latest --format=short-verbose ./...
 
     - name: Upload artifacts

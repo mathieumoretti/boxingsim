@@ -17,6 +17,9 @@ var (
 
 	// ErrBoxerInUse is returned when a boxer is already involved in another fight.
 	ErrBoxerInUse = errors.New("boxer is currently involved in another fight")
+
+	// ErrBoxerHasZombieEvent is returned when a boxer has unresolved scheduled events.
+	ErrBoxerHasZombieEvent = errors.New("boxer has unresolved scheduled event")
 )
 
 // FightStore implements data access operations for fights.
@@ -733,6 +736,28 @@ func (s *FightStore) scanFightTx(_ *sql.Tx, row Scanner) (*model.Fight, error) {
 	}
 
 	return fight, nil
+}
+
+// CheckZombieEventsForBoxer checks if a boxer has any pending or failed scheduled events
+// related to fights that could cause double-booking issues (MAT-139).
+// Returns true if zombie events exist, false otherwise.
+func (s *FightStore) CheckZombieEventsForBoxer(ctx context.Context, boxerID int, checkTime time.Time) (bool, error) {
+	query := `
+		SELECT COUNT(*) > 0
+		FROM scheduled_events se
+		WHERE se.event_type = 'fight_simulate'
+		  AND se.status IN ('pending', 'processing', 'failed')
+		  AND se.event_data::jsonb->>'fight_id' IS NOT NULL
+		  AND EXISTS (
+			SELECT 1 FROM fights f
+			WHERE f.id = (se.event_data::jsonb->>'fight_id')::int
+			  AND (f.boxer1_id = $1 OR f.boxer2_id = $1)
+			  AND f.status IN ('scheduled', 'in_progress')
+		  )`
+
+	var hasZombie bool
+	err := s.db.QueryRowContext(ctx, query, boxerID).Scan(&hasZombie)
+	return hasZombie, err
 }
 
 // Scanner is an interface for types that can scan database rows.
