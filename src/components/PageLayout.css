@@ -15,7 +15,7 @@
 /* Main Layout Container */
 .page-layout {
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: #f5f7fa; /* Default light gray */
   padding-top: calc(64px + 24px); /* TopBar height + spacing */
   padding-left: 24px;
   padding-right: 24px;
@@ -24,30 +24,12 @@
   margin: 0 auto;
 }
 
-/* Page-Specific Background Overrides */
-/* BoxerProfile navy blue gradient background */
-.boxer-profile {
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-}
-
-/* TrainingPage navy blue gradient background */
-.training-page {
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
-/* FightBookingPage navy blue gradient background */
-.fight-booking-page {
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
 /* Navigation Bar */
 .page-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
@@ -79,10 +61,41 @@
   outline-offset: 2px;
 }
 
+/* Cross-Navigation Button */
+.cross-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.cross-nav-btn:hover {
+  background: linear-gradient(135deg, #16213e, #1a1a2e);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.cross-nav-btn:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
 /* Dark mode variants for navy background pages */
 .boxer-profile .back-btn,
 .training-page .back-btn,
-.fight-booking-page .back-btn {
+.fight-booking-page .back-btn,
+.fight-details-page .back-btn {
   background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -91,10 +104,24 @@
 
 .boxer-profile .back-btn:hover,
 .training-page .back-btn:hover,
-.fight-booking-page .back-btn:hover {
+.fight-booking-page .back-btn:hover,
+.fight-details-page .back-btn:hover {
   background-color: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Cross-nav dark mode variants */
+.fight-details-page .cross-nav-btn {
+  background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fight-details-page .cross-nav-btn:hover {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Content Wrapper */
@@ -130,4 +157,42 @@
     padding-right: 12px;
     padding-bottom: 24px;
   }
+}
+
+/* ========================================
+   PAGE-SPECIFIC BACKGROUND OVERRIDES
+   Applied as pageClassName on .page-layout element
+   These override the default #f5f7fa background
+   ======================================== */
+
+/* BoxerProfile - Navy blue gradient */
+.boxer-profile {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%; /* Override the constrained max-width for full-screen backgrounds */
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+/* TrainingPage - Navy blue gradient (slightly lighter) */
+.training-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* FightBookingPage - Navy blue gradient */
+.fight-booking-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* FightDetailsPage - Navy arena gradient (theater mode) */
+.fight-details-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%; /* Full width for dramatic background */
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
 }
