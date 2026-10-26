@@ -21,6 +21,7 @@ import (
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/platform/middleware"
 	"github.com/mormm/boxing/internal/platform/redis"
+	"github.com/mormm/boxing/internal/platform/spa"
 	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
 )
@@ -159,10 +160,11 @@ func main() {
 	// Dashboard endpoint - protected with authentication middleware
 	protectedRouter.HandleFunc("/dashboard", dashboardHandler.GetDashboard).Methods("GET")
 
-	// Health check endpoint (public)
+	// Health check endpoint (public, outside API routes)
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 
 	// Authentication endpoints (CORS preflight handled by middleware)
+	// Note: webpack dev server proxies /api/* to backend and strips the /api prefix
 	router.HandleFunc("/auth/register", authHandler.RegisterUser).Methods("POST")
 	router.HandleFunc("/auth/login", authHandler.LoginUser).Methods("POST")
 
@@ -205,14 +207,14 @@ func main() {
 	// Training types endpoint - public (reference data)
 	router.HandleFunc("/training-types", trainingHandler.GetAllTrainingTypes).Methods("GET")
 
+	// World clock endpoint - public (game time is not user-specific)
+	router.HandleFunc("/world/time", worldClockHandler.GetCurrentGameTime).Methods("GET")
+
 	// Training completion endpoint - protected with authentication middleware
 	protectedRouter.HandleFunc("/training/{id}/complete", trainingHandler.CompleteTraining).Methods("POST")
 
 	// Bulk training completion endpoint (development feature) - protected with authentication middleware
 	protectedRouter.HandleFunc("/training/bulk-complete", trainingHandler.BulkCompleteTraining).Methods("POST")
-
-	// World clock endpoint - protected with authentication middleware
-	protectedRouter.HandleFunc("/world/time", worldClockHandler.GetCurrentGameTime).Methods("GET")
 
 	// Rankings endpoints - protected with authentication middleware
 	protectedRouter.HandleFunc("/rankings", rankingsHandler.GetRankings).Methods("GET")
@@ -220,11 +222,10 @@ func main() {
 	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", rankingsHandler.GetNearbyRankings).Methods("GET")
 	protectedRouter.HandleFunc("/rankings/invalidate", rankingsHandler.InvalidateRankings).Methods("POST")
 
-	// Serve static files for the UI (React app)
-	// For development, we'll serve from dist/ directory if it exists
-	// In production, this would be handled by a separate web server or proxy
-	webDir := http.Dir("./dist/")
-	router.PathPrefix("/").Handler(http.FileServer(webDir)).Methods("GET")
+	// Serve static files for the UI (React app) with SPA fallback
+	// The SPA handler serves actual static assets and falls back to index.html for React Router paths
+	spaHandler := spa.New("./dist")
+	router.PathPrefix("/").Handler(spaHandler).Methods("GET", "HEAD")
 
 	// Start server with configured port
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

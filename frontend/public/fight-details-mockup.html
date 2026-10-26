@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fight Details - Arena Dramatics Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .cross-nav-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cross-nav-btn:hover {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+        }
+
+        /* Fight Info Header */
+        .fight-info-header {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .fight-info-header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .fight-info-header h2 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 0 0 16px;
+        }
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: #0d2b1e; /* Dark text for contrast on green */
+        }
+
+        .fight-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        /* Victory Banner */
+        .victory-banner.ko {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: #2d0e0e; /* Dark text for contrast on red */
+            padding: 24px 32px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.5);
+            animation: bannerSlideIn 0.5s ease;
+        }
+
+        @keyframes bannerSlideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .victory-banner h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .fight-info-header h2 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 0 0 16px;
+        }
+
+        .victory-banner p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        .victory-banner p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        /* Boxer Comparison Section */
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .comparison-section h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .comparison-layout {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 24px;
+            position: relative;
+        }
+
+        .vs-badge {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            padding: 12px 0;
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.6);
+            flex-shrink: 0;
+        }
+
+        /* Boxer Card */
+        .boxer-card {
+            flex: 1;
+            max-width: 320px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .boxer-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .boxer-card.winner {
+            border-color: rgba(214, 158, 46, 0.8);
+            background: linear-gradient(135deg, rgba(255, 235, 59, 0.1) 0%, rgba(254, 243, 199, 0.05) 100%);
+            box-shadow: 0 8px 24px rgba(214, 158, 46, 0.3);
+        }
+
+        .card-avatar {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            border: 3px solid #1a1a2e;
+        }
+
+        .card-header {
+            text-align: center;
+            padding-top: 32px;
+            margin-bottom: 16px;
+        }
+
+        .card-header h2 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .card-header h3 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .card-header h4 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .card-header .nickname {
+            margin: 0 0 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #ffffff; /* Purple passes WCAG AA */
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .level-badge.winner-bg {
+            background: linear-gradient(135deg, #92400e, #78350f); /* Darker gold-brown */
+            color: #ffffff;
+        }
+
+        /* Health bar */
+        .health-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .health-row .label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .health-bar-wrapper {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .health-bar {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .health-low { background: linear-gradient(90deg, #fc8181, #f56565); }
+        .health-medium { background: linear-gradient(90deg, #f6e05e, #ecc94b); }
+        .health-high { background: linear-gradient(90deg, #48bb78, #38a169); }
+
+        .health-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Combat Stats */
+        .combat-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .stat-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* Card Footer */
+        .card-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .card-footer .label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .card-footer .value {
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Round Timeline */
+        .timeline-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .timeline-section h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .round-timeline {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px 0;
+        }
+
+        .round-marker {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .round-marker.completed {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af); /* Darker blue for contrast */
+            border-color: #1e40af;
+            color: white;
+        }
+
+        .round-marker.final.ko {
+            background: linear-gradient(135deg, #dc2626, #b91c1c); /* Darker red for contrast */
+            border-color: #b91c1c;
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 4px 16px rgba(220, 38, 38, 0.6);
+        }
+
+        .round-marker.final.ko::after {
+            content: "🔥";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 16px;
+            animation: bounce 0.5s ease infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-3px); }
+        }
+
+        /* Play-by-Play Log */
+        .playbyplay-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .playbyplay-section h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        }
+
+        .log-header {
+            text-align: center;
+            color: #ffffff;
+            font-size: 14px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-line {
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 4px;
+        }
+
+        .log-line.victory {
+            background: linear-gradient(90deg, rgba(253, 224, 71, 0.2), transparent);
+            border-left: 3px solid #f6e05e;
+            color: #f6e05e;
+        }
+
+        .log-line.knockout {
+            background: linear-gradient(90deg, rgba(245, 101, 101, 0.2), transparent);
+            border-left: 3px solid #fc8181;
+            color: #fc8181;
+        }
+
+        .log-line.damage {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .log-line.miss {
+            background: linear-gradient(90deg, rgba(164, 237, 236, 0.15), transparent);
+            border-left: 3px solid #a8ffff;
+            color: #a8ffff;
+        }
+
+        /* Fight Summary */
+        .summary-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .summary-section h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .summary-card .label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .summary-card .value {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .summary-card .value.completed { color: #48bb78; }
+        .summary-card .value.xp { color: #d69e2e; }
+        .summary-card .value.reward { color: #63b3ed; }
+
+        /* Fighter Links */
+        .links-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .links-section h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .link-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .fighter-link-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fighter-link-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+        }
+
+        .fighter-link-btn .history-badge {
+            font-size: 11px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 2px 8px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <button class="back-btn">← Back to Dashboard</button>
+            <button class="cross-nav-btn">Fight History ▶</button>
+        </nav>
+
+        <!-- Fight Info Header -->
+        <div class="fight-info-header">
+            <h1>MIKE TYSON vs EVANDER HOLLYFIELD</h1>
+            <span class="status-badge">✅ COMPLETED</span>
+            <p class="fight-date">Completed at Game Time: January 15, 2030 at 8:00 PM</p>
+        </div>
+
+        <!-- Victory Banner -->
+        <div class="victory-banner ko">
+            <h1>🔥 MIKE TYSON WINS 🔥</h1>
+            <p>by Knockout - Round 6</p>
+        </div>
+
+        <!-- Fighter Comparison Section -->
+        <div class="comparison-section">
+            <h2>Fighter Comparison</h2>
+            <div class="comparison-layout">
+                <!-- Winner Card -->
+                <div class="boxer-card winner">
+                    <div class="card-avatar">🥊</div>
+                    <div class="card-header">
+                        <h4>MIKE TYSON</h4>
+                        <p class="nickname">"IRON MIKE"</p>
+                        <span class="level-badge winner-bg">LVL 12</span>
+                    </div>
+
+                    <div class="health-row">
+                        <span class="label">Health:</span>
+                        <div class="health-bar-wrapper">
+                            <div class="health-bar health-low" style="width: 23%"></div>
+                        </div>
+                        <span class="health-value">23%</span>
+                    </div>
+
+                    <div class="combat-stats">
+                        <div class="stat-item">
+                            <span class="stat-icon">💪</span>
+                            <span class="stat-name">STR</span>
+                            <span class="stat-value">89</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">🛡️</span>
+                            <span class="stat-name">DEF</span>
+                            <span class="stat-value">72</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">⚡</span>
+                            <span class="stat-name">AGI</span>
+                            <span class="stat-value">84</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="label">Record:</span>
+                        <span class="value">5W - 1L - 0D</span>
+                    </div>
+                </div>
+
+                <!-- VS Badge -->
+                <div class="vs-badge">VS</div>
+
+                <!-- Loser Card -->
+                <div class="boxer-card">
+                    <div class="card-avatar">😤</div>
+                    <div class="card-header">
+                        <h4>EVANDER HOLLYFIELD</h4>
+                        <p class="nickname">"THE REAL DEAL"</p>
+                        <span class="level-badge">LVL 11</span>
+                    </div>
+
+                    <div class="health-row">
+                        <span class="label">Health:</span>
+                        <div class="health-bar-wrapper">
+                            <div class="health-bar health-high" style="width: 87%"></div>
+                        </div>
+                        <span class="health-value">87%</span>
+                    </div>
+
+                    <div class="combat-stats">
+                        <div class="stat-item">
+                            <span class="stat-icon">💪</span>
+                            <span class="stat-name">STR</span>
+                            <span class="stat-value">76</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">🛡️</span>
+                            <span class="stat-name">DEF</span>
+                            <span class="stat-value">81</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">⚡</span>
+                            <span class="stat-name">AGI</span>
+                            <span class="stat-value">90</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="label">Record:</span>
+                        <span class="value">3W - 2L - 0D</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Round Timeline -->
+        <div class="timeline-section">
+            <h2>Round Timeline</h2>
+            <div class="round-timeline">
+                <div class="round-marker completed">1</div>
+                <div class="round-marker completed">2</div>
+                <div class="round-marker completed">3</div>
+                <div class="round-marker completed">4</div>
+                <div class="round-marker completed">5</div>
+                <div class="round-marker final ko">6</div>
+            </div>
+        </div>
+
+        <!-- Play-by-Play Log -->
+        <div class="playbyplay-section">
+            <h2>Fight Narrative</h2>
+            <div class="log-container">
+                <h4 class="log-header">🥊 Round 6 Play-by-Play 🥊</h4>
+                <div class="log-line damage">> Mike Tyson throws a jab - Hollyfield blocks!</div>
+                <div class="log-line damage">> Tyson lands a heavy right hook! HollyFIELD takes -8 damage</div>
+                <div class="log-line miss">> Evander Hollyfield's counter punch MISSES!</div>
+                <div class="log-line damage">> Tyson closes in with a left uppercut! -12 damage to Hollyfield</div>
+                <div class="log-line knockout">> CRITICAL HIT! Tyson knocks down Hollyfield!</div>
+                <div class="log-line victory">> HOLLYFIELD CAN'T GET UP - IT'S A KO VICTORY FOR TYSON!</div>
+            </div>
+        </div>
+
+        <!-- Fight Summary -->
+        <div class="summary-section">
+            <h2>Fight Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <span class="label">Status</span>
+                    <span class="value completed">COMPLETED</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Rounds Fought</span>
+                    <span class="value">6</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Method</span>
+                    <span class="value">Knockout</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">XP Gained</span>
+                    <span class="value xp">+250 XP</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Purse Earned</span>
+                    <span class="value reward">$15,000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fighter Links -->
+        <div class="links-section">
+            <h2>Fighters</h2>
+            <div class="link-buttons">
+                <button class="fighter-link-btn">
+                    📄 View Mike Tyson's Profile
+                    <span class="history-badge">📊 History</span>
+                </button>
+                <button class="fighter-link-btn">
+                    📄 View Hollyfield's Profile
+                    <span class="history-badge">📊 History</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
