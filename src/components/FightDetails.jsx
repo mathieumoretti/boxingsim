@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './FightDetails.css';
-import { fetchFightDetails, fetchBoxer, formatTimeAgo } from '../api/fights';
+import PageLayout from './PageLayout';
 import RoundTimeline from './RoundTimeline';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
+import { fetchFightDetails, fetchBoxer } from '../api/fights';
+import './FightDetails.css';
 
 /**
  * VictoryBanner - Displays fight result prominently (MAT-104)
@@ -64,11 +65,11 @@ const BoxerComparisonCard = ({ boxer, role, fightData }) => {
   };
 
   const getHealthColorClass = (health) => {
-    if (!health) return 'bg-health-medium';
+    if (!health) return 'health-medium';
     const pct = health;
-    if (pct > 50) return 'bg-health-high';
-    if (pct > 25) return 'bg-health-medium';
-    return 'bg-health-low';
+    if (pct > 50) return 'health-high';
+    if (pct > 25) return 'health-medium';
+    return 'health-low';
   };
 
   const avatar = getAvatarEmoji(boxer.name);
@@ -79,59 +80,51 @@ const BoxerComparisonCard = ({ boxer, role, fightData }) => {
       <div className="card-avatar">{avatar}</div>
 
       <div className="card-header">
-        <h3>{boxer.name}</h3>
+        <h4>{boxer.name}</h4>
         {boxer.nickname && <p className="nickname">"{boxer.nickname}"</p>}
-        <span className={`level-badge ${role === 'winner' ? 'winner-bg' : ''}`}>LVL {boxer.level || 1}</span>
+        <span className={`level-badge ${isWinner ? 'winner-bg' : ''}`}>LVL {boxer.level || 1}</span>
       </div>
 
-      {/* Health at end of fight */}
+      {/* Health row - matches mockup structure */}
       {healthAtEnd !== undefined && (
-        <div className="fight-stat-row">
-          <span className="stat-label">Health at End:</span>
-          <div className="stat-bar-wrapper">
+        <div className="health-row">
+          <span className="label">Health:</span>
+          <div className="health-bar-wrapper">
             <div
-              className={`stat-bar ${healthClass}`}
+              className={`health-bar ${healthClass}`}
               style={{ width: `${Math.min(100, Math.max(0, healthAtEnd))}%` }}
             ></div>
           </div>
-          <span className="stat-value">{Math.round(healthAtEnd)}%</span>
+          <span className="health-value">{Math.round(healthAtEnd)}%</span>
         </div>
       )}
 
-      {/* Combat Stats */}
-      <div className="combat-stats-grid">
+      {/* Combat Stats - matches mockup structure (no .stat-info wrapper) */}
+      <div className="combat-stats">
         <div className="stat-item">
           <span className="stat-icon">💪</span>
-          <div className="stat-info">
-            <span className="stat-name">STR</span>
-            <span className="stat-value">{Math.round(boxer.strength)}</span>
-          </div>
+          <span className="stat-name">STR</span>
+          <span className="stat-value">{Math.round(boxer.strength)}</span>
         </div>
 
         <div className="stat-item">
           <span className="stat-icon">🛡️</span>
-          <div className="stat-info">
-            <span className="stat-name">DEF</span>
-            <span className="stat-value">{Math.round(boxer.defense)}</span>
-          </div>
+          <span className="stat-name">DEF</span>
+          <span className="stat-value">{Math.round(boxer.defense)}</span>
         </div>
 
         <div className="stat-item">
           <span className="stat-icon">⚡</span>
-          <div className="stat-info">
-            <span className="stat-name">AGI</span>
-            <span className="stat-value">{Math.round(boxer.agility)}</span>
-          </div>
+          <span className="stat-name">AGI</span>
+          <span className="stat-value">{Math.round(boxer.agility)}</span>
         </div>
-      </div>
+      </div> compo
 
-      {/* Additional Info */}
+      {/* Card Footer */}
       <div className="card-footer">
-        <span className="info-item">
-          <span className="label">Record:</span>
-          <span className="value">
-            {boxer.wins || 0}W - {boxer.losses || 0}L - {boxer.draws || 0}D
-          </span>
+        <span className="label">Record:</span>
+        <span className="value">
+          {boxer.wins || 0}W - {boxer.losses || 0}L - {boxer.draws || 0}D
         </span>
       </div>
     </div>
@@ -202,6 +195,11 @@ const PlayByPlayLog = ({ fightData, rounds }) => {
 
 /**
  * FightDetails - Main component (MAT-104)
+ *
+ * Theater mode page wrapper for fight details view.
+ * No TopBar - pure focus on fight content with:
+ * - Back button to Dashboard
+ * - Cross-navigation to boxer's fight history page
  */
 const FightDetails = () => {
   const { id } = useParams();
@@ -276,51 +274,56 @@ const FightDetails = () => {
   // Render loading state
   if (isLoading) {
     return (
-      <div className="fight-details-page">
+      <PageLayout
+        pageClassName="fight-details-page"
+        onBack={() => navigate('/dashboard')}
+        backButtonLabel="← Back to Dashboard"
+        showCrossNav={false}
+      >
         <div className="loading-state">
           <div className="spinner"></div>
           <p>Loading fight details...</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   // Render error state
   if (error) {
     return (
-      <div className="fight-details-page">
+      <PageLayout
+        pageClassName="fight-details-page"
+        onBack={() => navigate('/dashboard')}
+        backButtonLabel="← Back to Dashboard"
+      >
         <ErrorDisplay
           error={error}
           variant="alert"
           title={error?.includes('not found') ? 'Fight Not Found' : 'Error Loading Fight'}
           icon={true}
         />
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <button
-            className="back-btn"
-            onClick={() => navigate('/dashboard')}
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
+      </PageLayout>
     );
   }
 
+  // Get cross-nav target (link to first boxer's fight history)
+  const getFightHistoryUrl = () => {
+    if (!boxer1?.id && !fight?.boxer1_id) return null;
+    const boxerId = boxer1?.id || fight?.boxer1_id;
+    return `/boxer/${boxerId}/fights`;
+  };
+
+  const fightHistoryUrl = getFightHistoryUrl();
+
   // Render fight details
   return (
-    <div className="fight-details-page">
-      {/* Navigation Header */}
-      <div className="details-nav">
-        <button
-          className="back-btn"
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      {/* Fight Info Header */}
+    <PageLayout
+      pageClassName="fight-details-page"
+      onBack={() => navigate('/dashboard')}
+      backButtonLabel="← Back to Dashboard"
+      crossNavTo={fightHistoryUrl}
+      crossNavLabel="📜 Fight History ▶"
+    >
       <div className="fight-info-header">
         <h2>
           {boxer1?.name || 'Boxer 1'} vs {boxer2?.name || 'Boxer 2'}
@@ -338,7 +341,7 @@ const FightDetails = () => {
         {fight?.status === 'scheduled' && fight?.scheduled_time && (
           <>
             <p className="fight-date">
-              📅 Scheduled for Game Time:{' '}
+              Scheduled for Game Time:{' '}
               {new Date(fight.scheduled_time).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -387,7 +390,7 @@ const FightDetails = () => {
       )}
 
       {/* Boxer Comparison */}
-      <div className="boxer-comparison-section">
+      <div className="boxer-comparison-section fight-section-card">
         <h3>FIGHTER COMPARISON</h3>
         <div className="comparison-layout">
           <BoxerComparisonCard
@@ -408,7 +411,7 @@ const FightDetails = () => {
 
       {/* Round Timeline - Only show for completed fights */}
       {isFightCompleted && roundsFought > 0 && (
-        <div className="timeline-section">
+        <div className="timeline-section fight-section-card">
           <h3>ROUND TIMELINE</h3>
           <RoundTimeline
             totalRounds={roundsFought}
@@ -419,7 +422,7 @@ const FightDetails = () => {
 
       {/* Play-by-Play Log - Only show for completed fights */}
       {isFightCompleted && fightData?.log && (
-        <div className="playbyplay-section">
+        <div className="playbyplay-section fight-section-card">
           <h3>FIGHT NARRATIVE</h3>
           <PlayByPlayLog
             fightData={fightData}
@@ -429,7 +432,7 @@ const FightDetails = () => {
       )}
 
       {/* Fight Summary Stats */}
-      <div className="fight-summary-section">
+      <div className="fight-summary-section fight-section-card">
         <h3>FIGHT SUMMARY</h3>
         <div className="summary-grid">
           <div className="summary-card">
@@ -474,25 +477,28 @@ const FightDetails = () => {
 
       {/* Boxer Links */}
       {boxer1 && boxer2 && (
-        <div className="boxer-links-section">
+        <div className="boxer-links-section fight-section-card">
           <h3>FIGHTERS</h3>
           <div className="link-buttons">
             <button
               className="boxer-link-btn"
               onClick={() => navigate(`/boxer/${boxer1.id}`)}
             >
-              View {boxer1.name}'s Profile
+              📄 {boxer1.name} Profile
+              <span className="history-badge">📊 History</span>
             </button>
             <button
               className="boxer-link-btn"
               onClick={() => navigate(`/boxer/${boxer2.id}`)}
             >
-              View {boxer2.name}'s Profile
+              📄 {boxer2.name} Profile
+              <span className="history-badge">📊 History</span>
             </button>
           </div>
         </div>
       )}
-    </div>
+
+      </PageLayout>
   );
 };
 

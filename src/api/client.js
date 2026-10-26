@@ -3,14 +3,10 @@
  *
  * Provides centralized configuration, authentication, and error handling
  * for all API requests in the application.
+ *
+ * Note: All API endpoints use `/api/*` prefix which webpack dev server proxies
+ * to the Go backend, stripping the prefix before forwarding to localhost:8080.
  */
-
-/**
- * Base URL for API requests.
- * In development, webpack dev server proxies /api to backend.
- * In production, configure as needed.
- */
-export const API_BASE_URL = '/api';
 
 /**
  * Custom error class for API errors with structured data

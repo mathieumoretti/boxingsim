@@ -1,65 +1,87 @@
-/* Opponent List Container */
+/* ========================================
+   OPPONENT LIST - Compact Fighter Cards
+   Navy-aligned with booking page
+   ======================================== */
+
+:root {
+  --card-bg-dark: #1a1a2e;
+  --card-bg-hover: #16213e;
+  --card-border-default: #2a2a40;
+}
+
+/* ========================================
+   OPPONENT LIST CONTAINER
+   ======================================== */
 .opponent-list {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg-dark);
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
+  border: 1px solid var(--card-border-default);
 }
 
 .opponent-list-header {
-  padding: 16px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #2a1a1a 0%, #1a1a2e 100%);
+  color: #f5f7fa;
+  border-bottom: 1px solid var(--card-border-default);
 }
 
 .opponent-list-header h4 {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* Loading & Empty States */
+/* ========================================
+   LOADING & EMPTY STATES
+   ======================================== */
 .opponent-list-loading,
 .opponent-list-error,
 .opponent-list-empty {
-  padding: 40px;
+  padding: 40px 20px;
   text-align: center;
-  color: #666;
+  background: var(--card-bg-dark);
+  border: 1px solid var(--card-border-default);
+  border-radius: 10px;
 }
 
-.opponent-list-error {
-  color: #e74c3c;
+.opponent-list-error { color: #ef4444; }
+.opponent-list-empty { color: #7f8c8d; }
+
+.opponent-list-empty p:first-child {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 6px;
 }
 
 .empty-hint {
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0;
 }
 
-/* Skeleton Loader (MAT-130) */
-.opponent-list-loading {
-  padding: 0;
-}
-
+/* ========================================
+   SKELETON LOADER
+   ======================================== */
 .opponent-skeleton {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: var(--card-bg-dark);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
   position: relative;
   overflow: hidden;
-  border-left: 4px solid #e2e8f0;
+  border: 1px solid var(--card-border-default);
 }
 
 .opponent-skeleton::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.08), transparent);
   animation: shimmer-loading 1.5s infinite;
 }
 
@@ -71,182 +93,195 @@
 .skeleton-card-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .skeleton-card-header > div:first-child {
-  height: 18px;
-  width: 120px;
-  background-color: #e2e8f0;
+  height: 16px; width: 120px;
+  background-color: var(--card-border-default);
   border-radius: 4px;
 }
 
 .skeleton-card-header > div:last-child {
-  height: 16px;
-  width: 50px;
-  background-color: #e9ecef;
+  height: 14px; width: 45px;
+  background-color: #2a2a40;
   border-radius: 4px;
 }
 
 .skeleton-card-stats {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  display: flex; gap: 8px; margin-bottom: 8px;
 }
 
 .skeleton-card-stats::before,
 .skeleton-card-stats::after {
-  content: '';
-  height: 16px;
-  width: 60px;
-  background-color: #e2e8f0;
+  content: ''; height: 14px; width: 50px;
+  background-color: var(--card-border-default);
   border-radius: 4px;
 }
 
 .skeleton-card-button {
-  height: 40px;
-  background-color: #e2e8f0;
+  height: 36px;
+  background-color: var(--card-border-default);
   border-radius: 6px;
-  margin-top: 12px;
 }
 
-/* Scrollable Content */
+/* ========================================
+   SCROLLABLE CONTENT
+   ======================================== */
 .opponent-list-content {
-  max-height: 500px;
+  max-height: 400px;
   overflow-y: auto;
   padding: 12px;
+  background: #151520;
 }
 
-/* Opponent Card */
+.opponent-list-content::-webkit-scrollbar { width: 6px; }
+.opponent-list-content::-webkit-scrollbar-track { background: #151520; }
+.opponent-list-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #dc2626, #991b1b);
+  border-radius: 3px;
+}
+
+/* ========================================
+   OPPONENT CARD - Compact Design
+   ======================================== */
 .opponent-card {
-  background: #f8f9fa;
+  background: var(--card-bg-dark);
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px 16px;
   margin-bottom: 12px;
   position: relative;
-  border-left: 4px solid #ccc;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid var(--card-border-default);
+  transition: all 0.2s ease;
 }
 
 .opponent-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--card-bg-hover);
 }
 
-/* Match Quality Colors */
+/* Quality-based borders with glow */
 .opponent-card.excellent {
-  border-left-color: #27ae60;
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
 }
-
 .opponent-card.good {
-  border-left-color: #3498db;
+  border-color: #3b82f6;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
 }
-
 .opponent-card.fair {
-  border-left-color: #f39c12;
+  border-color: #f59e0b;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
 }
-
 .opponent-card.poor {
-  border-left-color: #e74c3c;
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
 }
 
-/* Best Match Badge */
+/* ========================================
+   BEST MATCH BADGE
+   ======================================== */
 .best-match-badge {
   position: absolute;
-  top: -10px;
-  right: 8px;
-  background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+  top: -6px; right: 8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(243, 156, 18, 0.4);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 }
 
-/* Card Header */
+.best-match-badge::before {
+  content: '🔥'; margin-right: 4px;
+}
+
+/* ========================================
+   CARD HEADER - Name & Level
+   ======================================== */
 .opponent-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--card-border-default);
 }
 
 .opponent-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  letter-spacing: 0.02em;
 }
 
 .opponent-level {
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  background: #e8e8e8;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  background: linear-gradient(135deg, #2a2a40, #1a1a2e);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--card-border-default);
 }
 
-/* Stats Row */
+/* ========================================
+   STATS ROW - Compact
+   ======================================== */
 .opponent-stats {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  display: flex; gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
   flex-wrap: wrap;
 }
 
 .stat-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
+  display: flex; align-items: center; gap: 6px;
 }
 
-.stat-label {
-  color: #7f8c8d;
-}
+.stat-label { color: #6b7280; }
+.stat-value { color: #e5e7eb; font-weight: 600; }
+.stat-value.same-level { color: #10b981; font-weight: 700; }
 
-.stat-value {
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.stat-value.same-level {
-  color: #27ae60;
-  font-weight: 600;
-}
-
-/* AI Badge */
-.stat-item.ai-badge {
-  margin-left: auto;
-}
+.stat-item.ai-badge { margin-left: auto; }
 
 .ai-indicator {
-  background: #9b59b6;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
   color: #fff;
   padding: 2px 8px;
   border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
-/* Match Quality Section */
+/* ========================================
+   MATCH QUALITY BAR - Compact
+   ======================================== */
 .match-quality-section {
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .match-quality-label {
-  font-size: 0.8rem;
-  color: #7f8c8d;
-  margin-bottom: 6px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-weight: 600;
+  min-width: 70px;
 }
 
 .match-quality-bar-container {
-  height: 8px;
-  background: #e0e0e0;
-  border-radius: 4px;
+  flex: 1;
+  height: 6px;
+  background: #2a2a40;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 4px;
 }
 
 .match-quality-bar {
@@ -254,114 +289,120 @@
   transition: width 0.3s ease;
 }
 
-.match-quality-bar.excellent {
-  background: linear-gradient(90deg, #27ae60, #2ecc71);
-}
-
-.match-quality-bar.good {
-  background: linear-gradient(90deg, #3498db, #5dade2);
-}
-
-.match-quality-bar.fair {
-  background: linear-gradient(90deg, #f39c12, #f1c40f);
-}
-
-.match-quality-bar.poor {
-  background: linear-gradient(90deg, #e74c3c, #ec7063);
-}
+.match-quality-bar.excellent { background: linear-gradient(90deg, #10b981, #34d399); }
+.match-quality-bar.good { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.match-quality-bar.fair { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.match-quality-bar.poor { background: linear-gradient(90deg, #ef4444, #f87171); }
 
 .match-quality-score {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  min-width: 45px;
   text-align: right;
 }
 
-/* Score Breakdown */
+/* ========================================
+   SCORE BREAKDOWN - Hidden by default, show on hover
+   ======================================== */
 .score-breakdown {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 8px;
-  background: #fff;
+  display: none;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: #2a2a40;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  flex-wrap: wrap;
 }
 
-.breakdown-item {
-  color: #666;
+.opponent-card:hover .score-breakdown {
+  display: flex;
 }
 
-.breakdown-item span {
-  font-weight: 500;
-  color: #2c3e50;
-}
+.breakdown-item { color: #9ca3af; }
+.breakdown-item strong { font-weight: 600; color: #f5f7fa; }
 
-/* Select Button */
+/* ========================================
+   SELECT BUTTON - Compact
+   ======================================== */
 .select-opponent-btn {
   width: 100%;
   padding: 10px;
   border: none;
   border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
 }
 
 .select-opponent-btn:hover {
-  opacity: 0.9;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .select-opponent-btn.excellent {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
 }
-
 .select-opponent-btn.good {
-  background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #fff;
 }
-
 .select-opponent-btn.fair {
-  background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
 }
-
 .select-opponent-btn.poor {
-  background: linear-gradient(135deg, #e74c3c 0%, #ec7063 100%);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #fff;
 }
 
-/* Match Reasoning */
+/* ========================================
+   MATCH REASONING - Tooltip on hover
+   ======================================== */
 .match-reasoning {
-  margin-top: 10px;
-  padding: 8px;
-  background: #e8f4fd;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(79, 70, 229, 0.1);
   border-radius: 4px;
-  font-size: 0.8rem;
-  color: #2980b9;
+  font-size: 0.75rem;
+  color: #c7d2fe;
   line-height: 1.4;
+  border: 1px solid rgba(79, 70, 229, 0.3);
 }
 
-/* Responsive */
+/* ========================================
+   RESPONSIVE
+   ======================================== */
 @media (max-width: 768px) {
-  .opponent-list-content {
-    max-height: 400px;
-  }
+  .opponent-list-content { max-height: 300px; }
+  .opponent-card { padding: 12px 14px; }
+  .opponent-stats { flex-direction: column; gap: 6px; }
+  .stat-item.ai-badge { margin-left: 0; align-self: flex-end; }
+  .match-quality-section { flex-wrap: wrap; }
+  .match-quality-label { width: 100%; min-width: auto; }
+}
 
-  .opponent-stats {
-    flex-direction: column;
-    gap: 8px;
-  }
+@media (max-width: 480px) {
+  .opponent-list-header { padding: 12px 14px; }
+  .opponent-list-header h4 { font-size: 0.8rem; }
+  .opponent-card { padding: 12px; margin-bottom: 10px; }
+  .select-opponent-btn { padding: 8px; font-size: 0.8rem; }
+}
 
-  .stat-item.ai-badge {
-    margin-left: 0;
-  }
+/* ========================================
+   ACCESSIBILITY & REDUCED MOTION
+   ======================================== */
+.select-opponent-btn:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
 
-  .score-breakdown {
-    flex-direction: column;
-    gap: 4px;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .opponent-card, .select-opponent-btn, .match-quality-bar { transition: none; }
+  .opponent-skeleton::before { animation: none; }
 }

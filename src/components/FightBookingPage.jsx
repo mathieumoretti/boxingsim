@@ -189,34 +189,33 @@ const FightBookingPage = ({ user, onLogout }) => {
     <>
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
+        variant="fight-booking-page"
         onBack={() => navigate('/dashboard')}
         backButtonLabel="← Back to Dashboard"
       >
         {/* Main Content */}
         <div className="booking-container">
-          {/* Header */}
-          <div className="booking-header">
-            <h1>Book a Fight for {boxer.name}</h1>
+          {/* Boxer Summary (Header Info) */}
+          <div className="boxer-summary">
+            <div className="boxer-info">
+              <span className="label">BOOK A FIGHT FOR</span>
+              <span className="value">{boxer.name}</span>
+            </div>
+            <div className="boxer-meta">
+              <span className="level-badge">Level {boxer.level}</span>
+              <div className="stats-mini">
+                <span title="Strength">STR {boxer.stats?.strength || 0}</span>
+                <span title="Defense">DEF {boxer.stats?.defense || 0}</span>
+                <span title="Agility">AGI {boxer.stats?.agility || 0}</span>
+              </div>
+            </div>
           </div>
-
-        {/* Boxer Summary */}
-        <div className="boxer-summary">
-          <div className="boxer-info">
-            <span className="label">Booking for:</span>
-            <span className="value">{boxer.name} (Level {boxer.level})</span>
-          </div>
-          <div className="boxer-stats-preview">
-            <span>STR: {boxer.stats?.strength || 0}</span>
-            <span>DEF: {boxer.stats?.defense || 0}</span>
-            <span>AGI: {boxer.stats?.agility || 0}</span>
-          </div>
-        </div>
 
         {/* Filter Controls */}
         <div className="filter-controls">
           <div className="filter-group">
             <label htmlFor="level-range-slider">
-              Level Range: ±{filters.levelRange} (Level {getLevelRangeMin()}-{getLevelRangeMax()})
+              Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}
             </label>
             <input
               id="level-range-slider"

@@ -78,6 +78,7 @@ function App() {
           }
         />
 
+        {/* Fight Details Page - Theater Mode (no TopBar) */}
         <Route
           path="/fight/:id"
           element={

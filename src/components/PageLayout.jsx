@@ -6,6 +6,7 @@ import './PageLayout.css';
  *
  * Provides consistent layout structure for dedicated pages with:
  * - Back button (optional)
+ * - Cross-navigation button (optional - e.g., to related pages)
  * - Content wrapper with responsive breakpoints
  *
  * Note: TopBar is rendered globally in App.js, so this component
@@ -17,40 +18,29 @@ import './PageLayout.css';
  * @param {string} [props.className] - Additional classes for content wrapper
  * @param {boolean} [props.showBackButton=true] - Toggle back button visibility
  * @param {string} [props.backButtonLabel='← Back'] - Custom back button text
- *
- * @example
- * // Basic usage with back button
- * <PageLayout onBack={() => navigate('/dashboard')}>
- *   <div className="content">...</div>
- * </PageLayout>
- *
- * @example
- * // Custom back button label
- * <PageLayout
- *   onBack={() => navigate('/dashboard')}
- *   backButtonLabel="← Back to Dashboard"
- * >
- *   {...children}
- * </PageLayout>
- *
- * @example
- * // Without back button
- * <PageLayout showBackButton={false}>
- *   {...children}
- * </PageLayout>
+ * @param {string} [props.crossNavTo] - URL for cross-navigation button
+ * @param {string} [props.crossNavLabel] - Label for cross-navigation button
+ * @param {boolean} [props.showCrossNav=false] - Toggle cross-nav visibility
  */
 const PageLayout = ({
   children,
   className = '',
+  pageClassName = '', // Additional classes for the .page-layout container itself
   onBack,
   showBackButton = true,
-  backButtonLabel = '← Back'
+  backButtonLabel = '← Back',
+  crossNavTo,
+  crossNavLabel,
+  showCrossNav = true
 }) => {
+  const hasCrossNav = showCrossNav && crossNavTo && crossNavLabel;
+
   return (
-    <div className="page-layout">
-      {/* Back Button (optional) */}
-      {showBackButton && onBack && (
-        <div className="page-nav">
+    <div className={`page-layout ${pageClassName}`}>
+      {/* Navigation Bar */}
+      <div className="page-nav">
+        {/* Back Button */}
+        {showBackButton && onBack && (
           <button
             onClick={onBack}
             className="back-btn"
@@ -58,8 +48,19 @@ const PageLayout = ({
           >
             {backButtonLabel}
           </button>
-        </div>
-      )}
+        )}
+
+        {/* Cross-Navigation Button */}
+        {hasCrossNav && (
+          <a
+            href={crossNavTo}
+            className="cross-nav-btn"
+            aria-label={crossNavLabel}
+          >
+            {crossNavLabel}
+          </a>
+        )}
+      </div>
 
       {/* Content Wrapper */}
       <main className={`page-content ${className}`}>

@@ -5,7 +5,7 @@ import { fetchWorldTime } from '../api/world';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
-const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => {
+const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compact = false }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [durationHours, setDurationHours] = useState(2);
@@ -214,88 +214,92 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
   }
 
   return (
-    <div className={`training-scheduler ${boxer?.has_active_rest ? 'has-rest' : ''}`}>
-      <h2>Schedule Training</h2>
+    <div className={`training-scheduler ${compact ? 'compact' : ''} ${boxer?.has_active_rest ? 'has-rest' : ''}`}>
+      {/* Energy Indicator - inline at top */}
+      {selectedType && (
+        <div className="energy-indicator">
+          <span className="energy-label-text">Energy: </span>
+          <span className={`energy-availability ${energyCost > boxer?.energy ? 'insufficient' : ''}`}>
+            {boxer?.energy || 0} / 100 available
+          </span>
+          {energyCost <= boxer?.energy && (
+            <span className="energy-after-text">({Math.round(boxer?.energy - energyCost)} after)</span>
+          )}
+        </div>
+      )}
 
-      {error && <ErrorDisplay error={error} variant="alert" title="Training Error" />}
-      {success && <div className="success-message">{success}</div>}
-
-      {/* Rest Period Warning */}
+      {/* Rest Period Warning - compacted */}
       {boxer?.has_active_rest && (
         <div className={`rest-warning ${isForcedRest ? 'rest-forced' : 'rest-voluntary'}`}>
           <span className="warning-icon">{isForcedRest ? '🚑' : '🏥'}</span>
-          <div className="warning-content">
-            <strong>{isForcedRest ? 'Forced Rest Period Active' : 'Boxer is Currently Resting'}</strong>
-            {restCountdownDisplay && (
-              <p className="countdown-text">{restCountdownDisplay}</p>
-            )}
-            <p className="warning-text">Training cannot be scheduled during rest periods</p>
-          </div>
+          <strong>{isForcedRest ? 'Forced Rest Active' : 'Currently Resting'}</strong>
+          {restCountdownDisplay && (
+            <span className="countdown-text">— {restCountdownDisplay}</span>
+          )}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="training-form">
-        {/* Training Type Selection */}
-        <div className="form-group">
-          <label htmlFor="training-type">Training Type</label>
-          <select
-            id="training-type"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            required
-            disabled={isSubmitting || boxer?.has_active_rest}
-            className="training-select"
-          >
-            <option value="">Select a training type...</option>
-            {trainingTypes.map(type => (
-              <option key={type.id} value={type.id}>
-                {type.name} - {type.energy_cost} energy/hour
-              </option>
-            ))}
-          </select>
+        {error && <ErrorDisplay error={error} variant="alert" title="Training Error" />}
+        {success && <div className="success-message">{success}</div>}
+
+        {/* Compact form layout */}
+        <div className="form-row">
+          {/* Training Type Selection */}
+          <div className="form-group type-select">
+            <label htmlFor="training-type">Type</label>
+            <select
+              id="training-type"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              required
+              disabled={isSubmitting || boxer?.has_active_rest}
+              className="training-select"
+            >
+              <option value="">Select type...</option>
+              {trainingTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name} ({type.energy_cost} E/h)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Duration Slider */}
+          <div className="form-group duration-select">
+            <label htmlFor="duration">Duration</label>
+            <div className="duration-control">
+              <input
+                id="duration"
+                type="range"
+                min="1"
+                max="8"
+                step="0.5"
+                value={durationHours}
+                onChange={(e) => setDurationHours(parseFloat(e.target.value))}
+                required
+                disabled={isSubmitting || boxer?.has_active_rest}
+                className="duration-slider"
+              />
+              <span className="duration-value">{durationHours}h</span>
+            </div>
+          </div>
         </div>
 
         {/* Training Type Description */}
         {trainingType && (
           <div className="training-description">
-            <p><strong>{trainingType.name}</strong></p>
             <p className="description-text">{trainingType.description || 'No description available'}</p>
           </div>
         )}
 
-        {/* Duration Slider */}
-        <div className="form-group">
-          <label htmlFor="duration">
-            Duration: <span className="highlight">{durationHours} hour{durationHours !== 1 ? 's' : ''}</span>
-          </label>
-          <input
-            id="duration"
-            type="range"
-            min="1"
-            max="8"
-            step="0.5"
-            value={durationHours}
-            onChange={(e) => setDurationHours(parseFloat(e.target.value))}
-            required
-            disabled={isSubmitting || boxer?.has_active_rest}
-            className="duration-slider"
-          />
-          <div className="range-markers">
-            <span>1h</span>
-            <span>4h</span>
-            <span>8h</span>
-          </div>
-        </div>
-
-        {/* Energy Cost Preview */}
+        {/* Energy Cost Preview - moved up */}
         {selectedType && (
-          <div className="energy-preview">
-            <div className="preview-item">
-              <span className="preview-label">Energy Cost:</span>
-              <span className={`preview-value ${energyCost > boxer?.energy ? 'over-budget' : ''}`}>
-                {energyCost} / {boxer?.energy || 100} available
-              </span>
-            </div>
+          <div className="energy-preview-compact">
+            <span className="preview-label">Cost: </span>
+            <span className={`preview-value ${energyCost > boxer?.energy ? 'over-budget' : ''}`}>
+              {energyCost} energy
+            </span>
           </div>
         )}
 
@@ -305,56 +309,27 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
             {/* Fatigue Effectiveness Warning */}
             {effectiveGains.fatigueMultiplier < 0.8 && (
               <div className="fatigue-warning">
-                <span className="warning-icon">⚠️</span>
-                <span>High fatigue reduces training effectiveness by {Math.round((1 - effectiveGains.fatigueMultiplier) * 100)}%</span>
+                ⚠️ High fatigue reduces gains by {Math.round((1 - effectiveGains.fatigueMultiplier) * 100)}%
               </div>
             )}
 
-            <div className="gains-preview">
-              <h4>Effective Stat Gains</h4>
-              <div className="gain-bars">
-                <div className={`gain-bar strength ${effectiveGains.diminishingReturns.strength < 0.6 ? 'reduced' : ''}`}>
-                  <span className="gain-label">💪 STR +{effectiveGains.strength}</span>
-                  <div
-                    className="gain-progress"
-                    style={{ width: `${Math.min((effectiveGains.strength / 5) * 100, 100)}%` }}
-                  ></div>
-                  {effectiveGains.diminishingReturns.strength < 0.6 && (
-                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.strength) * 100)}%</span>
-                  )}
+            <div className="gains-preview-compact">
+              <div className="gain-bars-compact">
+                <div className={`gain-bar-mini strength ${effectiveGains.diminishingReturns.strength < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label-mini">STR +{effectiveGains.strength}</span>
+                  <div className="gain-progress-mini" style={{ width: `${Math.min((effectiveGains.strength / 5) * 100, 100)}%` }}></div>
                 </div>
-                <div className={`gain-bar defense ${effectiveGains.diminishingReturns.defense < 0.6 ? 'reduced' : ''}`}>
-                  <span className="gain-label">🛡️ DEF +{effectiveGains.defense}</span>
-                  <div
-                    className="gain-progress"
-                    style={{ width: `${Math.min((effectiveGains.defense / 5) * 100, 100)}%` }}
-                  ></div>
-                  {effectiveGains.diminishingReturns.defense < 0.6 && (
-                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.defense) * 100)}%</span>
-                  )}
+                <div className={`gain-bar-mini defense ${effectiveGains.diminishingReturns.defense < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label-mini">DEF +{effectiveGains.defense}</span>
+                  <div className="gain-progress-mini" style={{ width: `${Math.min((effectiveGains.defense / 5) * 100, 100)}%` }}></div>
                 </div>
-                <div className={`gain-bar agility ${effectiveGains.diminishingReturns.agility < 0.6 ? 'reduced' : ''}`}>
-                  <span className="gain-label">⚡ AGI +{effectiveGains.agility}</span>
-                  <div
-                    className="gain-progress"
-                    style={{ width: `${Math.min((effectiveGains.agility / 5) * 100, 100)}%` }}
-                  ></div>
-                  {effectiveGains.diminishingReturns.agility < 0.6 && (
-                    <span className="diminish-badge">-{Math.round((1 - effectiveGains.diminishingReturns.agility) * 100)}%</span>
-                  )}
+                <div className={`gain-bar-mini agility ${effectiveGains.diminishingReturns.agility < 0.6 ? 'reduced' : ''}`}>
+                  <span className="gain-label-mini">AGI +{effectiveGains.agility}</span>
+                  <div className="gain-progress-mini" style={{ width: `${Math.min((effectiveGains.agility / 5) * 100, 100)}%` }}></div>
                 </div>
               </div>
-
-              {/* XP Preview */}
-              <div className="xp-preview">
-                <span className="xp-label">📊 Experience: +{effectiveGains.xp} XP</span>
-                <div className="xp-bar-wrapper">
-                  <div
-                    className="xp-progress"
-                    style={{ width: `${Math.min(((boxer?.experience || 0) + effectiveGains.xp) / ((boxer?.level || 1) * 100) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <span className="xp-text">Level {boxer?.level || 1}</span>
+              <div className="xp-preview-compact">
+                +{effectiveGains.xp} XP toward Level {boxer?.level || 1}
               </div>
             </div>
           </>
@@ -365,9 +340,9 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled }) => 
           type="submit"
           className="schedule-btn"
           disabled={!selectedType || isSubmitting || boxer?.has_active_rest}
-          title={boxer?.has_active_rest ? (isForcedRest ? 'Cannot schedule training during forced rest period' : 'Cannot schedule training during rest period') : 'Schedule Training'}
+          title={boxer?.has_active_rest ? (isForcedRest ? 'Cannot schedule during forced rest' : 'Cannot schedule during rest') : 'Schedule Training'}
         >
-          {isSubmitting ? 'Scheduling...' : 'Schedule Training Session'}
+          {isSubmitting ? 'Scheduling...' : 'Schedule Training'}
         </button>
       </form>
     </div>

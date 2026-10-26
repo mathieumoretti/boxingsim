@@ -1,115 +1,115 @@
 /* ========================================
-   RESTING BADGE - Top-left status indicator
+   RESTING BADGE - Status Indicator
+   Design System v2.0
+
+   Shows rest status with urgency coding
    ======================================== */
+
 .resting-badge {
   position: absolute;
-  top: -8px;
-  left: -8px;
-  padding: 6px 10px;
+  top: -6px;
+  left: -6px;
+  padding: 4px 8px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #ffffff;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  animation: restingPulse 2s ease-in-out infinite;
-  max-width: 140px;
-  justify-content: center;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 84px;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
 }
 
-/* ========================================
-   VOLUNTARY REST - Yellow/Orange healing theme
-   ======================================== */
+.resting-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Voluntary Rest - Warm Amber */
 .resting-voluntary {
-  background: linear-gradient(135deg, #f6e05e 0%, #dd6b20 100%);
-  box-shadow: 0 3px 10px rgba(221, 107, 32, 0.4);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.35), 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
-.resting-voluntary .resting-status {
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+.resting-voluntary:hover {
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.45), 0 2px 4px rgba(245, 158, 11, 0.25);
 }
 
-/* ========================================
-   FORCED REST - Red critical theme
-   ======================================== */
+/* Forced Rest - Critical Red */
 .resting-forced {
-  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
-  box-shadow: 0 3px 10px rgba(229, 62, 62, 0.5);
-  animation: forcedRestPulse 1.5s ease-in-out infinite;
-}
-
-.resting-forced .resting-status {
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 800;
-}
-
-/* ========================================
-   BADGE ICONS & TEXT
-   ======================================== */
-.resting-icon {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.resting-status {
-  white-space: nowrap;
-}
-
-.resting-timer {
-  display: block;
-  font-size: 9px;
-  opacity: 0.95;
-  font-weight: 600;
-  margin-top: 1px;
-  text-align: center;
-}
-
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-@keyframes restingPulse {
-  0%, 100% {
-    box-shadow: 0 3px 10px rgba(221, 107, 32, 0.4);
-  }
-  50% {
-    box-shadow: 0 3px 15px rgba(221, 107, 32, 0.6);
-  }
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.35), 0 1px 3px rgba(239, 68, 68, 0.2);
+  animation: forcedRestPulse 2s ease-in-out infinite;
 }
 
 @keyframes forcedRestPulse {
   0%, 100% {
-    box-shadow: 0 3px 10px rgba(229, 62, 62, 0.5);
-    transform: scale(1);
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.35), 0 1px 3px rgba(239, 68, 68, 0.2);
   }
   50% {
-    box-shadow: 0 4px 16px rgba(229, 62, 62, 0.7);
-    transform: scale(1.03);
+    box-shadow: 0 3px 16px rgba(239, 68, 68, 0.5), 0 2px 6px rgba(239, 68, 68, 0.3);
   }
 }
 
-/* ========================================
-   RESPONSIVE - Mobile adjustments
-   ======================================== */
+.resting-forced:hover {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5), 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.resting-icon {
+  font-size: 12px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.resting-status {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.resting-timer {
+  font-size: 9px;
+  opacity: 0.95;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .resting-badge {
-    left: -4px;
     top: -4px;
-    padding: 5px 8px;
-    font-size: 10px;
-    max-width: 120px;
+    left: -4px;
+    font-size: 9px;
+    padding: 3px 7px;
+    min-width: 76px;
   }
 
   .resting-icon {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .resting-timer {
     font-size: 8px;
+  }
+}
+
+/* Accessibility */
+.resting-badge:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resting-forced {
+    animation: none;
+  }
+
+  .resting-badge {
+    transition-duration: 0.01ms !important;
   }
 }
