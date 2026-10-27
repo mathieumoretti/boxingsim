@@ -444,3 +444,45 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 
 	return events, nil
 }
+
+// GetByFightID retrieves scheduled events for a specific fight (for cancellation cleanup).
+func (s *ScheduledEventStore) GetByFightID(ctx context.Context, fightID int) ([]*model.ScheduledEvent, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	query := `
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events
+						WHERE (event_data->>'fight_id')::int = $1
+						AND processed = FALSE
+						AND status IN ('pending', 'processing')
+						ORDER BY event_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, fightID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var events []*model.ScheduledEvent
+	for rows.Next() {
+		event := &model.ScheduledEvent{}
+		err := rows.Scan(
+			&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
+			&event.Processed, &event.Status, &event.EventData, &event.ErrorMessage,
+			&event.ProcessedAt, &event.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}

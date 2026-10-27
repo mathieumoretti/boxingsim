@@ -175,7 +175,7 @@ const BoxerProfile = ({ user, onLogout }) => {
           <CareerRecord boxer={boxer} />
 
           {/* Next Fight Card (only shows when there's an upcoming fight) */}
-          <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+          <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
 
           {/* Stats Overview - STR/DEF/AGI */}
           <StatsOverview boxer={boxer} />

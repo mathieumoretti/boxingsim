@@ -15,14 +15,14 @@ func TestHandler_SPA_Routing(t *testing.T) {
 	// Create index.html
 	indexHTML := `<!DOCTYPE html><html><head><title>Test</title></head><body><div id="root"></div></body></html>`
 	indexPath := filepath.Join(tmpDir, "index.html")
-	if err := os.WriteFile(indexPath, []byte(indexHTML), 0644); err != nil {
+	if err := os.WriteFile(indexPath, []byte(indexHTML), 0o644); err != nil {
 		t.Fatalf("Failed to create test index.html: %v", err)
 	}
 
 	// Create a test JS bundle
 	bundleJS := `console.log('test');`
 	bundlePath := filepath.Join(tmpDir, "bundle.js")
-	if err := os.WriteFile(bundlePath, []byte(bundleJS), 0644); err != nil {
+	if err := os.WriteFile(bundlePath, []byte(bundleJS), 0o644); err != nil {
 		t.Fatalf("Failed to create test bundle.js: %v", err)
 	}
 
@@ -112,7 +112,7 @@ func TestHandler_MethodRestrictions(t *testing.T) {
 
 	// Create index.html
 	indexPath := filepath.Join(tmpDir, "index.html")
-	if err := os.WriteFile(indexPath, []byte("<html></html>"), 0644); err != nil {
+	if err := os.WriteFile(indexPath, []byte("<html></html>"), 0o644); err != nil {
 		t.Fatalf("Failed to create test index.html: %v", err)
 	}
 

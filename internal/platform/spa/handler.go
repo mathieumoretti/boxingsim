@@ -55,7 +55,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// For everything else (SPA routes like /boxer/123), try to serve index.html
 	// First check if index.html exists in the static directory
- indexPath := filepath.Join(h.Dir, "index.html")
+	indexPath := filepath.Join(h.Dir, "index.html")
 	if h.fileExists(indexPath) {
 		// Serve index.html for SPA routing
 		http.ServeFile(w, r, indexPath)
