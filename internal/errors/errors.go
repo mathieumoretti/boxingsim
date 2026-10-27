@@ -35,6 +35,10 @@ const (
 
 	// Fatigue errors
 	ErrorCodeFatigueTooHigh ErrorCode = "FATIGUE_TOO_HIGH"
+
+	// Fight cancellation errors
+	ErrorCodeFightAlreadyStarted ErrorCode = "FIGHT_ALREADY_STARTED"
+	ErrorCodeFightCannotCancel   ErrorCode = "FIGHT_CANNOT_CANCEL"
 )
 
 // APIError represents a standardized error response for the API.
@@ -180,6 +184,22 @@ func FatigueTooHigh(message string) *APIError {
 	}
 }
 
+// FightAlreadyStarted creates a fight already started error.
+func FightAlreadyStarted() *APIError {
+	return &APIError{
+		Code:    ErrorCodeFightAlreadyStarted,
+		Message: "Fight has already started and cannot be cancelled",
+	}
+}
+
+// FightCannotCancel creates a fight cannot cancel error with reason.
+func FightCannotCancel(reason string) *APIError {
+	return &APIError{
+		Code:    ErrorCodeFightCannotCancel,
+		Message: "Fight cannot be cancelled: " + reason,
+	}
+}
+
 // ServiceUnavailable creates a service unavailable error.
 func ServiceUnavailable() *APIError {
 	return &APIError{
@@ -211,6 +231,8 @@ func GetHTTPStatus(code ErrorCode) int {
 		ErrorCodeTrainingScheduled, ErrorCodeBoxerResting,
 		ErrorCodeFatigueTooHigh:
 		return http.StatusBadRequest
+	case ErrorCodeFightAlreadyStarted, ErrorCodeFightCannotCancel:
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}

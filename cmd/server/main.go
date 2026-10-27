@@ -199,6 +199,7 @@ func main() {
 	protectedRouter.HandleFunc("/fights/book", fightHandler.BookFight).Methods("POST")
 	protectedRouter.HandleFunc("/fights/active", fightHandler.GetActiveFights).Methods("GET")
 	protectedRouter.HandleFunc("/fights/{id}", fightHandler.GetFightByID).Methods("GET")
+	protectedRouter.HandleFunc("/fights/{id}", fightHandler.CancelFight).Methods("DELETE")
 
 	// Opponent discovery endpoints (best_match and validate)
 	protectedRouter.HandleFunc("/opponents/best_match", opponentHandler.GetBestMatch).Methods("GET")

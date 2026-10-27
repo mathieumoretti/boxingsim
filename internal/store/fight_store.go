@@ -17,6 +17,9 @@ var (
 
 	// ErrBoxerInUse is returned when a boxer is already involved in another fight.
 	ErrBoxerInUse = errors.New("boxer is currently involved in another fight")
+
+	// ErrFightCannotCancel is returned when a fight cannot be cancelled (already started or completed).
+	ErrFightCannotCancel = errors.New("fight cannot be cancelled")
 )
 
 // FightStore implements data access operations for fights.
@@ -650,6 +653,38 @@ func (s *FightStore) CancelZombieFight(ctx context.Context, fightID int, reason 
 	}
 	if rowsAffected == 0 {
 		return ErrFightNotFound
+	}
+
+	return nil
+}
+
+// CancelFight cancels a scheduled fight by setting its status to 'cancelled'.
+// This is used for user-initiated cancellation (MAT-140).
+// Returns ErrFightCannotCancel if the fight is not in 'scheduled' state.
+func (s *FightStore) CancelFight(ctx context.Context, id int, reason string) error {
+	query := `
+		UPDATE fights
+		SET
+			status = 'cancelled',
+			updated_at = CURRENT_TIMESTAMP,
+			data = COALESCE(data, '{}'::jsonb) ||
+				jsonb_build_object(
+					'cancellation_reason', $2::text,
+					'cancelled_at', CURRENT_TIMESTAMP::text
+				)
+		WHERE id = $1 AND status = 'scheduled'`
+
+	result, err := s.db.ExecContext(ctx, query, id, reason)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightCannotCancel
 	}
 
 	return nil

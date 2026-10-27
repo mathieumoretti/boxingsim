@@ -2,7 +2,7 @@
  * Fights API - Data access layer for fight-related operations (MAT-120)
  */
 
-import { apiGetJson, apiPostJson } from './client';
+import { apiGetJson, apiPostJson, apiDelete } from './client';
 
 /**
  * Fetches the fight history for a specific boxer (MAT-103).
@@ -188,5 +188,20 @@ export async function fetchBoxer(boxerId) {
  */
 export async function bookFight(boxerId, fightData) {
   const data = await apiPostJson(`/api/boxers/${boxerId}/fights`, fightData);
+  return data;
+}
+
+/**
+ * Cancels a scheduled fight (MAT-140).
+ * @param {number} fightId - The fight's ID
+ * @param {Object} options - Optional cancellation options
+ * @param {string} options.reason - Reason for cancellation (optional)
+ * @returns {Promise<Object>} Cancellation result
+ */
+export async function cancelFight(fightId, options = {}) {
+  const { reason = 'User requested cancellation' } = options;
+  const data = await apiDelete(`/api/fights/${fightId}`, {
+    body: JSON.stringify({ reason }),
+  });
   return data;
 }

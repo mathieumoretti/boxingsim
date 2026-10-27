@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -232,4 +233,59 @@ func (h *FightHandler) GetFightHistoryWithOpponents(w http.ResponseWriter, r *ht
 	}
 
 	pkgerrors.WriteJSON(w, http.StatusOK, fights)
+}
+
+// CancelFight cancels a scheduled fight (DELETE /fights/{id}) (MAT-140)
+func (h *FightHandler) CancelFight(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		pkgerrors.WriteError(w, pkgerrors.BadRequest("fight id required"))
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.Validation("id", "invalid fight id format"))
+		return
+	}
+
+	// Optionally read cancellation reason from request body
+	type CancelRequest struct {
+		Reason string `json:"reason"`
+	}
+	var req CancelRequest
+	_ = BindJSON(r, &req) // Ignore error - body is optional
+
+	reason := req.Reason
+	if reason == "" {
+		reason = "User requested cancellation"
+	}
+
+	err = h.fightService.CancelFight(r.Context(), id, reason)
+	if err != nil {
+		switch {
+		case errors.Is(err, boxerdb.ErrBoxerNotExists):
+			pkgerrors.WriteError(w, pkgerrors.NotFound("fight not found"))
+		case strings.Contains(err.Error(), "cannot be cancelled"):
+			// Check specific reasons
+			if strings.Contains(err.Error(), "current status is") {
+				pkgerrors.WriteError(w, pkgerrors.FightAlreadyStarted())
+			} else if strings.Contains(err.Error(), "in the past") {
+				pkgerrors.WriteError(w, pkgerrors.FightCannotCancel("fight has already started"))
+			} else {
+				pkgerrors.WriteError(w, pkgerrors.Conflict(err.Error()))
+			}
+		case strings.Contains(err.Error(), "fight not found"):
+			pkgerrors.WriteError(w, pkgerrors.NotFound("fight does not exist"))
+		default:
+			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to cancel fight: "+err.Error()))
+		}
+		return
+	}
+
+	pkgerrors.WriteSuccess(w, http.StatusOK, map[string]string{
+		"message": "Fight cancelled successfully",
+	})
 }

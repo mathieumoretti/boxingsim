@@ -150,6 +150,90 @@ func (s *FightService) GetFightHistoryWithOpponents(ctx context.Context, boxerID
 	return s.fightStore.GetFightHistoryWithOpponents(ctx, boxerID)
 }
 
+// CancelFight cancels a scheduled fight (MAT-140).
+// Validates that:
+// - Fight exists and is in 'scheduled' status
+// - Fight scheduled_time is in the future relative to game time
+// Cleans up associated scheduled events.
+func (s *FightService) CancelFight(ctx context.Context, fightID int, reason string) error {
+	if fightID <= 0 {
+		return errors.New("invalid fight id")
+	}
+
+	// Get current game time for validation
+	var gameTime time.Time
+	if s.worldClockModel != nil && s.db != nil {
+		gt, err := s.worldClockModel.GetCurrentGameTime(ctx, s.db)
+		if err != nil {
+			return fmt.Errorf("failed to get current game time: %w", err)
+		}
+		gameTime = gt
+	}
+
+	// Retrieve the fight using a transaction for consistency
+	tx, err := s.fightStore.BeginFightTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }() // Will be ignored if committed
+
+	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, fightID)
+	if err != nil {
+		if errors.Is(err, store.ErrFightNotFound) {
+			return fmt.Errorf("fight not found: %w", boxerdb.ErrBoxerNotExists)
+		}
+		return fmt.Errorf("failed to retrieve fight: %w", err)
+	}
+
+	// Validate fight is in 'scheduled' status
+	if fight.Status != model.FightStatusScheduled {
+		return fmt.Errorf("fight cannot be cancelled: current status is '%s' (only 'scheduled' fights can be cancelled)", fight.Status)
+	}
+
+	// Validate fight is scheduled in the future relative to game time
+	if fight.ScheduledTime != nil && !gameTime.IsZero() {
+		if !fight.ScheduledTime.After(gameTime) {
+			return fmt.Errorf("fight cannot be cancelled: scheduled time (%v) is in the past relative to game time (%v)",
+				fight.ScheduledTime.Format("2006-01-02 15:04"), gameTime.Format("2006-01-02 15:04"))
+		}
+	}
+
+	// Cancel the fight (updates status to 'cancelled')
+	cancelReason := reason
+	if cancelReason == "" {
+		cancelReason = "User requested cancellation"
+	}
+
+	if err := s.fightStore.CancelFight(ctx, fightID, cancelReason); err != nil {
+		if errors.Is(err, store.ErrFightCannotCancel) {
+			return fmt.Errorf("fight cannot be cancelled: %w", err)
+		}
+		return fmt.Errorf("failed to cancel fight: %w", err)
+	}
+
+	// Clean up associated scheduled events (mark as completed to prevent processing)
+	if s.eventStore != nil {
+		events, err := s.eventStore.GetByFightID(ctx, fightID)
+		if err != nil {
+			// Log but don't fail - the fight is cancelled even if event cleanup fails
+			fmt.Printf("Warning: failed to retrieve events for fight %d: %v\n", fightID, err)
+		} else {
+			for _, event := range events {
+				if err := s.eventStore.MarkAsCompleted(ctx, event.ID); err != nil {
+					// Log but don't fail - other events may still be cleaned up
+					fmt.Printf("Warning: failed to mark event %d as completed: %v\n", event.ID, err)
+				}
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // ValidateOpponentMatch validates a potential matchup between two boxers (MAT-102).
 func (s *FightService) ValidateOpponentMatch(boxer1ID, boxer2ID int) MatchValidation {
 	validation := MatchValidation{
