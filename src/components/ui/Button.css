@@ -1,0 +1,249 @@
+/**
+ * Button Component Styles
+ *
+ * Centralized button styling with variants, sizes, and states.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   BASE BUTTON STYLES
+
+   Core button layout and interaction patterns.
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   BUTTON VARIANTS
+
+   Different visual treatments for different contexts.
+   ========================================================================== */
+
+/* --- Primary Variant ---
+   Main actions, primary CTAs. Uses brand color. */
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 100%
+  );
+  color: var(--color-white);
+  box-shadow: var(--shadow-card), 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: var(--shadow-elevated), 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-subtle), 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* --- Secondary Variant ---
+   Default variant. Neutral appearance for less prominent actions. */
+.btn-secondary {
+  background: linear-gradient(
+    135deg,
+    var(--color-gray-500) 0%,
+    var(--color-gray-600) 100%
+  );
+  color: var(--color-white);
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--color-gray-600) 0%,
+    var(--color-gray-700) 100%
+  );
+  transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: var(--shadow-card);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-subtle);
+}
+
+/* --- Danger Variant ---
+   Destructive actions (delete, cancel). Red treatment. */
+.btn-danger {
+  background: linear-gradient(
+    135deg,
+    var(--color-danger-bright) 0%,
+    var(--color-danger) 100%
+  );
+  color: var(--color-white);
+  box-shadow: var(--shadow-card), 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--color-danger) 0%,
+    var(--color-danger-dark) 100%
+  );
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: var(--shadow-elevated), 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-subtle), 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+/* --- Ghost Variant ---
+   Minimal appearance. Transparent background with border. */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  box-shadow: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-600);
+  color: var(--color-gray-800);
+  transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-ghost:active:not(:disabled) {
+  transform: translateY(0);
+  background-color: var(--color-gray-200);
+}
+
+/* ==========================================================================
+   BUTTON SIZES
+
+   Three size variants for different contexts.
+   ========================================================================== */
+
+/* --- Small Size ---
+   Compact buttons for tight spaces, secondary actions. */
+.btn-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* --- Medium Size (Default) ---
+   Standard button size for most use cases. */
+.btn-md {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-base);
+}
+
+/* --- Large Size ---
+   Prominent buttons for primary CTAs. */
+.btn-lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-lg);
+}
+
+/* ==========================================================================
+   DARK MODE VARIANTS
+
+   Override button styles when used on dark/navy backgrounds.
+   Applied via parent class context.
+   ========================================================================== */
+
+/* Ghost button on dark backgrounds */
+.btn-group-dark .btn-ghost,
+.boxer-profile .btn-ghost,
+.training-page .btn-ghost,
+.fight-booking-page .btn-ghost,
+.fight-details-page .btn-ghost {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-group-dark .btn-ghost:hover:not(:disabled),
+.boxer-profile .btn-ghost:hover:not(:disabled),
+.training-page .btn-ghost:hover:not(:disabled),
+.fight-booking-page .btn-ghost:hover:not(:disabled),
+.fight-details-page .btn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Secondary button on dark backgrounds */
+.btn-group-dark .btn-secondary,
+.boxer-profile .btn-secondary,
+.training-page .btn-secondary,
+.fight-booking-page .btn-secondary,
+.fight-details-page .btn-secondary {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-group-dark .btn-secondary:hover:not(:disabled),
+.boxer-profile .btn-secondary:hover:not(:disabled),
+.training-page .btn-secondary:hover:not(:disabled),
+.fight-booking-page .btn-secondary:hover:not(:disabled),
+.fight-details-page .btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+
+   Helper classes for button groups and layouts.
+   ========================================================================== */
+
+/* Button Group - multiple buttons together */
+.btn-group {
+  display: inline-flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.btn-group .btn {
+  flex: 0 0 auto;
+}
+
+/* Full Width Button - stretch to container */
+.btn-full-width {
+  width: 100%;
+}

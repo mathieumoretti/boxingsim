@@ -36,32 +36,28 @@
   margin-bottom: var(--space-6);
 }
 
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  background-color: var(--color-white);
-  color: var(--color-gray-700);
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-subtle);
+/* Back button wrapper - uses Button component (variant="ghost") */
+.page-back-btn {
+  /* Additional styling for back button in page context */
+  /* Base ghost variant already provides most styles from Button.css */
 }
 
-.back-btn:hover {
-  background-color: var(--color-gray-100);
-  border-color: var(--color-gray-600);
-  transform: translateY(calc(var(--space-1) * -0.5));
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+/* Dark mode override for back button */
+.boxer-profile .page-back-btn,
+.training-page .page-back-btn,
+.fight-booking-page .page-back-btn,
+.fight-details-page .page-back-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.back-btn:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+.boxer-profile .page-back-btn:hover,
+.training-page .page-back-btn:hover,
+.fight-booking-page .page-back-btn:hover,
+.fight-details-page .page-back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Cross-Navigation Button */

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from './ui';
 import './PageLayout.css';
 
 /**
@@ -41,13 +42,15 @@ const PageLayout = ({
       <div className="page-nav">
         {/* Back Button */}
         {showBackButton && onBack && (
-          <button
+          <Button
+            variant="ghost"
+            size="md"
             onClick={onBack}
-            className="back-btn"
             aria-label="Go back"
+            className="page-back-btn"
           >
             {backButtonLabel}
-          </button>
+          </Button>
         )}
 
         {/* Cross-Navigation Button */}
