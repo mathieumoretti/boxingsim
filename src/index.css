@@ -1,3 +1,13 @@
+/* ========================================
+   DESIGN TOKENS IMPORT
+
+   All design system values are centralized in design-tokens.css.
+   Import this first to ensure tokens are available throughout the app.
+
+   MAT-146: Design Tokens Foundation
+   ======================================== */
+@import './design-tokens.css';
+
 /* Global styles */
 * {
   margin: 0;
@@ -6,10 +16,10 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
-  line-height: 1.6;
+  font-family: var(--font-family-base);
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-800);
+  line-height: var(--line-height-normal);
 }
 
 .app {

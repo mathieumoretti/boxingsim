@@ -1,335 +1,317 @@
+/* src/components/NextFight.css */
+
 /**
- * NextFight Component Styles (MAT-123)
+ * NextFight - Next fight section for boxer profile page
  *
- * Matches the styling of other BoxerProfile sections.
+ * Shows upcoming fight details with opponent display, countdown timer,
+ * live badge, and cancel fight button. Includes cancellation modal.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
  */
 
-/* ============================================
-   CARD CONTAINER - matches other sections
-   ============================================ */
+/* ========================================
+   LOCAL VARIABLES
+   ======================================== */
 
-.next-fight-section {
-  background: linear-gradient(145deg, rgba(30, 30, 50, 0.8), rgba(20, 20, 40, 0.9));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  position: relative;
-  overflow: visible;
+:root {
+  --next-fight-purple: #7c3aed;
+  --next-fight-purple-dark: #6d28d9;
+  --modal-overlay-bg: rgba(0, 0, 0, 0.5);
 }
 
-/* Purple accent bar on left for scheduled fights */
-.next-fight-section::before {
+/* ========================================
+   NEXT FIGHT CARD - Arena Theater Mode
+   ======================================== */
+
+.next-fight-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d1a1a 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 2px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #4a2a2a;
+  margin-bottom: var(--space-5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Arena Background Accent */
+.next-fight-card::before {
   content: '';
   position: absolute;
-  top: 16px;
-  left: 0;
-  width: 4px;
-  height: calc(100% - 32px);
-  background: #8b5cf6;
-  border-radius: 2px;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-/* Red pulsing for imminent fights */
-.next-fight-section.next-fight-imminent {
-  border-color: rgba(220, 38, 38, 0.4);
-  box-shadow: 0 0 30px rgba(220, 38, 38, 0.15);
-}
+/* ========================================
+   HEADER SECTION
+   ======================================== */
 
-.next-fight-section.next-fight-imminent::before {
-  background: #dc2626;
-  width: 6px;
-}
-
-/* ============================================
-   CONTENT LAYOUT
-   ============================================ */
-
-.next-fight-content {
+.next-fight-header {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
 }
 
-.opponent-display {
-  display: flex;
-  align-items: center;
+/* Fight Title */
+.fight-title-section {
+  flex: 1;
 }
 
-.opponent-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #f1f5f9;
-  line-height: 1.2;
+.fight-title-label {
+  font-size: var(--font-size-xs);
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
 }
 
-/* ============================================
-   FIGHT DETAILS ROW
-   ============================================ */
-
-.fight-details {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+.fight-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
-.rounds-badge {
-  padding: 6px 12px;
-  background: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #c4b5fd;
-}
-
-.schedule-countdown {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #fbbf24;
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.schedule-date {
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-/* ============================================
-   VIEW FIGHT LINK
-   ============================================ */
-
-.view-fight-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid rgba(139, 92, 246, 0.5);
-  border-radius: 20px;
-  color: #c4b5fd;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  margin-left: auto; /* Push to right */
-}
-
-.view-fight-link:hover {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: #a78bfa;
-  color: #e9d5ff;
-}
-
-.next-fight-imminent .view-fight-link {
-  border-color: rgba(220, 38, 38, 0.5);
-  color: #fecaca;
-}
-
-.next-fight-imminent .view-fight-link:hover {
-  background: rgba(220, 38, 38, 0.15);
-  border-color: #dc2626;
-  color: #fee2e2;
-}
-
-/* ============================================
-   LIVE BADGE
-   ============================================ */
-
+/* Live Badge */
 .live-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: var(--color-white);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  border-radius: 12px;
-  animation: blink 1.5s ease-in-out infinite;
+  letter-spacing: 0.1em;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
-@keyframes blink {
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-white);
+  border-radius: var(--radius-full);
+  animation: livePulse 1s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+/* ========================================
+   OPPONENT DISPLAY - VS Card
+   ======================================== */
+
+.opponent-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  position: relative;
+}
+
+/* VS Divider */
+.vs-divider {
+  position: absolute;
+  left: 50%; top: var(--space-2); bottom: var(--space-2);
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(124, 58, 237, 0.5) 50%, transparent 100%);
+}
+
+/* Boxer Display */
+.boxer-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.boxer-avatar-large {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #4a2a2a, #2d1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xxl);
+  border: 2px solid rgba(124, 58, 237, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.boxer-info-large {
+  text-align: center;
+}
+
+.boxer-name-large {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  margin-bottom: var(--space-half);
+}
+
+/* Opponent Level */
+.opponent-level-large {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-half) var(--space-2);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(109, 40, 217, 0.15));
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: #c7d2fe;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+}
+
+/* VS Badge */
+.vs-badge {
+  position: relative;
+  z-index: 1;
+}
+
+.vs-text {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+}
+
+/* ========================================
+   FIGHT DETAILS ROW
+   ======================================== */
+
+.fight-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Countdown Timer */
+.fight-countdown {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.countdown-icon {
+  font-size: var(--font-size-lg);
+}
+
+.countdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+}
+
+.countdown-label {
+  font-size: var(--font-size-xs);
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.countdown-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-white);
+  font-weight: var(--font-weight-bold);
+  font-family: monospace;
+}
+
+/* Countdown States */
+.countdown-imminent .countdown-time {
+  color: #f59e0b;
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+.countdown-live .countdown-time {
+  color: #ef4444;
+}
+
+@keyframes countdownPulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.7; }
 }
 
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-@media (min-width: 768px) {
-  .next-fight-content {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .opponent-name {
-    font-size: 1.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .next-fight-section {
-    padding: 16px;
-  }
-
-  .opponent-name {
-    font-size: 1.25rem;
-  }
-
-  .fight-details {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .view-fight-link {
-    margin-left: 0;
-  }
-}
-
-/* ============================================
-   CANCEL FIGHT BUTTON (MAT-140)
-   ============================================ */
-
+/* Cancel Fight Button */
 .cancel-fight-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  border-radius: 20px;
-  color: #fca5a5;
-  font-size: 0.85rem;
-  font-weight: 600;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: 8px;
+  transition: all var(--transition-fast);
 }
 
-.cancel-fight-btn:hover:not(:disabled) {
-  background: rgba(220, 38, 38, 0.2);
-  border-color: rgba(220, 38, 38, 0.6);
-  color: #fecaca;
+.cancel-fight-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
 }
 
-.cancel-fight-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.cancel-icon {
+  font-size: var(--font-size-sm);
 }
 
-/* Error message for failed cancellation */
-.cancel-error {
-  margin-top: 12px;
-  padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
-  color: #fca5a5;
-  font-size: 0.9rem;
+/* ========================================
+   FIGHT LOCATION BADGE
+   ======================================== */
+
+.fight-location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(124, 58, 237, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: #c7d2fe;
+  font-weight: var(--font-weight-medium);
 }
 
-/* ============================================
-   CONFIRMATION MODAL (MAT-140)
-   ============================================ */
+/* ========================================
+   MODAL OVERLAY
+   ======================================== */
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--modal-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: calc(var(--z-dropdown) + 1);
   animation: fadeIn 0.2s ease-out;
-}
-
-.modal-content {
-  background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 480px;
-  width: 90%;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-  animation: slideUp 0.3s ease-out;
-}
-
-.modal-content h3 {
-  margin: 0 0 16px 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #f1f5f9;
-}
-
-.modal-content p {
-  margin: 0 0 12px 0;
-  line-height: 1.6;
-  color: #cbd5e1;
-}
-
-.modal-warning {
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 0.85rem;
-  color: #fde047;
-  margin-bottom: 24px !important;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.modal-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-btn-secondary {
-  background: rgba(148, 163, 184, 0.1);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  color: #cbd5e1;
-}
-
-.modal-btn-secondary:hover:not(:disabled) {
-  background: rgba(148, 163, 184, 0.2);
-  border-color: rgba(148, 163, 184, 0.6);
-}
-
-.modal-btn-danger {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.modal-btn-danger:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
-}
-
-.modal-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @keyframes fadeIn {
@@ -337,29 +319,210 @@
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
+/* ========================================
+   MODAL CONTENT - Theater Mode Style
+   ======================================== */
+
+.modal-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d1a1a 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid #4a2a2a;
+  max-width: 450px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: scale(0.9) translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }
 
-/* Modal responsive */
-@media (max-width: 480px) {
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  margin: 0;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  padding: var(--space-1);
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+.close-modal-btn:hover {
+  color: var(--color-white);
+}
+
+/* Modal Body */
+.modal-body {
+  margin-bottom: var(--space-5);
+}
+
+.modal-message {
+  color: #d1d5db;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+.warning-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-md);
+  color: #fca5a5;
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+}
+
+.warning-icon {
+  font-size: var(--font-size-base);
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.secondary-btn,
+.cancel-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 100px;
+}
+
+.secondary-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+}
+
+.cancel-confirm-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: var(--color-white);
+  border: none;
+}
+
+.cancel-confirm-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: var(--breakpoint-tablet)) {
+  .next-fight-card {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .opponent-display {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .vs-divider {
+    display: none;
+  }
+
+  .boxer-display {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .vs-badge {
+    order: -1;
+    margin-bottom: var(--space-2);
+  }
+
+  .fight-details-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cancel-fight-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .next-fight-card {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
   .modal-content {
-    padding: 24px;
+    padding: var(--space-4) var(--space-4);
     width: 95%;
   }
 
-  .modal-actions {
+  .modal-footer {
     flex-direction: column-reverse;
   }
 
-  .modal-btn {
+  .secondary-btn,
+  .cancel-confirm-btn {
     width: 100%;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY & FOCUS STATES
+   ======================================== */
+
+.cancel-fight-btn:focus-visible,
+.close-modal-btn:focus-visible,
+.secondary-btn:focus-visible,
+.cancel-confirm-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .modal-overlay,
+  .modal-content,
+  .countdown-time,
+  .cancel-fight-btn {
+    animation: none;
+    transition: none;
   }
 }

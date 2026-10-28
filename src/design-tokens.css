@@ -1,0 +1,296 @@
+/**
+ * Design Tokens — Single Source of Truth
+ *
+ * This file centralizes all design system values for consistency and theming capability.
+ * All color, typography, spacing, shadow, and animation values should be defined here
+ * and referenced throughout the application using CSS custom properties (var()).
+ *
+ * Usage:
+ *   - In CSS files: `background-color: var(--color-primary);`
+ *   - In JS inline styles: `style={{ color: getComputedStyle(document.documentElement).getPropertyValue('--color-primary') }}`
+ *
+ * Naming Convention:
+ *   - Colors: --color-{category}-{variant} (e.g., --color-primary, --color-success-light)
+ *   - Typography: --font-{property}-{variant} (e.g., --font-size-base, --font-weight-bold)
+ *   - Spacing: --space-{number} (e.g., --space-4, --space-8)
+ *   - Radius: --radius-{size} (e.g., --radius-sm, --radius-lg)
+ *   - Shadows: --shadow-{name} (e.g., --shadow-card, --shadow-glow-red)
+ *   - Breakpoints: --breakpoint-{name} (e.g., --breakpoint-tablet)
+ *
+ * Related Issues:
+ *   - MAT-146: Design Tokens Foundation
+ *   - MAT-121: UI/UX Audit & Design System
+ *   - MAT-124: UI Component & CSS Strategy Audit
+ */
+
+:root {
+  /* ==========================================================================
+     COLOR TOKENS
+
+     Semantic color system extracted from DESIGN.md.
+     All hex values centralized here for easy theming updates.
+     ========================================================================== */
+
+  /* --- Primary Brand Colors --- */
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+
+  /* --- Navy Gradient Family (Dark Mode / Premium Content) --- */
+  --color-navy-dark: #0f0f23;
+  --color-navy-medium: #1a1a2e;
+  --color-navy-light: #16213e;
+  --color-navy-overlay: rgba(30, 30, 50, 0.8);
+
+  /* --- Semantic Colors --- */
+  --color-success: #10b981;
+  --color-success-light: #34d399;
+
+  --color-danger-bright: #f87171;
+  --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
+
+  --color-warning: #f59e0b;
+  --color-warning-dark: #d97706;
+
+  --color-victory-gold: #ffd700;
+  --color-victory-light: #ffed4e;
+
+  /* --- Neutral / Gray Scale --- */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f5f7fa;
+  --color-gray-200: #f5f5f5;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #718096;
+  --color-gray-700: #4a5568;
+  --color-gray-800: #2d3748;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* --- Combat Stat Colors (Domain-Specific) --- */
+  --color-stat-strength: #ef4444;
+  --color-stat-strength-dark: #dc2626;
+  --color-stat-defense: #3b82f6;
+  --color-stat-defense-dark: #2563eb;
+  --color-stat-agility: #eab308;
+  --color-stat-agility-dark: #ca8a04;
+  --color-stat-health: #10b981;
+  --color-stat-energy: #eab308;
+
+  /* --- Level Badge Gradients --- */
+  --color-level-1-start: #718096;
+  --color-level-1-end: #4a5568;
+  --color-level-2-start: #38b2ac;
+  --color-level-2-end: #319795;
+  --color-level-3-start: #dd6b20;
+  --color-level-3-end: #c05621;
+  --color-level-4-start: #805ad5;
+  --color-level-4-end: #704ada;
+  --color-level-5-start: #d69e2e;
+  --color-level-5-end: #fbbf24;
+
+  /* ==========================================================================
+     TYPOGRAPHY TOKENS
+
+     Font scale and weights based on DESIGN.md Section 2.
+     REM-based for responsive typography.
+     ========================================================================== */
+
+  /* Font Family */
+  --font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  /* Font Sizes (REM Scale) */
+  --font-size-xs: 0.65rem;    /* Badges, labels, inline indicators */
+  --font-size-sm: 0.875rem;   /* Body text, secondary information */
+  --font-size-base: 1rem;     /* Standard body, list items */
+  --font-size-lg: 1.25rem;    /* Section headers, card titles */
+  --font-size-xl: 1.5rem;     /* Page headers in sections */
+  --font-size-xxl: 2rem;      /* Primary page headings */
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.6;
+  --line-height-relaxed: 1.8;
+
+  /* ==========================================================================
+     SPACING TOKENS
+
+     4px base grid system. All spacing should use these values.
+     Format: --space-{number} = {number} * 4px
+     ========================================================================== */
+
+  --space-1: 4px;    /* Tight spacing (0.25rem) */
+  --space-2: 8px;    /* Small gaps (0.5rem) */
+  --space-3: 12px;   /* Medium gaps (0.75rem) */
+  --space-4: 16px;   /* Standard spacing (1rem) */
+  --space-5: 20px;   /* Extended standard (1.25rem) */
+  --space-6: 24px;   /* Large sections (1.5rem) */
+  --space-8: 32px;   /* Page margins (2rem) */
+  --space-10: 40px;  /* Section gaps (2.5rem) */
+  --space-12: 48px;  /* Hero sections (3rem) */
+
+  /* ==========================================================================
+     BORDER RADIUS TOKENS
+
+     Border radius scale from DESIGN.md Section 2.6.
+     ========================================================================== */
+
+  --radius-sm: 6px;    /* Small badges, pill truncation */
+  --radius-md: 8px;    /* Standard cards, buttons */
+  --radius-lg: 10px;   /* Larger cards with more content */
+  --radius-xl: 12px;   /* Modal backgrounds, fight detail sections */
+  --radius-2xl: 16px;  /* Major profile containers, header cards */
+  --radius-3xl: 20px;  /* Avatar crops, large featured elements */
+  --radius-full: 50%;  /* Pill badges, circular avatars */
+
+  /* ==========================================================================
+     SHADOW / ELEVATION TOKENS
+
+     Shadow hierarchy from DESIGN.md Section 2.7.
+     ========================================================================== */
+
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-topbar: 0 2px 20px rgba(0, 0, 0, 0.3);
+
+  /* Glow Effects (Stat Bars, Status Indicators) */
+  --shadow-glow-red: 0 0 10px rgba(239, 68, 68, 0.5);
+  --shadow-glow-blue: 0 0 10px rgba(59, 130, 246, 0.5);
+  --shadow-glow-gold: 0 0 10px rgba(234, 179, 8, 0.5);
+
+  /* ==========================================================================
+     BREAKPOINT TOKENS
+
+     Responsive breakpoints from DESIGN.md Section 2.5.
+     Used in media queries: @media (min-width: var(--breakpoint-tablet))
+     ========================================================================== */
+
+  --breakpoint-mobile: 480px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+
+  /* ==========================================================================
+     ANIMATION / TRANSITION TOKENS
+
+     Default timing functions and durations for consistent motion.
+     ========================================================================== */
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  --transition-timing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-timing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Keyframe Animation Names (for reference) */
+  --animation-pulse: pulse 2s infinite;
+  --animation-slide-in: slideIn 0.5s ease-out;
+
+  /* ==========================================================================
+     COMPONENT-SPECIFIC TOKENS
+
+     Values specific to recurring component patterns.
+     ========================================================================== */
+
+  /* TopBar Navigation */
+  --topbar-height: 64px;
+  --topbar-padding-top: calc(64px + 24px); /* Main content top padding */
+
+  /* Card Dimensions */
+  --card-min-width: 315px;
+  --card-ideal-width: 340px;
+  --card-row-gap: 28px;
+
+  /* Stat Bar Dimensions */
+  --stat-bar-height: 8px;
+  --stat-bar-height-lg: 12px;
+
+  /* Badge Dimensions */
+  --badge-font-size: 0.65rem;
+  --badge-padding: 4px 8px;
+  --badge-radius: 50%;
+  --level-badge-size: 16px;
+
+  /* ==========================================================================
+     Z-INDEX LAYERS
+
+     Recommended z-index values for consistent stacking contexts.
+     ========================================================================== */
+
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-tooltip: 600;
+}
+
+/* ==========================================================================
+   UTILITY CLASSES (Optional - for quick prototyping)
+
+   These provide quick access to tokens without writing custom CSS.
+   Can be removed or replaced with a utility framework like Tailwind.
+   ========================================================================== */
+
+/* Text Sizes */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-xxl { font-size: var(--font-size-xxl); }
+
+/* Font Weights */
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+/* Spacing Utilities */
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+.p-8 { padding: var(--space-8); }
+
+.m-1 { margin: var(--space-1); }
+.m-2 { margin: var(--space-2); }
+.m-3 { margin: var(--space-3); }
+.m-4 { margin: var(--space-4); }
+.m-6 { margin: var(--space-6); }
+.m-8 { margin: var(--space-8); }
+
+/* Color Utilities */
+.text-primary { color: var(--color-primary); }
+.text-success { color: var(--color-success); }
+.text-danger { color: var(--color-danger); }
+.text-warning { color: var(--color-warning); }
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-success { background-color: var(--color-success); }
+.bg-danger { background-color: var(--color-danger); }
+.bg-gray-100 { background-color: var(--color-gray-100); }
+.bg-white { background-color: var(--color-white); }
+
+/* Border Radius Utilities */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadow Utilities */
+.shadow-subtle { box-shadow: var(--shadow-subtle); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-elevated { box-shadow: var(--shadow-elevated); }

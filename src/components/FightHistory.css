@@ -1,466 +1,450 @@
+/* src/components/FightHistory.css */
+
+/**
+ * FightHistory - Fight history timeline with collapsible entries
+ *
+ * Shows boxer's fight record grouped by time period (today/week/past).
+ * Includes expandable details, result badges, and navigation to fight details.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
 /* ========================================
-   FIGHT HISTORY CONTAINER (MAT-103)
+   CONTAINER
    ======================================== */
 
 .fight-history-container {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
-  margin-top: 24px;
+  max-width: 900px;
+  margin: var(--space-5) auto var(--space-10);
 }
 
-.fight-history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e9ecef;
+.fight-history-container.loading,
+.fight-history-container.error {
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-subtle);
 }
 
-.fight-history-header h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-.refresh-btn {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.loading-text {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
 }
 
 /* ========================================
-   TIMELINE SECTIONS (MAT-103)
+   ERROR STATE
    ======================================== */
 
-.timeline-section {
-  margin-bottom: 24px;
+.fight-history-error {
+  padding: var(--space-8) var(--space-6);
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: var(--radius-lg);
 }
 
-.timeline-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-left: 8px;
+.error-icon {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-3);
 }
 
-.timeline-label {
+.fight-history-error h3 {
+  margin: 0 0 var(--space-2) 0;
+  color: #991b1b;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.fight-history-error p {
+  margin: 0 0 var(--space-4) 0;
+  color: #b91c1c;
+  font-size: var(--font-size-sm);
+}
+
+.retry-btn {
+  padding: var(--space-2) var(--space-5);
+  background: linear-gradient(135deg, var(--color-danger-bright), var(--color-danger));
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.retry-btn:hover {
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
+  transform: translateY(calc(var(--space-1) * -0.5));
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.fight-history-empty {
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-subtle);
+}
+
+.empty-icon {
+  font-size: var(--font-size-xxl);
+  margin-bottom: var(--space-4);
+}
+
+.fight-history-empty h3 {
+  margin: 0 0 var(--space-2) 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.fight-history-empty p {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #4a5568;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+}
+
+/* ========================================
+   TIMELINE SECTIONS
+   ======================================== */
+
+.fight-history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.timeline-section-header {
+  margin-bottom: var(--space-3);
+  position: relative;
+}
+
+.section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-600);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin: 0;
 }
 
-.fight-count {
-  font-size: 12px;
-  color: #718096;
-  background: #edf2f7;
-  padding: 2px 8px;
-  border-radius: 12px;
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-gray-300) 0%, var(--color-gray-100) 100%);
+  margin-top: var(--space-2);
 }
 
 /* ========================================
-   FIGHT ENTRY CARD (MAT-103)
+   FIGHT ENTRY CARD
    ======================================== */
 
-.fight-entry-card {
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-  border-radius: 12px;
-  margin-bottom: 12px;
+.fight-entry {
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-subtle);
+  border: 1px solid var(--color-gray-200);
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  transition: all var(--transition-fast);
 }
 
-.fight-entry-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+.fight-entry:hover {
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--color-gray-300);
 }
 
-.fight-entry-card.expanded {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
+/* ========================================
+   FIGHT ENTRY HEADER (COLLAPSIBLE)
+   ======================================== */
 
 .fight-entry-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-4);
   cursor: pointer;
-  transition: background 0.2s ease;
+  user-select: none;
 }
 
-.fight-entry-header:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* View Details Link (MAT-104) */
-.view-details-link {
-  color: #4f46e5;
-  font-weight: 600;
-  margin-left: 4px;
-  text-decoration: none;
-  display: inline-block;
-  transition: color 0.2s ease;
-}
-
-.view-details-link:hover {
-  color: #7c3aed;
-  text-decoration: underline;
-}
-
-/* Result Badges */
-.result-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
+.expand-icon {
+  font-size: var(--font-size-base);
+  color: var(--color-gray-400);
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
-.result-badge.win {
-  background: linear-gradient(135deg, #48bb78, #38a169);
-  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.4);
+.fight-entry.expanded .expand-icon,
+.fight-entry:hover .expand-icon {
+  color: var(--color-primary);
+  transform: rotate(90deg);
 }
 
-.result-badge.loss {
-  background: linear-gradient(135deg, #f56565, #e53e3e);
-  box-shadow: 0 2px 8px rgba(245, 101, 101, 0.4);
-}
-
-.result-badge.draw {
-  background: linear-gradient(135deg, #718096, #4a5568);
-  box-shadow: 0 2px 8px rgba(113, 128, 150, 0.4);
-}
-
-/* Fight Info */
-.fight-info {
+/* Opponent Info */
+.fight-entry-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
 }
 
 .opponent-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #2d3748;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
 }
+
+.vs-icon {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-400);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.5px;
+}
+
+.fight-result {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.fight-result.win {
+  background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+  color: var(--color-white);
+}
+
+.fight-result.loss {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: var(--color-white);
+}
+
+.fight-result.draw {
+  background: linear-gradient(135deg, var(--color-gray-400), var(--color-gray-600));
+  color: var(--color-white);
+}
+
+/* Fight Date */
+.fight-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* View Details Link */
+.view-details-link {
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(135deg, var(--color-gray-100), var(--color-gray-200));
+  border-radius: var(--radius-md);
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.view-details-link:hover {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-white);
+  transform: translateY(calc(var(--space-1) * -0.5));
+}
+
+/* ========================================
+   FIGHT SUMMARY DETAILS (EXPANDED)
+   ======================================== */
 
 .fight-summary {
-  font-size: 12px;
-  color: #718096;
-  margin-top: 2px;
+  padding: 0 var(--space-5) var(--space-5) var(--space-5);
+  display: grid;
+  gap: var(--space-3);
 }
 
-/* Time Display */
-.fight-time {
-  font-size: 12px;
-  color: #a0aec0;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+.fight-details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+  background: rgba(0, 0, 0, 0.02);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
 }
 
-/* Expand Icon */
-.expand-icon {
-  font-size: 12px;
-  color: #cbd5e0;
-  transition: transform 0.2s ease;
-}
-
-.fight-entry-card.expanded .expand-icon {
-  transform: rotate(180deg);
-}
-
-/* ========================================
-   EXPANDED DETAILS (MAT-103)
-   ======================================== */
-
-.fight-entry-details {
-  padding: 0 16px 16px;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.detail-row {
+.fight-detail-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #e2e8f0;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.detail-row:last-child {
-  border-bottom: none;
+.fight-detail-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: var(--font-weight-semibold);
 }
 
-.detail-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #718096;
+.fight-detail-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
 }
 
-.detail-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: #2d3748;
-  text-align: right;
+/* XP Gained Highlight */
+.fight-detail-item.xp-gained .fight-detail-value {
+  color: var(--color-warning-dark);
 }
 
-.detail-row.xp-gained .detail-value {
-  color: #d69e2e;
-  font-weight: 700;
-}
-
-.detail-row.reward .detail-value {
-  color: #48bb78;
-  font-weight: 700;
-}
-
-.capitalize {
-  text-transform: capitalize;
+/* Reward Display */
+.reward-display {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
 }
 
 /* ========================================
-   EMPTY & ERROR STATES (MAT-103)
+   MODAL VARIANT (Theater Mode)
    ======================================== */
 
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: #718096;
+.fight-history-modal .fight-history-container {
+  margin: var(--space-4) auto;
 }
 
-.empty-icon {
-  font-size: 48px;
-  display: block;
-  margin-bottom: 16px;
+.fight-history-modal .timeline-section-header {
+  display: none;
 }
 
-.empty-state h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a5568;
-}
-
-.empty-state p {
-  margin: 0 0 8px;
-  font-size: 14px;
-}
-
-.empty-hint {
-  font-size: 13px;
-  color: #a0aec0;
-  font-style: italic;
-}
-
-.error-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: #718096;
-}
-
-.error-state p {
-  margin: 0 0 16px;
-  font-size: 14px;
-}
-
-.retry-btn {
-  background: linear-gradient(135deg, #4299e1, #3182ce);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.retry-btn:hover {
-  background: linear-gradient(135deg, #3182ce, #2b6cb0);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
-}
-
-/* Loading State */
-.loading {
-  text-align: center;
-  padding: 48px 24px;
-  color: #718096;
-  font-size: 14px;
+.fight-history-modal .section-divider {
+  display: none;
 }
 
 /* ========================================
-   RESPONSIVE DESIGN (MAT-103)
+   RESPONSIVE DESIGN
    ======================================== */
 
 @media (max-width: 768px) {
   .fight-history-container {
-    padding: 16px;
-    margin-top: 16px;
-  }
-
-  .fight-history-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .fight-history-header h2 {
-    font-size: 20px;
+    margin: var(--space-4) auto var(--space-8);
   }
 
   .fight-entry-header {
     flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
-  .fight-info {
-    order: 1;
+  .fight-entry-info {
+    order: -1;
     width: 100%;
-  }
-
-  .result-badge {
-    order: 0;
-  }
-
-  .fight-time {
-    order: 2;
-    font-size: 11px;
-  }
-
-  .expand-icon {
-    order: 3;
-    margin-left: auto;
-  }
-
-  .timeline-label {
-    font-size: 14px;
-  }
-
-  .fight-count {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
-  .fight-history-container {
-    border-radius: 12px;
-    padding: 12px;
-  }
-
-  .fight-entry-card {
-    border-radius: 8px;
-  }
-
-  .fight-entry-header {
-    padding: 12px;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-gray-200);
   }
 
   .opponent-name {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
-  .detail-row {
+  .fight-date,
+  .view-details-link {
+    margin-left: auto;
+  }
+
+  .expand-icon {
+    position: absolute;
+    right: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .fight-entry-header {
+    position: relative;
+  }
+
+  .fight-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .fight-detail-item.xp-gained {
+    grid-column: span 2;
+  }
+
+  .reward-display {
+    display: none;
+  }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .fight-history-container {
+    padding: 0 var(--space-3);
+    margin: var(--space-4) auto;
+  }
+
+  .fight-entry {
+    border-radius: var(--radius-md);
+  }
+
+  .fight-entry-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    align-items: stretch;
+    gap: var(--space-3);
   }
 
-  .detail-value {
-    text-align: left;
+  .fight-result {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .fight-entry-header {
+    position: relative;
+  }
+
+  .view-details-link {
+    width: 100%;
+    text-align: center;
+    padding: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
+  }
+
+  .expand-icon {
+    position: static;
+    transform: rotate(0deg);
+  }
+
+  .fight-entry.expanded .expand-icon,
+  .fight-entry:hover .expand-icon {
+    transform: rotate(90deg);
+  }
+
+  .fight-summary {
+    padding: var(--space-4);
+  }
+
+  .fight-details-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .fight-detail-item.xp-gained {
+    grid-column: span 1;
   }
 }
 
-/* ========================================
-   FIGHT HISTORY MODAL (MAT-103)
-   ======================================== */
-
-.fight-history-modal {
-  max-width: 900px;
-  width: 95%;
-  max-height: 95vh;
-  overflow-y: auto;
+/* Focus visible for accessibility */
+.fight-entry-header:focus-visible,
+.view-details-link:focus-visible,
+.retry-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
-
-.fight-history-modal .fight-history-container {
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin-top: 0;
-}
-
-.fight-history-modal .fight-history-header h2 {
-  font-size: 28px;
-  color: #ffffff;
-}
-
-.fight-history-modal .refresh-btn {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
-}
-
-.fight-history-modal .timeline-label {
-  color: #e5e7eb;
-}
-
-.fight-history-modal .fight-entry-card {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.9));
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.fight-history-modal .opponent-name {
-  color: #f3f4f6;
-}
-
-.fight-history-modal .detail-value {
-  color: #d1d5db;
-}
-
-.fight-history-modal .empty-state,
-.fight-history-modal .error-state,
-.fight-history-modal .loading {
-  color: #9ca3af;
-}
-

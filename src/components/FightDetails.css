@@ -1,11 +1,10 @@
-/* ========================================
-   FIGHT DETAILS PAGE (MAT-104) - Arena Dramatics
-   Theater mode: navy background, glass cards
-   ======================================== */
+/* src/components/FightDetails.css */
 
 /**
- * Main container handled by PageLayout.css (.fight-details-page background)
- * This file contains only component-specific styling.
+ * FightDetails - Theater mode arena page (MAT-104)
+ *
+ * Navy background handled by PageLayout.css (.fight-details-page background).
+ * All design tokens reference src/design-tokens.css (MAT-146).
  */
 
 /* ========================================
@@ -15,78 +14,78 @@
 .fight-info-header {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
   backdrop-filter: blur(10px);
 }
 
 .fight-info-header h1 {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   font-size: 28px;
-  font-weight: 700;
-  color: #ffffff;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
   letter-spacing: 0.5px;
 }
 
 .fight-info-header h2 {
   color: rgba(255, 255, 255, 0.8);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 1px;
   text-align: center;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
 .fight-date {
-  margin: 8px 0 0;
-  font-size: 14px;
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
 }
 
 .info-message {
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
-  padding: 12px;
+  padding: var(--space-3);
   background: rgba(79, 70, 229, 0.15);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
-/* Status Badges - matches mockup .status-badge structure */
+/* Status Badges */
 .fight-status-badge {
   display: inline-block;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .fight-status-badge.scheduled {
   background: linear-gradient(135deg, #63b3ed, #4299e1);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .fight-status-badge.in_progress {
   background: linear-gradient(135deg, #f6ad55, #ed8936);
-  color: #ffffff;
+  color: var(--color-white);
   animation: pulse 2s ease infinite;
 }
 
 .fight-status-badge.completed {
-  background: linear-gradient(135deg, #48bb78, #38a169);
-  color: #0d2b1e; /* Dark text for contrast on green - matches mockup */
+  background: linear-gradient(135deg, var(--color-success), #38a169);
+  color: #0d2b1e;
 }
 
 .fight-status-badge.canceled {
-  background: linear-gradient(135deg, #718096, #4a5568);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-gray-600), var(--color-gray-700));
+  color: var(--color-white);
 }
 
 @keyframes pulse {
@@ -99,10 +98,10 @@
    ======================================== */
 
 .victory-banner {
-  padding: 24px 32px;
-  border-radius: 16px;
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-xl);
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
   animation: bannerSlideIn 0.5s ease;
 }
 
@@ -118,7 +117,7 @@
 }
 
 .victory-banner h1 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -127,49 +126,48 @@
 
 .victory-banner p {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  opacity: 0.95; /* matches mockup */
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.95;
 }
 
 /* Decision Victory - Gold */
 .victory-banner:not(.ko):not(.draw) {
-  background: linear-gradient(135deg, #fbbf24, #d97706);
-  color: #2d0e0e; /* Dark text for contrast */
-  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, var(--color-victory-gold), var(--color-warning));
+  color: #2d0e0e;
+  box-shadow: 0 8px 24px rgba(var(--color-victory-gold), 0.4);
 }
 
-/* KO Victory - Lighter Red (matches mockup) */
+/* KO Victory - Lighter Red */
 .victory-banner.ko {
   background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-  color: #2d0e0e; /* Dark text for contrast on red */
+  color: #2d0e0e;
   box-shadow: 0 8px 24px rgba(255, 107, 107, 0.5);
 }
 
 /* Draw - Neutral Gray */
 .victory-banner.draw {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
-  color: #ffffff;
-  box-shadow: 0 8px 24px rgba(107, 114, 128, 0.5);
+  background: linear-gradient(135deg, var(--color-gray-600), var(--color-gray-700));
+  color: var(--color-white);
+  box-shadow: 0 8px 24px rgba(var(--color-gray-600), 0.5);
 }
 
 /* ========================================
    SECTION CARDS - Shared Styles
-   Used by: boxer-comparison, timeline, playbyplay, fight-summary, boxer-links sections
    ======================================== */
 
 .fight-section-card {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .fight-section-card h3 {
-  margin: 0 0 20px;
-  font-size: 16px;
-  font-weight: 700;
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -180,32 +178,28 @@
    BOXER COMPARISON SECTION
    ======================================== */
 
-.boxer-comparison-section {
-  /* Inherits from .fight-section-card */
-}
-
 .comparison-layout {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: 24px;
+  gap: var(--space-6);
   position: relative;
 }
 
 /* VS Badge */
 .vs-badge {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 800;
-  color: #ffffff;
-  padding: 12px 0;
-  background: linear-gradient(135deg, #f56565, #dc2626);
-  border-radius: 50%;
+  color: var(--color-white);
+  padding: var(--space-3) 0;
+  background: linear-gradient(135deg, #f56565, var(--color-danger));
+  border-radius: var(--radius-full);
   width: 56px;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6);
+  box-shadow: 0 4px 12px rgba(var(--color-danger), 0.6);
   flex-shrink: 0;
 }
 
@@ -214,19 +208,19 @@
   flex: 1;
   max-width: 320px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
   border: 2px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   position: relative;
 }
 
 .boxer-comparison-card:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transform: translateY(-4px);
+  transform: translateY(calc(var(--space-1) * -2));
 }
 
-/* Winner Card - Gold glow (matches mockup colors) */
+/* Winner Card - Gold glow */
 .boxer-comparison-card.winner {
   border-color: rgba(214, 158, 46, 0.8);
   background: linear-gradient(135deg, rgba(255, 235, 59, 0.1) 0%, rgba(254, 243, 199, 0.05) 100%);
@@ -236,40 +230,40 @@
 /* Card Avatar */
 .card-avatar {
   position: absolute;
-  top: -28px;
+  top: calc(var(--space-7) * -1);
   left: 50%;
   transform: translateX(-50%);
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-light));
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: var(--font-size-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border: 3px solid #0f0f23;
+  border: 3px solid var(--color-navy-dark);
 }
 
 /* Card Header */
 .card-header {
   text-align: center;
-  padding-top: 32px;
-  margin-bottom: 16px;
+  padding-top: calc(var(--space-8) + var(--space-1));
+  margin-bottom: var(--space-4);
 }
 
 .card-header h2,
 .card-header h3,
 .card-header h4 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #ffffff;
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
 }
 
 .card-header .nickname {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
 }
@@ -278,35 +272,36 @@
 .level-badge {
   display: inline-block;
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  color: #ffffff;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--color-white);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
 }
-.level-badge.lvl-2 { background: linear-gradient(135deg, #38b2ac, #319795); } /* Teal */
-.level-badge.lvl-3 { background: linear-gradient(135deg, #dd6b20, #c05621); } /* Orange */
-.level-badge.lvl-4 { background: linear-gradient(135deg, #805ad5, #704ada); } /* Purple */
-.level-badge.lvl-5 { background: linear-gradient(135deg, #d69e2e, #fbbf24); } /* Gold */
+
+.level-badge.lvl-2 { background: linear-gradient(135deg, #38b2ac, #319795); }
+.level-badge.lvl-3 { background: linear-gradient(135deg, #dd6b20, #c05621); }
+.level-badge.lvl-4 { background: linear-gradient(135deg, #805ad5, #704ada); }
+.level-badge.lvl-5 { background: linear-gradient(135deg, #d69e2e, var(--color-victory-gold)); }
 
 .level-badge.winner-bg {
-  background: linear-gradient(135deg, #fbbf24, #d97706);
+  background: linear-gradient(135deg, var(--color-victory-gold), var(--color-warning));
 }
 
 /* Health Row */
 .health-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .health-row .label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -314,23 +309,23 @@
   flex: 1;
   height: 8px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .health-bar {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .health-low { background: linear-gradient(90deg, #fc8181, #f56565); }
 .health-medium { background: linear-gradient(90deg, #f6e05e, #ecc94b); }
-.health-high { background: linear-gradient(90deg, #48bb78, #38a169); }
+.health-high { background: linear-gradient(90deg, var(--color-success), #38a169); }
 
 .health-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
   min-width: 40px;
   text-align: right;
 }
@@ -339,19 +334,19 @@
 .combat-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .stat-item {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 12px 8px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-2);
   text-align: center;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .stat-item:hover {
@@ -360,114 +355,110 @@
 }
 
 .stat-icon {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   display: block;
 }
 
 .stat-name {
-    font-size: 10px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    display: block;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  display: block;
 }
 
 .stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #ffffff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
 }
 
 /* Card Footer */
 .card-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 12px;
-  margin-top: 16px;
+  padding-top: var(--space-3);
+  margin-top: var(--space-4);
   text-align: center;
 }
 
 .card-footer .label {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .card-footer .value {
-  font-size: 14px;
-  color: #ffffff;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ========================================
    ROUND TIMELINE SECTION
    ======================================== */
 
-.timeline-section {
-  /* Inherits from .fight-section-card */
-}
-
 .round-timeline-container {
   overflow-x: auto;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-5);
 }
 
 .round-timeline {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  padding: 20px 0;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
 }
 
 .round-marker {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.1);
   border: 3px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: rgba(255, 255, 255, 0.4);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   position: relative;
 }
 
 .round-marker.completed {
   background: linear-gradient(135deg, #1d4ed8, #1e40af);
   border-color: #1e40af;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .round-marker.final {
-  background: linear-gradient(135deg, #fbbf24, #d97706);
-  border-color: #d97706;
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-victory-gold), var(--color-warning));
+  border-color: var(--color-warning);
+  color: var(--color-white);
   transform: scale(1.15);
-  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 16px rgba(var(--color-victory-gold), 0.4);
 }
 
 .round-marker.final.ko {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
   border-color: #b91c1c;
-  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.6);
+  box-shadow: 0 4px 16px rgba(var(--color-danger), 0.6);
 }
 
 .round-marker.final.ko::after {
   content: "🔥";
   position: absolute;
-  top: -8px;
-  right: -8px;
-  font-size: 16px;
+  top: calc(var(--space-2) * -1);
+  right: calc(var(--space-2) * -1);
+  font-size: var(--font-size-base);
   animation: bounce 0.5s ease infinite alternate;
 }
 
 .round-marker.selected {
   transform: scale(1.2);
-  box-shadow: 0 4px 16px rgba(22, 33, 62, 0.6);
+  box-shadow: 0 4px 16px rgba(var(--color-navy-light), 0.6);
 }
 
 @keyframes bounce {
@@ -479,42 +470,37 @@
    PLAY-BY-PLAY LOG SECTION
    ======================================== */
 
-.playbyplay-section {
-  /* Inherits from .fight-section-card */
-}
-
 .play-by-play-log {
   max-height: 300px;
   overflow-y: auto;
 }
 
-/* Log Header */
 h4.log-header {
   text-align: center;
-  color: #ffffff;
-  font-size: 14px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .log-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 16px;
+  gap: var(--space-1);
+  padding: var(--space-4);
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
 .log-line {
-  padding: 6px 10px;
-  margin-bottom: 4px;
-  font-size: 13px;
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.8);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .log-line.victory {
@@ -545,7 +531,7 @@ h4.log-header {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
   font-style: italic;
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 /* Log Navigation */
@@ -553,27 +539,27 @@ h4.log-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
-  gap: 12px;
+  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 
 .nav-btn {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  color: white;
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-light));
+  color: var(--color-white);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   flex: 1;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #16213e, #0f0f23);
+  background: linear-gradient(135deg, var(--color-navy-light), var(--color-navy-dark));
   border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -584,8 +570,8 @@ h4.log-header {
 }
 
 .round-indicator {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: rgba(255, 255, 255, 0.8);
   white-space: nowrap;
 }
@@ -594,49 +580,45 @@ h4.log-header {
    FIGHT SUMMARY SECTION
    ======================================== */
 
-.fight-summary-section {
-  /* Inherits from .fight-section-card */
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .summary-card {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .summary-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(calc(var(--space-1) * -2));
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .summary-card .label {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .summary-card .value {
   display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
 }
 
-.summary-card .value.completed { color: #48bb78; }
+.summary-card .value.completed { color: var(--color-success); }
 .summary-card .value.xp { color: #d69e2e; }
-.summary-card .value.reward { color: #63b3ed; }
+.summary-card .value.reward { color: var(--color-primary); }
 
 .capitalize { text-transform: capitalize; }
 
@@ -644,45 +626,41 @@ h4.log-header {
    BOXER LINKS SECTION
    ======================================== */
 
-.boxer-links-section {
-  /* Inherits from .fight-section-card */
-}
-
 .link-buttons {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .boxer-link-btn {
   background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: var(--color-white);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: var(--space-3) var(--space-7);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .boxer-link-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
+  transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
 }
 
 .history-badge {
-  font-size: 11px;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  padding: 2px 8px;
-  border-radius: 8px;
-  margin-left: 4px;
+  font-size: var(--font-size-xs);
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-light));
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-left: var(--space-1);
 }
 
 /* ========================================
@@ -691,16 +669,16 @@ h4.log-header {
 
 .loading-state {
   text-align: center;
-  padding: 64px 24px;
+  padding: var(--space-10) var(--space-6);
 }
 
 .spinner {
   width: 48px;
   height: 48px;
   border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #16213e;
-  border-radius: 50%;
-  margin: 0 auto 16px;
+  border-top-color: var(--color-navy-light);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-4);
   animation: spin 1s linear infinite;
 }
 
@@ -710,7 +688,7 @@ h4.log-header {
 
 .loading-state p {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -718,38 +696,38 @@ h4.log-header {
    RESPONSIVE DESIGN
    ======================================== */
 
-@media (max-width: 1024px) {
+@media (max-width: var(--breakpoint-desktop)) {
   .comparison-layout {
-    gap: 16px;
+    gap: var(--space-4);
   }
 
   .boxer-comparison-card {
     max-width: 280px;
-    padding: 20px;
+    padding: var(--space-5);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-tablet)) {
   .fight-info-header {
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
   }
 
   .fight-info-header h1 {
-    font-size: 22px;
+    font-size: var(--font-size-xl);
   }
 
   .victory-banner {
-    padding: 20px 16px;
-    margin-bottom: 24px;
+    padding: var(--space-5) var(--space-4);
+    margin-bottom: var(--space-6);
   }
 
   .victory-banner h1 {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
   }
 
   .victory-banner p {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .comparison-layout {
@@ -759,11 +737,11 @@ h4.log-header {
 
   .vs-badge {
     transform: rotate(90deg);
-    margin: 8px 0;
+    margin: var(--space-2) 0;
     order: -1;
     width: 48px;
     height: 48px;
-    font-size: 16px;
+    font-size: var(--font-size-sm);
   }
 
   .boxer-comparison-card {
@@ -773,13 +751,13 @@ h4.log-header {
   }
 
   .round-timeline {
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .round-marker {
     width: 44px;
     height: 44px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .summary-grid {
@@ -796,13 +774,13 @@ h4.log-header {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: var(--breakpoint-mobile)) {
   .fight-info-header h1 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
 
   .victory-banner h1 {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
   }
 
   .boxer-comparison-section,
@@ -810,12 +788,12 @@ h4.log-header {
   .playbyplay-section,
   .fight-summary-section,
   .boxer-links-section {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .combat-stats-grid {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .summary-grid {
@@ -844,13 +822,13 @@ h4.log-header {
 .play-by-play-log::-webkit-scrollbar-track,
 .round-timeline-container::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .play-by-play-log::-webkit-scrollbar-thumb,
 .round-timeline-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .play-by-play-log::-webkit-scrollbar-thumb:hover,

@@ -1,170 +1,395 @@
-/* Training History - Dense list layout */
+/* src/components/TrainingHistory.css */
 
-.training-history {
-  display: flex;
-  flex-direction: column;
+/**
+ * TrainingHistory - Training session timeline with stat gains
+ *
+ * Displays boxer's training history grouped by time periods.
+ * Each entry shows type, gains, and energy cost with type-specific colors.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* ========================================
+   LOCAL VARIABLES (Training Colors)
+   ======================================== */
+
+:root {
+  --training-strength-border: #dc2626;
+  --training-defense-border: #2563eb;
+  --training-agility-border: #eab308;
+  --training-recovery-border: #0d9488;
 }
 
-.training-history.compact .history-list {
-  gap: 6px;
-}
+/* ========================================
+   TRAINING HISTORY CONTAINER
+   ======================================== */
 
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* History Item - compact horizontal card */
-.history-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 10px 12px;
-  background: #151520; /* arena-charcoal */
-  border-radius: 8px;
-  border-left: 3px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.history-item:hover {
-  background: #1a1a2e; /* navy-medium on hover */
-  transform: translateX(4px);
-}
-
-.history-item.compact {
-  padding: 8px 10px;
-}
-
-/* Training type color borders */
-.history-item.training-strength {
-  border-left-color: #fc8181;
-}
-
-.history-item.training-defense {
-  border-left-color: #63b3ed;
-}
-
-.history-item.training-agility {
-  border-left-color: #f6ad55;
-}
-
-.history-item.training-recovery {
-  border-left-color: #4fd1c5;
-}
-
-.history-item.training-default {
-  border-left-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Left side - icon + content */
-.history-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex: 1;
-}
-
-.history-icon {
-  font-size: 1rem;
-  padding-top: 2px;
-}
-
-/* Compact content layout */
-.history-content-compact {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.history-header-compact {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.history-header-compact strong {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.history-header-compact .history-date {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* Gains row - horizontal tags */
-.history-gains-compact {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.gain-tag {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #0f0f23; /* arena-navy-dark */
-}
-
-.gain-tag.strength {
-  color: #fc8181;
-}
-
-.gain-tag.defense {
-  color: #63b3ed;
-}
-
-.gain-tag.agility {
-  color: #f6ad55;
-}
-
-.gain-tag.xp {
-  color: #fbbf24; /* spotlight-gold */
-}
-
-.history-duration {
-  margin-left: auto;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+.training-history-container {
+  max-width: 700px;
+  margin: var(--space-5) auto var(--space-10);
 }
 
 /* Loading State */
-.history-loading {
+.training-history-container.loading,
+.training-history-container.error {
+  padding: var(--space-8) var(--space-6);
   text-align: center;
-  padding: 16px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-subtle);
 }
 
-/* Empty State */
-.history-empty-state {
-  text-align: center;
-  padding: 20px 16px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
+.loading-text,
+.empty-text {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .history-item.compact {
-    padding: 10px 12px;
+/* ========================================
+   ERROR STATE
+   ======================================== */
+
+.training-history-error {
+  padding: var(--space-8) var(--space-6);
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: var(--radius-lg);
+}
+
+.error-icon {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-3);
+}
+
+.training-history-error h3 {
+  margin: 0 0 var(--space-2) 0;
+  color: #991b1b;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.retry-btn {
+  padding: var(--space-2) var(--space-5);
+  background: linear-gradient(135deg, var(--color-danger-bright), var(--color-danger));
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.retry-btn:hover {
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
+  transform: translateY(calc(var(--space-1) * -0.5));
+}
+
+/* ========================================
+   TIMELINE SECTIONS
+   ======================================== */
+
+.training-history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.timeline-section-header {
+  margin-bottom: var(--space-3);
+}
+
+.section-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-gray-300) 0%, var(--color-gray-100) 100%);
+  margin-top: var(--space-2);
+}
+
+/* ========================================
+   TRAINING SESSION ENTRY
+   ======================================== */
+
+.training-entry {
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-subtle);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.training-entry:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(calc(var(--space-1) * -0.5));
+}
+
+/* Type-based left border */
+.training-entry.strength {
+  border-left: 4px solid var(--training-strength-border);
+}
+
+.training-entry.defense {
+  border-left: 4px solid var(--training-defense-border);
+}
+
+.training-entry.agility {
+  border-left: 4px solid var(--training-agility-border);
+}
+
+.training-entry.recovery {
+  border-left: 4px solid var(--training-recovery-border);
+}
+
+/* ========================================
+   TRAINING ENTRY HEADER
+   ======================================== */
+
+.training-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-4);
+}
+
+/* Type Badge */
+.training-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.training-type-badge.strength {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+
+.training-type-badge.defense {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+}
+
+.training-type-badge.agility {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+}
+
+.training-type-badge.recovery {
+  background: linear-gradient(135deg, #ccfbf1, #99f6e4);
+  color: #0f766e;
+}
+
+/* Training Icon */
+.training-icon {
+  font-size: var(--font-size-base);
+  line-height: 1;
+}
+
+/* Session Info */
+.training-session-info {
+  flex: 1;
+}
+
+.session-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  margin-bottom: var(--space-1);
+}
+
+.session-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}
+
+/* ========================================
+   GAINS DISPLAY
+   ======================================== */
+
+.training-gains {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.gain-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-half) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* XP Gain */
+.gain-tag.xp {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+}
+
+.gain-tag.xp .gain-icon { color: #7c3aed; }
+
+/* Stat Gains */
+.gain-tag.strength-gain {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+
+.gain-tag.defense-gain {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+}
+
+.gain-tag.agility-gain {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+}
+
+.gain-tag.recovery-gain {
+  background: linear-gradient(135deg, #ccfbf1, #99f6e4);
+  color: #0f766e;
+}
+
+/* Energy Cost */
+.energy-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-half) var(--space-2);
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-600);
+}
+
+.energy-cost .gain-icon { color: #fbbf24; }
+
+/* ========================================
+   TRAINING SUMMARY FOOTER
+   ======================================== */
+
+.training-summary {
+  padding: var(--space-3) var(--space-5);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid var(--color-gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-id {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  font-family: monospace;
+}
+
+.session-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-half) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.session-status.completed {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+
+.session-status.scheduled {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: var(--breakpoint-tablet)) {
+  .training-history-container {
+    max-width: 600px;
+    margin: var(--space-4) auto var(--space-8);
   }
 
-  .history-header-compact {
+  .training-entry-header {
+    flex-wrap: wrap;
+  }
+
+  .training-gains {
+    width: 100%;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-gray-200);
+  }
+
+  .training-summary {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .training-entry-header {
+    padding: var(--space-3);
   }
 
-  .history-gains-compact {
-    justify-content: space-between;
+  .training-type-badge {
+    font-size: 0.65rem;
+    padding: var(--space-half) var(--space-2);
   }
 
-  .history-duration {
-    margin-left: 0;
+  .session-title {
+    font-size: var(--font-size-sm);
+  }
+
+  .session-time {
+    font-size: 0.65rem;
+  }
+
+  .training-gains {
+    gap: var(--space-1);
+  }
+
+  .gain-tag {
+    font-size: 0.65rem;
+    padding: var(--space-half) var(--space-1);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY & FOCUS STATES
+   ======================================== */
+
+.retry-btn:focus-visible,
+.training-entry:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .training-entry {
+    transition: none;
   }
 }

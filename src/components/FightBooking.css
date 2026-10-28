@@ -1,22 +1,38 @@
-/* Modal Overlay */
+/* src/components/FightBooking.css (LEGACY - Use FightBookingPage.css) */
+
+/**
+ * FightBooking - Legacy modal version of fight booking
+ *
+ * ⚠️ DEPRECATED: This is the old modal-based fight booking component.
+ * The new dedicated page version is in FightBookingPage.css.
+ * Kept for reference and potential fallback usage.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* ========================================
+   MODAL OVERLAY
+   ======================================== */
+
 .fight-booking-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  z-index: var(--z-dropdown);
+  padding: var(--space-5);
 }
 
-/* Modal Container */
+/* ========================================
+   MODAL CONTAINER
+   ======================================== */
+
 .modal-container {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
@@ -24,15 +40,18 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Header */
+/* ========================================
+   HEADER
+   ======================================== */
+
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: var(--space-5) var(--space-6);
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
-  border-radius: 12px 12px 0 0;
+  color: var(--color-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -40,15 +59,15 @@
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 .modal-close {
   background: transparent;
   border: none;
-  color: #fff;
-  font-size: 2rem;
+  color: var(--color-white);
+  font-size: var(--font-size-xxl);
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -57,214 +76,268 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
 }
 
 .modal-close:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Boxer Summary */
+.modal-close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   BOXER SUMMARY
+   ======================================== */
+
 .boxer-summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-gray-50);
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .boxer-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .boxer-info .label {
-  font-size: 0.85rem;
-  color: #7f8c8d;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
 }
 
 .boxer-info .value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-800);
 }
 
 .boxer-stats-preview {
   display: flex;
-  gap: 16px;
-  font-size: 0.9rem;
-  color: #555;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
 }
 
 .boxer-stats-preview span {
-  background: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
+  background: var(--color-white);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Filter Controls */
+/* ========================================
+   FILTER CONTROLS
+   ======================================== */
+
 .filter-controls {
-  padding: 20px 24px;
-  background: #fdfdfd;
-  border-bottom: 1px solid #e8e8e8;
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-gray-50);
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .filter-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .filter-group label {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #2c3e50;
-  margin-bottom: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+  margin-bottom: var(--space-2);
 }
 
+/* Level Range Slider */
 .level-range-slider {
   width: 100%;
   height: 6px;
-  border-radius: 3px;
-  background: #ddd;
+  border-radius: var(--radius-xs);
+  background: var(--color-gray-300);
   outline: none;
-  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
 }
 
 .level-range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+  appearance: none;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: linear-gradient(135deg, #3498db, #2980b9);
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(52, 152, 219, 0.4);
+  transition: transform var(--transition-fast);
+}
+
+.level-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.level-range-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.4);
+  border: none;
 }
 
 .slider-markers {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #7f8c8d;
-  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  margin-top: var(--space-1);
 }
 
 /* Filter Toggles */
 .filter-toggles {
   display: flex;
-  gap: 20px;
+  gap: var(--space-5);
   flex-wrap: wrap;
 }
 
 .toggle-checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #2c3e50;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
 }
 
 .toggle-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  cursor: pointer;
+  border: 2px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
   accent-color: #3498db;
+  cursor: pointer;
+}
+
+.toggle-checkbox input[type="checkbox"]:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
 }
 
 .toggle-label {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
-/* Opponent Section */
+/* ========================================
+   OPPONENT SECTION
+   ======================================== */
+
 .opponent-section {
-  padding: 0 24px 20px;
+  padding: 0 var(--space-6) var(--space-5);
 }
 
-/* Match Validation Warnings */
+/* ========================================
+   MATCH VALIDATION WARNINGS
+   ======================================== */
+
 .match-validation-warnings {
-  padding: 16px 24px;
+  padding: var(--space-4) var(--space-6);
   background: #fef9e7;
   border: 1px solid #f1c40f;
-  border-radius: 8px;
-  margin: 0 24px 16px;
+  border-radius: var(--radius-md);
+  margin: 0 var(--space-6) var(--space-4);
 }
 
 .match-validation-warnings h4 {
-  margin: 0 0 8px;
-  font-size: 0.95rem;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
   color: #f39c12;
+  font-weight: var(--font-weight-semibold);
 }
 
 .match-validation-warnings ul {
   margin: 0;
-  padding-left: 20px;
-  font-size: 0.85rem;
+  padding-left: var(--space-5);
+  font-size: var(--font-size-xs);
   color: #7d6608;
 }
 
 .match-validation-warnings li {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
-/* Modal Actions */
+/* ========================================
+   MODAL ACTIONS
+   ======================================== */
+
 .modal-actions {
-  padding: 20px 24px;
-  background: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
-  border-radius: 0 0 12px 12px;
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-gray-50);
+  border-top: 1px solid var(--color-gray-200);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .selection-summary {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #555;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
 }
 
 .selection-summary strong {
-  color: #2c3e50;
+  color: var(--color-gray-800);
 }
 
 .booking-error {
   background: #fee;
   color: #e74c3c;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-sm);
 }
 
+/* Book Fight Button */
 .book-fight-btn {
   width: 100%;
-  padding: 14px;
+  padding: var(--space-3) var(--space-6);
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-  color: #fff;
+  color: var(--color-white);
   border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .book-fight-btn:hover:not(:disabled) {
   opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translateY(calc(var(--space-1) * -0.5));
 }
 
 .book-fight-btn:disabled {
-  background: #bdc3c7;
+  background: var(--color-gray-400);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+.book-fight-btn:focus-visible {
+  outline: 2px solid #c0392b;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: var(--breakpoint-tablet)) {
   .fight-booking-modal {
     padding: 0;
   }
@@ -275,13 +348,13 @@
   }
 
   .modal-header h2 {
-    font-size: 1.2rem;
+    font-size: var(--font-size-base);
   }
 
   .boxer-summary {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .boxer-stats-preview {
@@ -291,11 +364,48 @@
 
   .filter-toggles {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .selection-summary {
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .modal-header {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .boxer-summary {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .filter-controls {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .opponent-section {
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  .modal-actions {
+    padding: var(--space-4);
+  }
+
+  .book-fight-btn {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY & REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .level-range-slider::-webkit-slider-thumb,
+  .book-fight-btn {
+    transition: none;
   }
 }

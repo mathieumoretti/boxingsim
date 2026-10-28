@@ -1,30 +1,39 @@
-/* ========================================
-   RANK CARD - Compact ranking display
-   ======================================== */
+/* src/components/RankCard.css */
 
+/**
+ * RankCard - Compact ranking display component
+ *
+ * Displays boxer rankings with tier styling (gold/silver/bronze).
+ * Used in Rankings page for individual rank entries.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* Base Card */
 .rank-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-100) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-subtle);
+  border: 1px solid var(--color-gray-200);
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .rank-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
-  border-color: #d1d5db;
+  transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--color-gray-300);
 }
 
 .rank-card:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.3);
 }
 
 /* ========================================
@@ -32,23 +41,23 @@
    ======================================== */
 
 .rank-card.rank-1 {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 2px solid #f59e0b;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
+  background: linear-gradient(135deg, #fffbeb 0%, var(--color-warning-bright) 100%);
+  border: 2px solid var(--color-warning-dark);
+  box-shadow: 0 4px 16px rgba(var(--color-warning), 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
 }
 
 .rank-card.rank-1:hover {
-  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.15);
+  box-shadow: 0 6px 24px rgba(var(--color-warning), 0.3), inset 0 0 20px rgba(255, 215, 0, 0.15);
 }
 
 .rank-card.rank-2 {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border: 2px solid #9ca3af;
-  box-shadow: 0 4px 16px rgba(156, 163, 175, 0.2), inset 0 0 20px rgba(192, 192, 192, 0.1);
+  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  border: 2px solid var(--color-gray-400);
+  box-shadow: 0 4px 16px rgba(var(--color-gray-400), 0.2), inset 0 0 20px rgba(192, 192, 192, 0.1);
 }
 
 .rank-card.rank-2:hover {
-  box-shadow: 0 6px 24px rgba(156, 163, 175, 0.3), inset 0 0 20px rgba(192, 192, 192, 0.15);
+  box-shadow: 0 6px 24px rgba(var(--color-gray-400), 0.3), inset 0 0 20px rgba(192, 192, 192, 0.15);
 }
 
 .rank-card.rank-3 {
@@ -62,7 +71,7 @@
 }
 
 .rank-card.rank-regular {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
 }
 
 /* ========================================
@@ -82,7 +91,7 @@
 }
 
 .rank-1 .rank-badge {
-  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.4));
+  filter: drop-shadow(0 2px 4px rgba(var(--color-warning), 0.4));
   animation: goldShine 3s ease-in-out infinite;
 }
 
@@ -106,46 +115,46 @@
 .rank-boxer-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .boxer-name-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .boxer-avatar {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
 .boxer-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
 .boxer-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rank-1 .boxer-name {
-  background: linear-gradient(90deg, #b45309, #f59e0b);
+  background: linear-gradient(90deg, #b45309, var(--color-warning));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .rank-2 .boxer-name {
-  color: #4b5563;
+  color: var(--color-gray-600);
 }
 
 .rank-3 .boxer-name {
@@ -153,9 +162,9 @@
 }
 
 .boxer-nickname {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-style: italic;
-  color: #6b7280;
+  color: var(--color-gray-500);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -167,7 +176,7 @@
 
 .rank-stats {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: center;
   flex-wrap: wrap;
 }
@@ -175,25 +184,25 @@
 .stat-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px 8px;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   background: rgba(0, 0, 0, 0.03);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   min-width: fit-content;
 }
 
 .stat-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  color: #9ca3af;
+  color: var(--color-gray-400);
   text-transform: uppercase;
 }
 
 .stat-value {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
   font-variant-numeric: tabular-nums;
 }
 
@@ -204,14 +213,14 @@
 
 /* Record styling */
 .stat-record .stat-value {
-  color: #2563eb;
+  color: var(--color-primary-dark);
 }
 
 /* Win rate highlight */
 .stat-winrate .stat-value-highlight {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 800;
-  color: #059669;
+  color: var(--color-success-dark);
 }
 
 .rank-1 .stat-value-highlight {
@@ -228,39 +237,39 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-  border-radius: 50%;
-  color: #6b7280;
-  font-size: 18px;
-  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--color-gray-200), var(--color-gray-300));
+  border-radius: var(--radius-full);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-lg);
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .rank-card:hover .rank-nav-arrow {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  transform: translateX(4px);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-white);
+  transform: translateX(var(--space-1));
 }
 
 /* View Profile button for mobile */
 .rank-mobile-btn {
-  display: none; /* Hidden on desktop */
+  display: none;
   width: 100%;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-white);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   justify-self: start;
 }
 
 .rank-mobile-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--color-primary-dark), #1e40af);
+  transform: translateY(calc(var(--space-1) * -0.5));
 }
 
 /* ========================================
@@ -274,7 +283,7 @@
 
 .rank-card.loading .boxer-name,
 .rank-card.loading .stat-value {
-  background: linear-gradient(90deg, #e5e7eb 25%, #d1d5db 50%, #e5e7eb 75%);
+  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-300) 50%, var(--color-gray-200) 75%);
   background-size: 200% 100%;
   animation: skeletonLoading 1.5s ease-in-out infinite;
   -webkit-background-clip: text;
@@ -291,11 +300,11 @@
    RESPONSIVE STYLES
    ======================================== */
 
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-tablet)) {
   .rank-card {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .rank-position {
@@ -313,11 +322,11 @@
   }
 
   .rank-stats {
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .stat-group {
-    padding: 3px 6px;
+    padding: var(--space-1);
   }
 
   .stat-label {
@@ -325,20 +334,20 @@
   }
 
   .stat-value {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 
   .stat-winrate .stat-value-highlight {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 }
 
 /* Mobile card view - stacked layout */
-@media (max-width: 480px) {
+@media (max-width: var(--breakpoint-mobile)) {
   .rank-card {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .rank-position {
@@ -348,7 +357,7 @@
   }
 
   .rank-badge {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
   }
 
   .rank-boxer-info {
@@ -357,24 +366,24 @@
   }
 
   .boxer-name-section {
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .boxer-avatar {
-    font-size: 20px;
+    font-size: var(--font-size-lg);
   }
 
   .boxer-name {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .rank-stats {
     flex-direction: row;
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .stat-group {
-    padding: 2px 5px;
+    padding: var(--space-1);
     background: transparent;
   }
 
@@ -383,12 +392,12 @@
   }
 
   .stat-value {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .stat-winrate .stat-value-highlight {
-    font-size: 14px;
-    color: #059669;
+    font-size: var(--font-size-sm);
+    color: var(--color-success-dark);
   }
 
   /* Hide arrow on mobile, show button instead */
@@ -402,6 +411,12 @@
     grid-row: 3 / 4;
     align-items: center;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: var(--space-2);
   }
+}
+
+/* Focus visible for accessibility */
+.rank-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }

@@ -1,65 +1,80 @@
-/* ========================================
-   FIGHT BADGE - Upcoming Fight Indicator
-   Design System v2.0
+/* src/components/FightBadge.css */
 
-   Urgency-coded countdown for scheduled fights
+/**
+ * FightBadge - Upcoming fight indicator with urgency coding
+ *
+ * Shows scheduled fight countdown with color-coded urgency levels.
+ * Used as absolute-positioned badge on boxer cards.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* ========================================
+   FIGHT BADGE CONTAINER
    ======================================== */
 
 .fight-badge {
   position: absolute;
-  top: 8px;
+  top: var(--space-2);
   left: 50%;
   transform: translateX(-50%);
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: var(--space-1) calc(var(--space-1) * 2.5);
+  border-radius: var(--radius-full);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: var(--color-white);
   text-transform: none;
-  z-index: 10;
+  z-index: var(--z-dropdown);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35), 0 1px 3px rgba(124, 58, 237, 0.2);
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(8px);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .fight-badge:hover {
-  transform: translateX(-50%) translateY(-1px);
+  transform: translateX(-50%) translateY(calc(var(--space-1) * -0.5));
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.45), 0 2px 4px rgba(124, 58, 237, 0.25);
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
+/* Fight Icon */
 .fight-icon {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
+/* Fight Info Text */
 .fight-info {
   text-transform: none;
   letter-spacing: 0.2px;
 }
 
+/* ========================================
+   COUNTDOWN TIMER
+   ======================================== */
+
 .fight-timer {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--space-1);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: rgba(255, 255, 255, 0.95);
-  padding: 1px 5px;
-  border-radius: 10px;
+  padding: var(--space-half) var(--space-1);
+  border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.15);
-  transition: all 200ms ease;
+  transition: all var(--transition-fast);
 }
 
-/* Countdown urgency states */
+/* Urgency States */
 .countdown-normal {
   background: rgba(0, 0, 0, 0.15);
 }
@@ -88,7 +103,7 @@
 
 .countdown-immediate {
   background: rgba(239, 68, 68, 0.4);
-  color: #fff;
+  color: var(--color-white);
   animation: countdownBlink 0.8s ease-in-out infinite;
 }
 
@@ -101,7 +116,10 @@
   }
 }
 
-/* Pulse animation for fights within 2 hours */
+/* ========================================
+   PULSE ANIMATION (within 2 hours)
+   ======================================== */
+
 .pulse-animation {
   animation: fightPulse 2s ease-in-out infinite;
 }
@@ -115,30 +133,37 @@
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: var(--breakpoint-tablet)) {
   .fight-badge {
-    top: 8px;
+    top: var(--space-2);
     font-size: 9px;
-    padding: 3px 8px;
+    padding: var(--space-half) calc(var(--space-1) * 2);
   }
 
   .fight-icon {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .fight-timer {
     font-size: 8px;
-    padding: 1px 4px;
+    padding: var(--space-half) var(--space-1);
   }
 }
 
-/* Accessibility */
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
 .fight-badge:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .countdown-critical,
   .countdown-immediate,

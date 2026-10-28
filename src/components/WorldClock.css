@@ -1,8 +1,20 @@
-/* World Clock Component Styles */
+/* src/components/WorldClock.css */
+
+/**
+ * WorldClock - Game time display widget
+ *
+ * Navy-themed clock component showing game time, day count, and status.
+ * Compact floating display for monitoring game state.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* Container */
 .world-clock {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 16px;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy-medium) 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 320px;
   max-width: 400px;
@@ -11,24 +23,24 @@
 .world-clock-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   position: relative;
 }
 
 /* Loading state */
 .world-clock-loading {
-  color: #a0a0a0;
+  color: var(--color-gray-500);
   text-align: center;
-  padding: 20px;
-  font-size: 0.9rem;
+  padding: var(--space-5);
+  font-size: var(--font-size-sm);
 }
 
 /* Error state */
 .world-clock-error {
-  color: #ff4444;
-  background: rgba(255, 68, 68, 0.1);
-  padding: 12px;
-  border-radius: 8px;
+  color: var(--color-danger-bright);
+  background: rgba(var(--color-danger), 0.1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
   text-align: center;
 }
 
@@ -38,17 +50,17 @@
 }
 
 .time-label {
-  font-size: 0.75rem;
-  color: #a0a0a0;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .main-time {
   font-size: 1.4rem;
-  font-weight: 600;
-  color: #ffffff;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
   line-height: 1.3;
 }
 
@@ -57,11 +69,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   width: fit-content;
   margin: 0 auto;
 }
@@ -69,8 +81,8 @@
 .status-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background-color: #4ade80;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success);
   animation: pulse 2s infinite;
 }
 
@@ -84,64 +96,64 @@
 }
 
 .status-running {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: rgba(var(--color-success), 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(var(--color-success), 0.3);
 }
 
 .status-paused {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(var(--color-warning), 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(var(--color-warning), 0.3);
 }
 
 .status-stopped {
-  background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
-  border: 1px solid rgba(156, 163, 175, 0.3);
+  background: rgba(var(--color-gray-600), 0.15);
+  color: var(--color-gray-600);
+  border: 1px solid rgba(var(--color-gray-600), 0.3);
 }
 
 /* Clock details */
 .clock-details {
   display: flex;
   justify-content: space-between;
-  padding-top: 12px;
+  padding-top: var(--space-3);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .detail-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .detail-label {
-  font-size: 0.7rem;
-  color: #808080;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .detail-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #e0e0e0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-200);
 }
 
 /* Refresh button */
 .refresh-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: var(--space-3);
+  right: var(--space-3);
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: #a0a0a0;
-  font-size: 1rem;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,7 +161,7 @@
 
 .refresh-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  color: var(--color-white);
   transform: rotate(180deg);
 }
 
@@ -158,11 +170,11 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-tablet)) {
   .world-clock {
     min-width: 100%;
     max-width: 100%;
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .main-time {
@@ -171,11 +183,17 @@
 
   .clock-details {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .detail-item {
     flex: 1;
     min-width: 80px;
   }
+}
+
+/* Focus visible for accessibility */
+.refresh-btn:focus-visible {
+  outline: 2px solid var(--color-victory-gold);
+  outline-offset: 2px;
 }

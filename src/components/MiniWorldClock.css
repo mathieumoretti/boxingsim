@@ -1,30 +1,41 @@
-/* ========================================
-   MINI WORLD CLOCK (Compact for Top Bar)
-   ======================================== */
+/* src/components/MiniWorldClock.css */
+
+/**
+ * MiniWorldClock - Compact game clock for TopBar
+ *
+ * Small inline display showing game time and status.
+ * Designed to fit within the TopBar component alongside navigation.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* Container */
 .mini-world-clock {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-5);
   background: rgba(255, 255, 255, 0.05);
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mini-world-clock-loading {
   justify-content: center;
-  color: #a0aec0;
-  font-size: 13px;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
 }
 
+/* Status Badge */
 .clock-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -32,8 +43,8 @@
 .status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background-color: #4ade80;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success);
   animation: pulse 2s infinite;
 }
 
@@ -43,23 +54,24 @@
 }
 
 .clock-status.status-running {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: rgba(var(--color-success), 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(var(--color-success), 0.3);
 }
 
 .clock-status.status-paused {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(var(--color-warning), 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(var(--color-warning), 0.3);
 }
 
 .clock-status.status-stopped {
-  background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
-  border: 1px solid rgba(156, 163, 175, 0.3);
+  background: rgba(var(--color-gray-600), 0.15);
+  color: var(--color-gray-600);
+  border: 1px solid rgba(var(--color-gray-600), 0.3);
 }
 
+/* Time Display */
 .game-time-display {
   display: flex;
   flex-direction: column;
@@ -67,50 +79,51 @@
 }
 
 .time-label {
-  font-size: 9px;
-  color: #808080;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 2px;
+  margin-bottom: var(--space-1);
 }
 
 .time-value {
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
   font-variant-numeric: tabular-nums;
 }
 
 /* ========================================
-   RESPONSIVE DESIGN (Mobile)
+   RESPONSIVE DESIGN
    ======================================== */
-@media (max-width: 768px) {
+
+@media (max-width: var(--breakpoint-tablet)) {
   .mini-world-clock {
-    gap: 12px;
-    padding: 6px 12px;
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-3);
   }
 
   .time-label {
-    display: none; /* Hide label on mobile to save space */
+    display: none;
   }
 
   .time-value {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: var(--breakpoint-mobile)) {
   .mini-world-clock {
-    flex-shrink: 0; /* Prevent shrinking on very small screens */
-    padding: 4px 10px;
+    flex-shrink: 0;
+    padding: var(--space-1) var(--space-2);
   }
 
   .clock-status {
-    padding: 3px 8px;
+    padding: var(--space-1);
     font-size: 10px;
   }
 
   .time-value {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

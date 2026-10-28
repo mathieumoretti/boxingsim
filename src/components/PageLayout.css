@@ -9,17 +9,20 @@
  * - Back button navigation
  * - Responsive breakpoints
  *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ *
  * @see MAT-152: https://linear.app/mathieu-moretti/issue/MAT-152/page-layout-wrapper-component
  */
 
 /* Main Layout Container */
 .page-layout {
   min-height: 100vh;
-  background-color: #f5f7fa; /* Default light gray */
-  padding-top: calc(64px + 24px); /* TopBar height + spacing */
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 40px;
+  background-color: var(--color-gray-100);
+  padding-top: var(--topbar-padding-top);
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+  padding-bottom: var(--space-10);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -29,35 +32,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--color-white);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
 }
 
 .back-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-600);
+  transform: translateY(calc(var(--space-1) * -0.5));
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -65,24 +68,24 @@
 .cross-nav-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  color: white;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-light));
+  color: var(--color-white);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .cross-nav-btn:hover {
-  background: linear-gradient(135deg, #16213e, #1a1a2e);
+  background: linear-gradient(135deg, var(--color-navy-light), var(--color-navy-medium));
   border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -97,7 +100,7 @@
 .fight-booking-page .back-btn,
 .fight-details-page .back-btn {
   background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: var(--color-white);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -113,13 +116,13 @@
 
 /* Cross-nav dark mode variants */
 .fight-details-page .cross-nav-btn {
-  background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+  background: linear-gradient(135deg, var(--color-navy-dark), var(--color-navy-medium));
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .fight-details-page .cross-nav-btn:hover {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-light));
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -130,32 +133,32 @@
 }
 
 /* Responsive Breakpoints - Tablet */
-@media (max-width: 1024px) {
+@media (max-width: var(--breakpoint-desktop)) {
   .page-layout {
     max-width: 95%;
   }
 }
 
 /* Responsive Breakpoints - Mobile */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-tablet)) {
   .page-layout {
-    padding-top: calc(64px + 16px);
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-top: calc(var(--topbar-height) + var(--space-4));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
   }
 
   .back-btn {
-    padding: 8px 16px;
-    font-size: 13px;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
   }
 }
 
 /* Responsive Breakpoints - Small Mobile */
-@media (max-width: 480px) {
+@media (max-width: var(--breakpoint-mobile)) {
   .page-layout {
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-bottom: 24px;
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+    padding-bottom: var(--space-6);
   }
 }
 
@@ -170,7 +173,7 @@
   min-height: 100vh;
   width: 100%;
   max-width: 100%; /* Override the constrained max-width for full-screen backgrounds */
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy-medium) 50%, var(--color-navy-light) 100%);
 }
 
 /* TrainingPage - Navy blue gradient (slightly lighter) */
@@ -178,7 +181,7 @@
   min-height: 100vh;
   width: 100%;
   max-width: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-light) 100%);
 }
 
 /* FightBookingPage - Navy blue gradient */
@@ -186,7 +189,7 @@
   min-height: 100vh;
   width: 100%;
   max-width: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-light) 100%);
 }
 
 /* FightDetailsPage - Navy arena gradient (theater mode) */
@@ -194,5 +197,5 @@
   min-height: 100vh;
   width: 100%;
   max-width: 100%; /* Full width for dramatic background */
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy-medium) 50%, var(--color-navy-light) 100%);
 }
