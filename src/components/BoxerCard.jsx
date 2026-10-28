@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ProgressBar } from './ui';
+import { ProgressBar, StatDisplay } from './ui';
 import './BoxerCard.css';
 import { fetchUpcomingFight, fetchBoxer } from '../api/fights';
 import { fetchActiveTrainingSessions } from '../api/training';
@@ -303,29 +303,9 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenProfile, onOpenTrain
 
       {/* Combat Stats */}
       <div className="combat-stats">
-        <div className="stat-item stat-strength">
-          <span className="stat-icon" title="Strength">💪</span>
-          <div className="stat-info">
-            <span className="stat-name">STR</span>
-            <span className="stat-value-sm">{Math.round(boxer.strength)}</span>
-          </div>
-        </div>
-
-        <div className="stat-item stat-agility">
-          <span className="stat-icon" title="Agility">⚡</span>
-          <div className="stat-info">
-            <span className="stat-name">AGI</span>
-            <span className="stat-value-sm">{Math.round(boxer.agility)}</span>
-          </div>
-        </div>
-
-        <div className="stat-item stat-defense">
-          <span className="stat-icon" title="Defense">🛡️</span>
-          <div className="stat-info">
-            <span className="stat-name">DEF</span>
-            <span className="stat-value-sm">{Math.round(boxer.defense)}</span>
-          </div>
-        </div>
+        <StatDisplay label="STR" value={boxer.strength} icon="💪" color="strength" />
+        <StatDisplay label="AGI" value={boxer.agility} icon="⚡" color="agility" />
+        <StatDisplay label="DEF" value={boxer.defense} icon="🛡️" color="defense" />
       </div>
 
       {/* Action Buttons */}

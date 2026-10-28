@@ -1,0 +1,253 @@
+/**
+ * Alert Component Styles
+ *
+ * Unified styling for alerts and messages across the application.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-154 - Additional Refactoring Opportunities
+ * @see MAT-129 - Error Handling & User Feedback
+ */
+
+/* ==========================================================================
+   BASE ALERT STYLES
+
+   Core layout and spacing shared across all variants.
+   ========================================================================== */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-4);
+  animation: slideIn var(--transition-normal) ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-icon {
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: calc(var(--space-1) / 2);
+}
+
+.alert-message {
+  font-size: var(--font-size-sm);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Dismissible alert styles */
+.alert-dismissible {
+  position: relative;
+}
+
+.alert-dismiss {
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+  padding: 0;
+  line-height: 1;
+  color: inherit;
+}
+
+.alert-dismiss:hover {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   VARIANT: INFO
+
+   Blue informational alerts.
+   ========================================================================== */
+
+.alert-info {
+  background: linear-gradient(
+    135deg,
+    #dbeafe 0%,
+    #bfdbfe 100%
+  );
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #1e3a8a;
+}
+
+.alert-info .alert-title {
+  color: #1e40af;
+}
+
+.alert-info .alert-message {
+  color: #1e3a8a;
+}
+
+.alert-info .alert-dismiss {
+  color: #1e3a8a;
+}
+
+/* ==========================================================================
+   VARIANT: SUCCESS
+
+   Green success confirmations.
+   ========================================================================== */
+
+.alert-success {
+  background: linear-gradient(
+    135deg,
+    #d1fae5 0%,
+    #a7f3d0 100%
+  );
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #064e3b;
+}
+
+.alert-success .alert-title {
+  color: #047857;
+}
+
+.alert-success .alert-message {
+  color: #064e3b;
+}
+
+.alert-success .alert-dismiss {
+  color: #064e3b;
+}
+
+/* ==========================================================================
+   VARIANT: WARNING
+
+   Yellow/orange warning alerts.
+   ========================================================================== */
+
+.alert-warning {
+  background: linear-gradient(
+    135deg,
+    #fef3c7 0%,
+    #fde68a 100%
+  );
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #78350f;
+}
+
+.alert-warning .alert-title {
+  color: #b45309;
+}
+
+.alert-warning .alert-message {
+  color: #78350f;
+}
+
+.alert-warning .alert-dismiss {
+  color: #78350f;
+}
+
+/* ==========================================================================
+   VARIANT: ERROR
+
+   Red error alerts. Matches ErrorDisplay for consistency.
+   ========================================================================== */
+
+.alert-error {
+  background: linear-gradient(
+    135deg,
+    #fee2e2 0%,
+    #fecaca 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #7f1d1d;
+}
+
+.alert-error .alert-title {
+  color: #dc2626;
+}
+
+.alert-error .alert-message {
+  color: #7f1d1d;
+}
+
+.alert-error .alert-dismiss {
+  color: #7f1d1d;
+}
+
+/* ==========================================================================
+   DARK MODE / IN-LINE VARIANTS
+
+   Alternative styling for dark backgrounds or inline usage.
+   ========================================================================== */
+
+.alert-inline {
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+/* Alert on dark backgrounds (navy, arena themes) */
+.boxer-profile .alert,
+.training-page .alert,
+.fight-booking-page .alert,
+.fight-details-page .alert {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.boxer-profile .alert-success,
+.training-page .alert-success,
+.fight-booking-page .alert-success,
+.fight-details-page .alert-success {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2) 0%,
+    rgba(5, 150, 105, 0.1) 100%
+  );
+  border-color: var(--color-success);
+  color: #a7f3d0;
+}
+
+.boxer-profile .alert-success .alert-title,
+.training-page .alert-success .alert-title,
+.fight-booking-page .alert-success .alert-title,
+.fight-details-page .alert-success .alert-title {
+  color: #6ee7b7;
+}
+
+.boxer-profile .alert-error,
+.training-page .alert-error,
+.fight-booking-page .alert-error,
+.fight-details-page .alert-error {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.2) 0%,
+    rgba(220, 38, 38, 0.1) 100%
+  );
+  border-color: var(--color-danger);
+  color: #fca5a5;
+}
+
+.boxer-profile .alert-error .alert-title,
+.training-page .alert-error .alert-title,
+.fight-booking-page .alert-error .alert-title,
+.fight-details-page .alert-error .alert-title {
+  color: #f87171;
+}

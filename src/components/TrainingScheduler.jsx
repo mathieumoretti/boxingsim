@@ -3,6 +3,7 @@ import './TrainingScheduler.css';
 import { fetchTrainingTypes, startTrainingSession } from '../api/training';
 import { fetchWorldTime } from '../api/world';
 import { ErrorDisplay } from './ErrorDisplay';
+import { Alert } from './ui';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
 const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compact = false }) => {
@@ -241,7 +242,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
 
       <form onSubmit={handleSubmit} className="training-form">
         {error && <ErrorDisplay error={error} variant="alert" title="Training Error" />}
-        {success && <div className="success-message">{success}</div>}
+        {success && <Alert variant="success" title="Success!" message={success} />}
 
         {/* Compact form layout */}
         <div className="form-row">

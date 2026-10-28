@@ -20,3 +20,6 @@ export { Button } from './Button.jsx';
 export { Input } from './Input.jsx';
 export { ProgressBar } from './ProgressBar.jsx';
 export { LoadingSpinner } from './LoadingSpinner.jsx';
+export { StatDisplay } from './StatDisplay.jsx';
+export { Badge } from './Badge.jsx';
+export { Alert } from './Alert.jsx';

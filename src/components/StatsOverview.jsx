@@ -2,9 +2,11 @@
  * StatsOverview - Combat stats display (MAT-148)
  *
  * Shows Strength, Defense, and Agility with visual bars and comparisons.
+ * Migrated to StatDisplay component (MAT-154).
  */
 
 import React from 'react';
+import { StatDisplay } from './ui';
 import './BoxerProfile.css';
 
 const StatsOverview = ({ boxer }) => {
@@ -18,55 +20,36 @@ const StatsOverview = ({ boxer }) => {
   const averageStatForLevel = (boxer.level || 1) * 10;
   const maxPossibleStat = averageStatForLevel * 2; // Estimated max
 
-  const StatBar = ({ label, value, icon, colorClass }) => {
-    const percent = Math.min(100, (value / maxPossibleStat) * 100);
-    const isAboveAverage = value >= averageStatForLevel;
-
-    return (
-      <div className="stat-row">
-        <div className="stat-label-container">
-          <span className="stat-icon">{icon}</span>
-          <span className="stat-name">{label}</span>
-        </div>
-        <div className="stat-bar-container-full">
-          <div className={`stat-bar-fill ${colorClass}`}>
-            <div style={{ width: `${percent}%` }}></div>
-          </div>
-        </div>
-        <div className="stat-value-container">
-          <span className="stat-number">{value}</span>
-          {isAboveAverage && (
-            <span className="stat-badge positive">Excellent</span>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="stats-overview-section">
       <h3 className="section-title">Combat Stats</h3>
 
       <div className="stats-grid">
-        <StatBar
+        <StatDisplay
           label="Strength"
           value={strength}
           icon="💪"
-          colorClass="stat-strength"
+          variant="bar"
+          color="strength"
+          maxValue={maxPossibleStat}
         />
 
-        <StatBar
+        <StatDisplay
           label="Defense"
           value={defense}
           icon="🛡️"
-          colorClass="stat-defense"
+          variant="bar"
+          color="defense"
+          maxValue={maxPossibleStat}
         />
 
-        <StatBar
+        <StatDisplay
           label="Agility"
           value={agility}
           icon="⚡"
-          colorClass="stat-agility"
+          variant="bar"
+          color="agility"
+          maxValue={maxPossibleStat}
         />
       </div>
 

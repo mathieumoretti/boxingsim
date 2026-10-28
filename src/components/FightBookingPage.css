@@ -104,15 +104,9 @@
   gap: var(--space-4);
 }
 
-.level-badge {
-  background: linear-gradient(135deg, var(--spotlight-gold) 0%, var(--spotlight-gold-dim) 100%);
-  color: var(--arena-navy-dark);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+/* Level badge - migrated to Badge component (MAT-154) */
+.boxer-meta .badge {
+  margin-right: var(--space-1);
 }
 
 .stats-mini {
@@ -287,18 +281,6 @@
   border-radius: var(--radius-md);
   margin-top: var(--space-7);
   box-shadow: var(--shadow-dramatic);
-  position: relative;
-  overflow: hidden;
-}
-
-.booking-actions::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--fight-red-bright), var(--fight-red), var(--fight-red-bright), transparent);
 }
 
 .selection-summary {

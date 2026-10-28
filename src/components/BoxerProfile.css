@@ -107,26 +107,13 @@
   font-style: italic;
 }
 
-.level-badge-large {
+/* Level Badge - migrated to Badge component (MAT-154)
+   .badge styles now come from src/components/ui/Badge.css */
+.header-info .badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  padding: var(--space-1) var(--space-4);
-  border-radius: var(--radius-full);
-}
-
-.level-label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: var(--font-size-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.level-value {
-  color: var(--color-white);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  margin-top: var(--space-2);
 }
 
 /* XP Progress */
@@ -301,7 +288,7 @@
 }
 
 /* ============================================
-   StatsOverview Component
+   StatsOverview Component - migrated to StatDisplay (MAT-154)
    ============================================ */
 
 .stats-overview-section {
@@ -318,84 +305,50 @@
   gap: var(--space-4);
 }
 
-.stat-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
+/* StatDisplay bar variant compatibility */
+.stats-grid .stat-display.stat-bar {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
 
-.stat-label-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 100px;
-}
-
-.stat-icon {
-  font-size: var(--font-size-lg);
-}
-
-.stat-name {
-  color: var(--color-white);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-}
-
-.stat-bar-container-full {
-  flex: 1;
+/* Custom stat bar heights in StatsOverview */
+.stats-grid .stat-bar-container {
   height: 24px;
-  background: rgba(255, 255, 255, 0.1);
+}
+
+.stats-grid .stat-bar-fill > div {
   border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
 }
 
-.stat-bar-fill {
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.stat-bar-fill > div {
-  height: 100%;
-  border-radius: var(--radius-lg);
-  transition: width 0.5s ease;
-}
-
-.stat-strength > div {
+/* StatDisplay color overrides for profile page */
+.stats-grid .stat-bar-strength .stat-bar-fill > div {
   background: linear-gradient(90deg, var(--color-danger), #dc2626);
-  box-shadow: 0 0 10px rgba(var(--color-danger), 0.5);
+  box-shadow: 0 0 10px rgba(var(--color-danger), 0.3);
 }
 
-.stat-defense > div {
+.stats-grid .stat-bar-defense .stat-bar-fill > div {
   background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
-  box-shadow: 0 0 10px rgba(var(--color-primary), 0.5);
+  box-shadow: 0 0 10px rgba(var(--color-primary), 0.3);
 }
 
-.stat-agility > div {
+.stats-grid .stat-bar-agility .stat-bar-fill > div {
   background: linear-gradient(90deg, var(--color-warning), #d97706);
-  box-shadow: 0 0 10px rgba(var(--color-warning), 0.5);
+  box-shadow: 0 0 10px rgba(var(--color-warning), 0.3);
 }
 
-.stat-value-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 80px;
-  justify-content: flex-end;
+.stats-description {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  text-align: center;
 }
 
-.stat-number {
-  color: var(--color-white);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-}
-
-.stat-badge {
-  font-size: 0.65rem;
-  padding: 2px var(--space-1);
-  border-radius: var(--radius-sm);
-  text-transform: uppercase;
+.stats-description p {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
 }
 
 .stat-badge.positive {

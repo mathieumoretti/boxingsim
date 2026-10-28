@@ -400,37 +400,26 @@
   border-top: 1px solid #2a2a40;
 }
 
-.stat-item {
+/* StatDisplay component wrapper styles for BoxerCard context */
+.combat-stats .stat-display {
   background: transparent;
   padding: calc(var(--space-2) + var(--space-1)) var(--space-2);
   border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   border: 1px solid #2a2a40;
   transition: all var(--transition-fast) ease;
 }
 
-.stat-item:hover {
+.combat-stats .stat-display:hover {
   background: rgba(255, 255, 255, 0.03);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
 }
 
-.stat-icon {
+/* Override icon size for compact variant in BoxerCard */
+.combat-stats .stat-display .stat-icon {
   font-size: 20px;
   line-height: 1;
-  flex-shrink: 0;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex-grow: 1;
-  overflow: hidden;
 }
 
 .stat-name {
