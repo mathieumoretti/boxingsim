@@ -3,18 +3,24 @@
    Design System v2.0
 
    Principles: Hierarchy, Motion, Clarity
+
+   Uses Design Tokens (MAT-146):
+   - All colors reference var(--color-*) tokens
+   - Spacing uses var(--space-*) values
+   - Typography uses var(--font-*) scale
+   - Shadows use var(--shadow-*) elevations
    ======================================== */
 
 /* ===== CARD BASE ===== */
 
 .boxer-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-gray-200);
   position: relative;
-  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-normal) var(--transition-timing-default);
   overflow: visible;
 }
 
@@ -22,25 +28,25 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-2xl);
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.1) 0%,
+    rgba(var(--color-primary), 0.1) 0%,
     transparent 50%,
-    rgba(16, 185, 129, 0.1) 100%
+    rgba(var(--color-success), 0.1) 100%
   );
   -webkit-mask: linear-gradient(#fff 0, #fff 0) content-box, linear-gradient(#fff 0, #fff 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 250ms ease;
+  transition: opacity var(--transition-normal) ease;
 }
 
 .boxer-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: var(--shadow-elevated);
 }
 
 .boxer-card:hover::before {
@@ -51,18 +57,18 @@
 
 .level-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 4px 10px;
-  border-radius: 20px;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: var(--space-1) calc(var(--space-1) * 2.5);
+  border-radius: var(--radius-full);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: var(--color-white);
   text-transform: uppercase;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  transition: all 200ms ease;
+  z-index: var(--z-dropdown);
+  transition: all var(--transition-fast) ease;
   backdrop-filter: blur(8px);
 }
 
@@ -73,35 +79,35 @@
 
 /* Level Tier Gradients */
 .badge-level-1 {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  background: linear-gradient(135deg, var(--color-level-1-start) 0%, var(--color-level-1-end) 100%);
 } /* Gray - Novice */
 
 .badge-level-2 {
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  background: linear-gradient(135deg, var(--color-level-2-start) 0%, var(--color-level-2-end) 100%);
 } /* Teal - Amateur */
 
 .badge-level-3 {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, var(--color-level-3-start) 0%, var(--color-level-3-end) 100%);
 } /* Orange - Challenger */
 
 .badge-level-4 {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-level-4-start) 0%, var(--color-level-4-end) 100%);
 } /* Purple - Veteran */
 
 .badge-level-5 {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-level-5-start) 0%, var(--color-level-5-end) 100%);
 } /* Gold - Champion */
 
 /* Level 5 special effect */
 .badge-level-5::after {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: calc(var(--space-1) * -0.5);
   border-radius: inherit;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24);
+  background: linear-gradient(135deg, var(--color-victory-light), var(--color-warning), var(--color-victory-light));
   z-index: -1;
   opacity: 0;
-  transition: opacity 300ms ease;
+  transition: opacity var(--transition-slow) ease;
   animation: none;
 }
 
@@ -119,22 +125,22 @@
 
 .training-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 4px 8px;
-  border-radius: 20px;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  color: #ffffff;
+  color: var(--color-white);
   text-transform: uppercase;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2);
-  z-index: 10;
+  z-index: var(--z-dropdown);
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 200ms ease;
+  gap: var(--space-1);
+  transition: all var(--transition-fast) ease;
   backdrop-filter: blur(8px);
 }
 
@@ -171,9 +177,9 @@
   display: block;
   font-size: 9px;
   opacity: 0.9;
-  font-weight: 600;
-  margin-top: 1px;
-  color: rgba(255, 255, 255, 0.95);
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--space-1);
+  color: rgba(var(--color-white), 0.95);
 }
 
 /* ===== CARD HEADER ===== */
@@ -181,16 +187,16 @@
 .card-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: calc(var(--space-4) + var(--space-1));
+  margin-bottom: var(--space-4);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 12px;
-  transition: all 200ms ease;
+  padding: var(--space-2);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast) ease;
 }
 
 .card-header:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--color-primary), 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
 }
 
 .card-header:active {
@@ -200,21 +206,21 @@
 .avatar-circle {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(var(--color-white), 0.1);
+  border: 2px solid var(--color-white);
   flex-shrink: 0;
-  transition: all 200ms ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .card-header:hover .avatar-circle {
   transform: rotate(-5deg) scale(1.05);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.4), inset 0 1px 0 rgba(var(--color-white), 0.15);
 }
 
 .name-section {
@@ -224,19 +230,19 @@
 
 .boxer-name {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
+  font-size: calc(var(--font-size-base) + 0.125rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  line-height: var(--line-height-tight);
   letter-spacing: -0.01em;
 }
 
 .boxer-nickname {
-  margin: 2px 0 0 0;
-  font-size: 0.8125rem;
+  margin: var(--space-1) 0 0 0;
+  font-size: var(--font-size-sm);
   font-style: italic;
-  color: #64748b;
-  font-weight: 400;
+  color: var(--color-gray-600);
+  font-weight: var(--font-weight-normal);
   line-height: 1.4;
 }
 
@@ -245,25 +251,25 @@
 .stat-bar-container {
   display: grid;
   grid-template-columns: 60px 1fr auto;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: calc(var(--space-2) + var(--space-1));
 }
 
 .stat-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #475569;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   text-align: left;
 }
 
 .bar-wrapper {
-  height: 12px;
+  height: var(--stat-bar-height-lg);
   width: 100%;
-  background: #f1f5f9;
-  border-radius: 6px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   position: relative;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -277,7 +283,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--color-white), 0.3), transparent);
   animation: barShimmer 2s infinite;
 }
 
@@ -288,8 +294,8 @@
 
 .progress-bar {
   height: 100%;
-  border-radius: 6px;
-  transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms ease;
+  border-radius: var(--radius-sm);
+  transition: width 500ms var(--transition-timing-default), box-shadow var(--transition-slow) ease;
   position: relative;
 }
 
@@ -300,24 +306,24 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(180deg, rgba(var(--color-white), 0.2), transparent);
   border-radius: inherit;
 }
 
 /* Health Bar */
 .bg-health-high {
-  background: linear-gradient(90deg, #10b981, #059669);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(90deg, var(--color-success), #059669);
+  box-shadow: 0 0 8px rgba(var(--color-success), 0.4);
 }
 
 .bg-health-medium {
-  background: linear-gradient(90deg, #f97316, #ea580c);
-  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+  background: linear-gradient(90deg, var(--color-warning-dark), #ea580c);
+  box-shadow: 0 0 8px rgba(var(--color-warning), 0.4);
 }
 
 .bg-health-low {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
+  box-shadow: 0 0 8px rgba(var(--color-danger), 0.4);
   animation: healthCritical 1.5s ease-in-out infinite;
 }
 
@@ -328,8 +334,8 @@
 
 /* Energy Bar */
 .bg-energy {
-  background: linear-gradient(90deg, #fbbf24, #f59e0b);
-  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+  background: linear-gradient(90deg, var(--color-victory-light), var(--color-warning));
+  box-shadow: var(--shadow-glow-gold);
 }
 
 .bar-fatigue {
@@ -338,18 +344,18 @@
 
 /* Fatigue Bar */
 .bg-fatigue-ok {
-  background: linear-gradient(90deg, #4ade80, #22c55e);
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
+  background: linear-gradient(90deg, #4ade80, var(--color-success));
+  box-shadow: 0 0 8px rgba(var(--color-success), 0.35);
 }
 
 .bg-fatigue-warning {
-  background: linear-gradient(90deg, #fbbf24, #f59e0b);
-  box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+  background: linear-gradient(90deg, var(--color-victory-light), var(--color-warning));
+  box-shadow: 0 0 8px rgba(var(--color-warning), 0.35);
 }
 
 .bg-fatigue-critical {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
+  box-shadow: 0 0 8px rgba(var(--color-danger), 0.35);
   animation: fatigueCritical 1s ease-in-out infinite;
 }
 
@@ -363,24 +369,24 @@
 }
 
 .bg-xp {
-  background: linear-gradient(90deg, #f59e0b, #d97706);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+  background: linear-gradient(90deg, var(--color-warning), var(--color-warning-dark));
+  box-shadow: 0 0 8px rgba(var(--color-warning), 0.35);
 }
 
 .stat-value {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-800);
   min-width: 42px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 .stat-value small {
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   color: #94a3b8;
-  font-weight: 400;
-  margin-left: 2px;
+  font-weight: var(--font-weight-normal);
+  margin-left: var(--space-1);
 }
 
 /* ===== COMBAT STATS ===== */
@@ -388,27 +394,27 @@
 .combat-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-200);
 }
 
 .stat-item {
-  background: #ffffff;
-  padding: 10px 8px;
-  border-radius: 10px;
+  background: var(--color-white);
+  padding: calc(var(--space-2) + var(--space-1)) var(--space-2);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: var(--space-2);
+  box-shadow: var(--shadow-subtle);
   border: 1px solid rgba(0, 0, 0, 0.06);
-  transition: all 200ms ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .stat-item:hover {
-  background: #fafafa;
+  background: var(--color-gray-100);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
@@ -429,44 +435,44 @@
 
 .stat-name {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--color-gray-600);
 }
 
 .stat-value-sm {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 /* Strength - Red */
 .stat-strength .stat-value-sm {
-  color: #ef4444;
+  color: var(--color-stat-strength);
 }
 
 .stat-strength:hover {
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(var(--color-stat-strength), 0.3);
 }
 
 /* Agility - Gold */
 .stat-agility .stat-value-sm {
-  color: #f59e0b;
+  color: var(--color-stat-agility);
 }
 
 .stat-agility:hover {
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(var(--color-stat-agility), 0.3);
 }
 
 /* Defense - Blue */
 .stat-defense .stat-value-sm {
-  color: #3b82f6;
+  color: var(--color-stat-defense);
 }
 
 .stat-defense:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(var(--color-stat-defense), 0.3);
 }
 
 /* ===== ACTION BUTTONS ===== */
@@ -474,21 +480,21 @@
 .card-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 .train-btn,
 .fight-btn,
 .history-btn {
-  padding: 12px 14px;
+  padding: calc(var(--space-2) + var(--space-1)) calc(var(--space-3) + var(--space-2));
   border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   font-family: inherit;
   cursor: pointer;
-  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-normal) var(--transition-timing-default);
   position: relative;
   overflow: hidden;
 }
@@ -503,8 +509,8 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
+  background: rgba(var(--color-white), 0.3);
+  border-radius: var(--radius-full);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
@@ -518,15 +524,15 @@
 
 /* Training Button - Gold */
 .train-btn {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, var(--color-victory-light) 0%, var(--color-warning) 100%);
   color: #1e293b;
-  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.25);
+  box-shadow: 0 2px 4px rgba(var(--color-warning), 0.25);
 }
 
 .train-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #fcd34a 0%, #fbbf24 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(251, 191, 36, 0.35);
+  background: linear-gradient(135deg, #fcd34a 0%, var(--color-victory-light) 100%);
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: 0 4px 8px rgba(var(--color-warning), 0.35);
 }
 
 .train-btn:active:not(:disabled) {
@@ -534,23 +540,23 @@
 }
 
 .train-btn:disabled {
-  background: #cbd5e1;
-  color: #64748b;
+  background: var(--color-gray-300);
+  color: var(--color-gray-600);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* Fight Button - Red */
 .fight-btn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.25);
+  background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
+  color: var(--color-white);
+  box-shadow: 0 2px 4px rgba(var(--color-danger), 0.25);
 }
 
 .fight-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35);
+  background: linear-gradient(135deg, #f87171 0%, var(--color-danger) 100%);
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: 0 4px 8px rgba(var(--color-danger), 0.35);
 }
 
 .fight-btn:active:not(:disabled) {
@@ -558,23 +564,23 @@
 }
 
 .fight-btn:disabled {
-  background: #cbd5e1;
-  color: #64748b;
+  background: var(--color-gray-300);
+  color: var(--color-gray-600);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* History Button - Slate */
 .history-btn {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(100, 116, 139, 0.25);
+  background: linear-gradient(135deg, var(--color-gray-600) 0%, var(--color-gray-700) 100%);
+  color: var(--color-white);
+  box-shadow: 0 2px 4px rgba(var(--color-gray-600), 0.25);
 }
 
 .history-btn:hover {
-  background: linear-gradient(135deg, #788ca3 0%, #64748b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(100, 116, 139, 0.35);
+  background: linear-gradient(135deg, #788ca3 0%, var(--color-gray-600) 100%);
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: 0 4px 8px rgba(var(--color-gray-600), 0.35);
 }
 
 .history-btn:active {
@@ -589,22 +595,22 @@
 
 /* ===== RESPONSIVE ===== */
 
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-tablet)) {
   .boxer-card {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .level-badge,
   .training-badge {
-    top: 8px;
-    right: 8px;
-    left: 8px;
+    top: var(--space-2);
+    right: var(--space-2);
+    left: var(--space-2);
     font-size: 9px;
-    padding: 3px 8px;
+    padding: calc(var(--space-1) - 1px) var(--space-2);
   }
 
   .training-badge {
-    left: 8px;
+    left: var(--space-2);
     right: auto;
   }
 
@@ -615,8 +621,8 @@
   }
 
   .boxer-name {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
   }
 
   .combat-stats {
@@ -624,7 +630,7 @@
   }
 
   .stat-item {
-    padding: 10px 8px;
+    padding: calc(var(--space-2) + var(--space-1)) var(--space-2);
   }
 
   .stat-icon {
@@ -632,8 +638,8 @@
   }
 
   .stat-value-sm {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
   }
 
   .card-actions {
@@ -643,23 +649,23 @@
   .train-btn,
   .fight-btn,
   .history-btn {
-    padding: 10px 12px;
-    font-size: 0.8rem;
+    padding: calc(var(--space-2) + var(--space-1)) var(--space-3);
+    font-size: calc(var(--font-size-sm) - 0.075rem);
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: var(--breakpoint-mobile)) {
   .stat-bar-container {
     grid-template-columns: 45px 1fr auto;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .stat-label {
-    font-size: 0.65rem;
+    font-size: var(--font-size-xs);
   }
 
   .bar-wrapper {
-    height: 12px;
+    height: var(--stat-bar-height-lg);
     width: 100%;
     flex: 1;
     box-sizing: border-box;
@@ -667,12 +673,12 @@
 
   .combat-stats {
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .stat-item {
-    padding: 8px 6px;
-    border-radius: 8px;
+    padding: var(--space-2) calc(var(--space-2) - 2px);
+    border-radius: var(--radius-md);
   }
 
   .stat-icon {
@@ -695,8 +701,8 @@
 .fight-btn:focus-visible,
 .history-btn:focus-visible,
 .card-header:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -733,11 +739,11 @@
   }
 
   .boxer-nickname {
-    color: #94a3b8;
+    color: var(--color-gray-600);
   }
 
   .stat-label {
-    color: #94a3b8;
+    color: var(--color-gray-600);
   }
 
   .bar-wrapper {
@@ -749,7 +755,7 @@
   }
 
   .stat-value small {
-    color: #64748b;
+    color: var(--color-gray-600);
   }
 
   .combat-stats {
@@ -765,6 +771,6 @@
   }
 
   .position-text {
-    color: #64748b;
+    color: var(--color-gray-600);
   }
 }

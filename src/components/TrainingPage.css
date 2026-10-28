@@ -1,49 +1,81 @@
-/* Training Page - Compact single-column layout */
-/* Inherits navy gradient background from PageLayout.css */
+/* src/components/TrainingPage.css */
 
+/**
+ * TrainingPage - Training management page content
+ *
+ * Compact single-column layout inheriting navy gradient from PageLayout.
+ * Minimal separation for clean information flow.
+ *
+ * Uses Design Tokens (MAT-146):
+ * - All values reference src/design-tokens.css
+ */
+
+/* Container */
 .training-page-content {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 24px 32px;
+  padding: 0 var(--space-6) calc(var(--space-8) + env(safe-area-inset-bottom, 0));
 }
 
-/* Section Styles - minimal separation, no heavy borders */
+/* Section Styles - minimal separation */
 .energy-status-section,
 .training-scheduler-section,
 .stat-progression-section,
 .training-history-section {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
+/* Section Headers */
 .training-scheduler-section h3,
 .stat-progression-section h3,
 .training-history-section h3 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #fbbf24; /* spotlight-gold for section titles */
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-victory-gold);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2);
 }
 
 /* Loading and Error States */
 .loading-state,
 .error-state {
   text-align: center;
-  padding: 32px 24px;
+  padding: var(--space-8) var(--space-6);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* Responsive Design - Desktop */
+@media (max-width: var(--breakpoint-desktop)) {
   .training-page-content {
-    padding: 0 16px 24px;
+    max-width: 100%;
+  }
+}
+
+/* Responsive Design - Tablet */
+@media (max-width: var(--breakpoint-tablet)) {
+  .training-page-content {
+    padding: 0 var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0));
   }
 
   .training-scheduler-section h3,
   .stat-progression-section h3,
   .training-history-section h3 {
     font-size: 0.8125rem;
+  }
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: var(--breakpoint-mobile)) {
+  .training-page-content {
+    padding: 0 var(--space-3) calc(var(--space-4) + env(safe-area-inset-bottom, 0));
+  }
+
+  .energy-status-section,
+  .training-scheduler-section,
+  .stat-progression-section,
+  .training-history-section {
+    margin-bottom: var(--space-3);
   }
 }

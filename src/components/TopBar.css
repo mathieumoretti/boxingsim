@@ -1,20 +1,24 @@
 /* ========================================
    FIXED TOP NAVIGATION BAR
+
+   Uses Design Tokens (MAT-146):
+   - All values reference src/design-tokens.css
    ======================================== */
+
 .top-bar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  height: var(--topbar-height);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-light) 100%);
+  box-shadow: var(--shadow-topbar);
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  gap: 24px;
+  padding: 0 var(--space-6);
+  gap: var(--space-6);
 }
 
 .top-bar-left {
@@ -23,9 +27,9 @@
 
 .app-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
   letter-spacing: -0.5px;
 }
 
@@ -40,73 +44,74 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 /* Navigation Links */
 .nav-links {
   display: flex;
-  gap: 8px;
-  margin-right: 8px;
-  padding-right: 16px;
+  gap: var(--space-2);
+  margin-right: var(--space-2);
+  padding-right: var(--space-4);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-link {
   color: #a0aec0;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .nav-link:hover {
-  color: #ffffff;
+  color: var(--color-white);
   background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link.active {
-  color: #ffffff;
-  background: rgba(255, 215, 0, 0.2);
+  color: var(--color-white);
+  background: rgba(var(--color-victory-gold), 0.2);
 }
 
 .user-welcome {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #a0aec0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .logout-btn {
-  background-color: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
+  background-color: rgba(var(--color-danger), 0.9);
+  color: var(--color-white);
   border: none;
-  padding: 8px 20px;
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
 }
 
 .logout-btn:hover {
-  background-color: rgba(220, 38, 38, 1);
-  transform: translateY(-1px);
+  background-color: rgba(var(--color-danger-dark), 1);
+  transform: translateY(calc(var(--space-1) * -0.5));
 }
 
 /* ========================================
    RESPONSIVE DESIGN (Mobile)
    ======================================== */
-@media (max-width: 768px) {
+
+@media (max-width: var(--breakpoint-tablet)) {
   .top-bar {
-    padding: 0 12px;
-    gap: 12px;
+    padding: 0 var(--space-3);
+    gap: var(--space-3);
   }
 
   .app-title {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
 
   /* Hide navigation links on mobile - use hamburger menu instead (future enhancement) */
@@ -119,8 +124,8 @@
   }
 
   .logout-btn {
-    padding: 6px 14px;
-    font-size: 12px;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-xs);
   }
 
   /* Hide mini clock on mobile - saves space, no horizontal scroll needed */
