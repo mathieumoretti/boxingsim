@@ -1,0 +1,191 @@
+/**
+ * Input Component Styles
+ *
+ * Centralized form input styling with label, error states, and helper text.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   INPUT WRAPPER
+
+   Container for the complete input field (label + input + helper text).
+   ========================================================================== */
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* ==========================================================================
+   INPUT LABEL
+
+   Label styling above the input field.
+   ========================================================================== */
+
+.input-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+  margin: 0;
+}
+
+/* ==========================================================================
+   BASE INPUT STYLES
+
+   Core input field appearance and behavior.
+   ========================================================================== */
+
+.input-field {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-gray-800);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.input-field::placeholder {
+  color: var(--color-gray-400);
+}
+
+/* Focus state */
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card), 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hover state */
+.input-field:hover:not(:focus):not(:disabled) {
+  border-color: var(--color-gray-400);
+}
+
+/* Disabled state */
+.input-field:disabled {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-400);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Error state */
+.input-field.input-error {
+  border-color: var(--color-danger);
+  background-color: #fef2f2;
+}
+
+.input-field.input-error:focus {
+  box-shadow: var(--shadow-card), 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* ==========================================================================
+   INPUT TYPE VARIANTS
+
+   Specific styling for different input types.
+   ========================================================================== */
+
+/* --- Select Dropdown --- */
+.input-field[type="select"] {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23718096'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: var(--space-10);
+}
+
+.input-field[type="select"]:disabled {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+}
+
+/* --- Number Input --- */
+.input-field[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.input-field[type="number"]::-webkit-inner-spin-button,
+.input-field[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ==========================================================================
+   HELPER TEXT & ERROR MESSAGES
+
+   Text displayed below the input for guidance or validation errors.
+   ========================================================================== */
+
+.input-helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin: 0;
+}
+
+.input-helper-error {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   DARK MODE VARIANTS
+
+   Override input styles when used on dark/navy backgrounds.
+   Applied via parent class context.
+   ========================================================================== */
+
+.boxer-profile .input-field,
+.training-page .input-field,
+.fight-booking-page .input-field {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--color-gray-800);
+}
+
+.boxer-profile .input-field:focus,
+.training-page .input-field:focus,
+.fight-booking-page .input-field:focus {
+  background-color: rgba(255, 255, 255, 1);
+  border-color: var(--color-primary);
+}
+
+.boxer-profile .input-label,
+.training-page .input-label,
+.fight-booking-page .input-label {
+  color: var(--color-gray-300);
+}
+
+/* Dark mode error state */
+.boxer-profile .input-field.input-error,
+.training-page .input-field.input-error,
+.fight-booking-page .input-field.input-error {
+  background-color: rgba(255, 242, 242, 0.95);
+  border-color: var(--color-danger);
+}
+
+/* ==========================================================================
+   SIZE VARIANTS
+
+   Optional size modifications for different contexts.
+   ========================================================================== */
+
+/* Small input */
+.input-field.input-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* Large input */
+.input-field.input-lg {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-lg);
+}

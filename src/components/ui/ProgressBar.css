@@ -1,0 +1,265 @@
+/**
+ * ProgressBar Component Styles
+ *
+ * Progress bar styling with multiple variants for health, energy, fatigue, XP, and stats.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   PROGRESS CONTAINER
+
+   Wrapper for label and progress bar together.
+   ========================================================================== */
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   PROGRESS LABEL
+
+   Label text with value/percentage displayed above the bar.
+   ========================================================================== */
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+}
+
+.progress-label-text {
+  font-weight: var(--font-weight-semibold);
+}
+
+.progress-label-value {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-600);
+}
+
+/* ==========================================================================
+   PROGRESS TRACK
+
+   Background container for the progress bar fill.
+   ========================================================================== */
+
+.progress-track {
+  height: var(--stat-bar-height-lg);
+  background-color: var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   PROGRESS BAR (FILL)
+
+   The animated fill that represents the progress value.
+   Uses gradient backgrounds and glow effects.
+   ========================================================================== */
+
+.progress-bar {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width 500ms var(--transition-timing-default),
+              box-shadow 400ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine effect overlay */
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 50%
+  );
+  border-radius: inherit;
+}
+
+/* ==========================================================================
+   PROGRESS BAR VARIANTS
+
+   Color variants for different contexts.
+   Each uses gradient backgrounds with matching glow shadows.
+   ========================================================================== */
+
+/* --- Health Variant ---
+   Dynamic color based on percentage (handled in component or via classes) */
+.progress-health {
+  background: linear-gradient(
+    90deg,
+    var(--color-stat-health) 0%,
+    #059669 100%
+  );
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Health level overrides (add classes to parent or bar) */
+.progress-health-low {
+  background: linear-gradient(
+    90deg,
+    var(--color-danger) 0%,
+    var(--color-danger-dark) 100%
+  );
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  animation: healthCritical 1.5s ease-in-out infinite;
+}
+
+.progress-health-medium {
+  background: linear-gradient(
+    90deg,
+    var(--color-warning-dark) 0%,
+    #ea580c 100%
+  );
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+@keyframes healthCritical {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* --- Energy Variant --- */
+.progress-energy {
+  background: linear-gradient(
+    90deg,
+    var(--color-stat-energy) 0%,
+    var(--color-warning-dark) 100%
+  );
+  box-shadow: var(--shadow-glow-gold);
+}
+
+/* --- Fatigue Variant --- */
+.progress-fatigue {
+  background: linear-gradient(
+    90deg,
+    var(--color-danger) 0%,
+    var(--color-danger-dark) 100%
+  );
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+/* --- XP Variant --- */
+.progress-xp {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 100%
+  );
+  box-shadow: var(--shadow-glow-blue);
+}
+
+/* --- Strength Stat Variant --- */
+.progress-strength {
+  background: linear-gradient(
+    90deg,
+    var(--color-stat-strength) 0%,
+    var(--color-stat-strength-dark) 100%
+  );
+  box-shadow: var(--shadow-glow-red);
+}
+
+/* --- Defense Stat Variant --- */
+.progress-defense {
+  background: linear-gradient(
+    90deg,
+    var(--color-stat-defense) 0%,
+    var(--color-stat-defense-dark) 100%
+  );
+  box-shadow: var(--shadow-glow-blue);
+}
+
+/* --- Agility Stat Variant --- */
+.progress-agility {
+  background: linear-gradient(
+    90deg,
+    var(--color-stat-agility) 0%,
+    var(--color-stat-agility-dark) 100%
+  );
+  box-shadow: var(--shadow-glow-gold);
+}
+
+/* --- Neutral Variant ---
+   Default gray for generic progress indicators */
+.progress-neutral {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-600) 0%,
+    var(--color-gray-700) 100%
+  );
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   DARK MODE VARIANTS
+
+   Override progress track color when used on dark/navy backgrounds.
+   Applied via parent class context.
+   ========================================================================== */
+
+.boxer-profile .progress-track,
+.training-page .progress-track,
+.fight-details-page .progress-track {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.boxer-profile .progress-label,
+.training-page .progress-label,
+.fight-details-page .progress-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================================================
+   SIZE VARIANTS
+
+   Optional size modifications for different contexts.
+   ========================================================================== */
+
+/* Small progress bar (compact displays) */
+.progress-track.progress-sm {
+  height: var(--stat-bar-height);
+}
+
+/* Large progress bar (prominent displays) */
+.progress-track.progress-lg {
+  height: 16px;
+}
+
+/* ==========================================================================
+   SPECIAL STATES
+
+   Loading, empty, or disabled states.
+   ========================================================================== */
+
+/* Empty/zero state */
+.progress-bar[style*="width: 0%"] {
+  opacity: 0.3;
+}
+
+/* Disabled state */
+.progress-container.progress-disabled .progress-label {
+  opacity: 0.5;
+}
+
+.progress-container.progress-disabled .progress-bar {
+  animation: none;
+  opacity: 0.6;
+}

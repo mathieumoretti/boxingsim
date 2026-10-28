@@ -1,0 +1,141 @@
+/**
+ * LoadingSpinner Component Styles
+ *
+ * CSS spinner animation with configurable sizes.
+ * Based on FightDetails loading state animation (MAT-104).
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   LOADING SPINNER CONTAINER
+
+   Centered container for spinner and optional label.
+   ========================================================================== */
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ==========================================================================
+   SPINNER CIRCLE
+
+   The rotating circular element using CSS border trick.
+   ========================================================================== */
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   SPINNER SIZES
+
+   Three size variants for different contexts.
+   ========================================================================== */
+
+/* Small spinner (inline, compact spaces) */
+.loading-spinner-sm .spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+}
+
+/* Medium spinner (default, most use cases) */
+.loading-spinner-md .spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+/* Large spinner (prominent loading states) */
+.loading-spinner-lg .spinner {
+  width: 64px;
+  height: 64px;
+  border-width: 5px;
+}
+
+/* ==========================================================================
+   SPIN ANIMATION
+
+   Infinite rotation keyframes.
+   ========================================================================== */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   LOADING LABEL
+
+   Optional text below the spinner.
+   ========================================================================== */
+
+.loading-label {
+  margin-top: var(--space-4);
+  margin-bottom: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-gray-600);
+  font-weight: var(--font-weight-normal);
+}
+
+/* ==========================================================================
+   DARK MODE VARIANTS
+
+   Override spinner colors when used on dark/navy backgrounds.
+   Applied via parent class context.
+   ========================================================================== */
+
+.boxer-profile .spinner,
+.training-page .spinner,
+.fight-details-page .spinner,
+.fight-booking-page .spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-primary-light);
+}
+
+.boxer-profile .loading-label,
+.training-page .loading-label,
+.fight-details-page .loading-label,
+.fight-booking-page .loading-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ==========================================================================
+   ALTERNATE COLORS
+
+   Utility classes for different spinner colors in specific contexts.
+   ========================================================================== */
+
+/* Primary color (default) */
+.loading-spinner-primary .spinner {
+  border-top-color: var(--color-primary);
+}
+
+/* Success color */
+.loading-spinner-success .spinner {
+  border-top-color: var(--color-success);
+}
+
+/* Warning color */
+.loading-spinner-warning .spinner {
+  border-top-color: var(--color-warning);
+}
+
+/* Victory/gold color */
+.loading-spinner-gold .spinner {
+  border-top-color: var(--color-victory-gold);
+}

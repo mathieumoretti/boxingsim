@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageLayout from './PageLayout';
+import { LoadingSpinner } from './ui';
 import RoundTimeline from './RoundTimeline';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
@@ -280,10 +281,7 @@ const FightDetails = () => {
         backButtonLabel="← Back to Dashboard"
         showCrossNav={false}
       >
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Loading fight details...</p>
-        </div>
+        <LoadingSpinner size="lg" label="Loading fight details..." />
       </PageLayout>
     );
   }

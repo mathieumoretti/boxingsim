@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ProgressBar } from './ui';
 import './BoxerCard.css';
 import { fetchUpcomingFight, fetchBoxer } from '../api/fights';
 import { fetchActiveTrainingSessions } from '../api/training';
@@ -268,52 +269,37 @@ const BoxerCard = ({ boxer, worldTime, upcomingFight, onOpenProfile, onOpenTrain
       </div>
 
       {/* Health Bar */}
-      <div className="stat-bar-container">
-        <span className="stat-label">Health</span>
-        <div className="bar-wrapper">
-          <div
-            className={`progress-bar ${healthBarClass}`}
-            style={{ width: `${(boxer.health / maxHealth) * 100}%` }}
-          ></div>
-        </div>
-        <span className="stat-value">{Math.floor(boxer.health)}<small>/ {maxHealth}</small></span>
-      </div>
+      <ProgressBar
+        value={boxer.health}
+        max={maxHealth}
+        variant="health"
+        label="Health"
+      />
 
       {/* Energy Bar */}
-      <div className="stat-bar-container">
-        <span className="stat-label">Energy</span>
-        <div className="bar-wrapper bar-energy">
-          <div
-            className={`progress-bar bg-energy`}
-            style={{ width: `${(boxer.energy / 100) * 100}%` }}
-          ></div>
-        </div>
-        <span className="stat-value">{Math.floor(boxer.energy)}<small>/ 100</small></span>
-      </div>
+      <ProgressBar
+        value={boxer.energy}
+        max={100}
+        variant="energy"
+        label="Energy"
+      />
 
       {/* Fatigue Bar */}
-      <div className="stat-bar-container stat-bar-fatigue">
-        <span className="stat-label">Fatigue</span>
-        <div className="bar-wrapper bar-fatigue">
-          <div
-            className={`progress-bar ${getFatigueColorClass(boxer.fatigue_score)}`}
-            style={{ width: `${boxer.fatigue_score}%` }}
-          ></div>
-        </div>
-        <span className="stat-value">{Math.round(boxer.fatigue_score)}<small>/ 100</small></span>
-      </div>
+      <ProgressBar
+        value={boxer.fatigue_score}
+        max={100}
+        variant="fatigue"
+        label="Fatigue"
+      />
 
       {/* XP Progress Bar */}
-      <div className="stat-bar-container stat-bar-xp">
-        <span className="stat-label">XP</span>
-        <div className="bar-wrapper bar-xp">
-          <div
-            className={`progress-bar bg-xp`}
-            style={{ width: `${((boxer.experience || 0) / ((boxer.level || 1) * 100)) * 100}%` }}
-          ></div>
-        </div>
-        <span className="stat-value">{Math.floor(boxer.experience || 0)}<small>/ {(boxer.level || 1) * 100}</small></span>
-      </div>
+      <ProgressBar
+        value={boxer.experience || 0}
+        max={(boxer.level || 1) * 100}
+        variant="xp"
+        label="XP"
+        showPercentage={false}
+      />
 
       {/* Combat Stats */}
       <div className="combat-stats">
