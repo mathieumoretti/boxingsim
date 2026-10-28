@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageLayout from './PageLayout';
-import { LoadingSpinner } from './ui';
+import { LoadingSpinner, StatDisplay, Badge } from './ui';
 import RoundTimeline from './RoundTimeline';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
@@ -83,7 +83,7 @@ const BoxerComparisonCard = ({ boxer, role, fightData }) => {
       <div className="card-header">
         <h4>{boxer.name}</h4>
         {boxer.nickname && <p className="nickname">"{boxer.nickname}"</p>}
-        <span className={`level-badge ${isWinner ? 'winner-bg' : ''}`}>LVL {boxer.level || 1}</span>
+        <Badge variant={isWinner ? 'winner' : 'level'} size="sm">LVL {boxer.level || 1}</Badge>
       </div>
 
       {/* Health row - matches mockup structure */}
@@ -100,26 +100,12 @@ const BoxerComparisonCard = ({ boxer, role, fightData }) => {
         </div>
       )}
 
-      {/* Combat Stats - matches mockup structure (no .stat-info wrapper) */}
+      {/* Combat Stats - migrated to StatDisplay (MAT-154) */}
       <div className="combat-stats">
-        <div className="stat-item">
-          <span className="stat-icon">💪</span>
-          <span className="stat-name">STR</span>
-          <span className="stat-value">{Math.round(boxer.strength)}</span>
-        </div>
-
-        <div className="stat-item">
-          <span className="stat-icon">🛡️</span>
-          <span className="stat-name">DEF</span>
-          <span className="stat-value">{Math.round(boxer.defense)}</span>
-        </div>
-
-        <div className="stat-item">
-          <span className="stat-icon">⚡</span>
-          <span className="stat-name">AGI</span>
-          <span className="stat-value">{Math.round(boxer.agility)}</span>
-        </div>
-      </div> compo
+        <StatDisplay label="STR" value={boxer.strength} icon="💪" color="strength" />
+        <StatDisplay label="DEF" value={boxer.defense} icon="🛡️" color="defense" />
+        <StatDisplay label="AGI" value={boxer.agility} icon="⚡" color="agility" />
+      </div>
 
       {/* Card Footer */}
       <div className="card-footer">
@@ -327,13 +313,11 @@ const FightDetails = () => {
           {boxer1?.name || 'Boxer 1'} vs {boxer2?.name || 'Boxer 2'}
         </h2>
 
-        {/* Status Badge */}
-        <div className={`fight-status-badge ${fight?.status}`}>
-          {fight?.status === 'scheduled' && '📅 SCHEDULED'}
-          {fight?.status === 'in_progress' && '🥊 IN PROGRESS'}
-          {fight?.status === 'completed' && '✅ COMPLETED'}
-          {fight?.status === 'canceled' && '❌ CANCELED'}
-        </div>
+        {/* Status Badge - migrated to Badge component (MAT-154) */}
+        {fight?.status === 'scheduled' && <Badge variant="fight-status-scheduled" icon="📅">Scheduled</Badge>}
+        {fight?.status === 'in_progress' && <Badge variant="winner" icon="🥊">In Progress</Badge>}
+        {fight?.status === 'completed' && <Badge variant="fight-status-completed" icon="✅">Completed</Badge>}
+        {fight?.status === 'canceled' && <Badge variant="fight-status-cancelled" icon="❌">Canceled</Badge>}
 
         {/* Scheduled Time for future fights */}
         {fight?.status === 'scheduled' && fight?.scheduled_time && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { StatDisplay, Badge } from './ui';
 import './RankCard.css';
 
 const RankCard = ({ boxer, rank }) => {
@@ -65,12 +66,9 @@ const RankCard = ({ boxer, rank }) => {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats - migrated to StatDisplay (MAT-154) */}
         <div className="rank-stats">
-          <div className="stat-group stat-level">
-            <span className="stat-label">LVL</span>
-            <span className="stat-value">{boxer.level}</span>
-          </div>
+          <StatDisplay label="LVL" value={boxer.level} variant="mini" color="level" />
 
           <div className="stat-group stat-record">
             <span className="stat-label">Record</span>

@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Badge } from './ui';
 import './BoxerProfile.css';
 
 const BoxerHeader = ({ boxer }) => {
@@ -42,10 +43,8 @@ const BoxerHeader = ({ boxer }) => {
           {nicknameDisplay && (
             <p className="boxer-nickname-display">{nicknameDisplay}</p>
           )}
-          <div className="level-badge-large">
-            <span className="level-label">Level</span>
-            <span className="level-value">{level}</span>
-          </div>
+          {/* Migrated to Badge component (MAT-154) */}
+          <Badge variant="level" size="lg">Level {level}</Badge>
         </div>
       </div>
 

@@ -1,0 +1,205 @@
+/**
+ * StatDisplay Component Styles
+ *
+ * Unified styling for combat stats, levels, and numeric displays.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-154 - Additional Refactoring Opportunities
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   BASE STAT DISPLAY STYLES
+
+   Core layout shared across all variants.
+   ========================================================================== */
+
+.stat-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   COMPACT VARIANT (default)
+
+   Used in BoxerCard combat stats section.
+   Icon + label/value stack layout.
+   ========================================================================== */
+
+.stat-compact {
+  flex: 1;
+}
+
+.stat-compact .stat-icon {
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+.stat-compact .stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-compact .stat-name {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-400);
+  letter-spacing: 0.5px;
+}
+
+.stat-compact .stat-value-sm {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   BAR VARIANT
+
+   Used in StatsOverview with full-width progress bar.
+   Icon + label + bar + value horizontal layout.
+   ========================================================================== */
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+}
+
+.stat-bar .stat-icon {
+  font-size: var(--font-size-lg);
+  width: var(--space-5);
+  text-align: center;
+}
+
+.stat-bar .stat-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-200);
+  min-width: 80px;
+}
+
+.stat-bar .stat-bar-container {
+  flex: 1;
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-700) 0%,
+    var(--color-gray-600) 100%
+  );
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.stat-bar .stat-bar-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.stat-bar .stat-bar-fill > div {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.stat-bar .stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* ==========================================================================
+   MINI VARIANT
+
+   Used in RankCard stat groups.
+   Label + value inline layout.
+   ========================================================================== */
+
+.stat-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-mini .stat-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-mini .stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   COLOR VARIANTS
+
+   Color schemes for different stat types.
+   Applied to bar fills and value text.
+   ========================================================================== */
+
+/* --- Strength (Red/Orange) --- */
+.stat-strength .stat-bar-fill > div {
+  background: linear-gradient(
+    90deg,
+    var(--color-danger) 0%,
+    var(--color-danger-bright) 100%
+  );
+}
+
+/* --- Defense (Blue/Steel) --- */
+.stat-defense .stat-bar-fill > div {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+}
+
+/* --- Agility (Yellow/Gold) --- */
+.stat-agility .stat-bar-fill > div {
+  background: linear-gradient(
+    90deg,
+    var(--color-warning) 0%,
+    var(--color-victory-light) 100%
+  );
+}
+
+/* --- Level (Purple) --- */
+.stat-level .stat-bar-fill > div {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-purple) 0%,
+    #a78bfa 100%
+  );
+}
+
+.stat-mini.stat-level .stat-value {
+  color: var(--color-accent-purple);
+}
+
+/* --- Neutral (Gray) --- */
+.stat-neutral .stat-bar-fill > div {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-400) 0%,
+    var(--color-gray-300) 100%
+  );
+}

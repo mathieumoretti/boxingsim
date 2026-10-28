@@ -4,6 +4,7 @@ import './FightBookingPage.css';
 import TopBar from './TopBar';
 import OpponentList from './OpponentList.jsx';
 import PageLayout from './PageLayout';
+import { Badge } from './ui';
 import { fetchBestMatch } from '../api/opponents';
 import { bookFight } from '../api/fights';
 import { ErrorDisplay } from './ErrorDisplay';
@@ -202,7 +203,8 @@ const FightBookingPage = ({ user, onLogout }) => {
               <span className="value">{boxer.name}</span>
             </div>
             <div className="boxer-meta">
-              <span className="level-badge">Level {boxer.level}</span>
+              {/* Migrated to Badge component (MAT-154) */}
+              <Badge variant="level" size="md">Level {boxer.level}</Badge>
               <div className="stats-mini">
                 <span title="Strength">STR {boxer.stats?.strength || 0}</span>
                 <span title="Defense">DEF {boxer.stats?.defense || 0}</span>

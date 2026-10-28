@@ -1,0 +1,180 @@
+/**
+ * Badge Component Styles
+ *
+ * Unified styling for status badges across the application.
+ * Uses design tokens from src/design-tokens.css for consistency.
+ *
+ * @see MAT-154 - Additional Refactoring Opportunities
+ * @see MAT-146 - Design Tokens Foundation
+ */
+
+/* ==========================================================================
+   BASE BADGE STYLES
+
+   Core layout and typography shared across all variants.
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-icon {
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
+/* ==========================================================================
+   BADGE SIZES
+
+   Three size variants for different contexts.
+   ========================================================================== */
+
+/* Small - overlay badges, compact spaces */
+.badge-sm {
+  padding: calc(var(--space-1) - 1px) var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+/* Medium (default) - standard use */
+.badge-md {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+/* Large - prominent display */
+.badge-lg {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ==========================================================================
+   POSITIONING
+
+   Absolute positioning for card overlay badges.
+   ========================================================================== */
+
+.badge-absolute {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 10;
+}
+
+/* ==========================================================================
+   VARIANT: DEFAULT
+
+   Neutral gray badge for generic use.
+   ========================================================================== */
+
+.badge-default {
+  background: linear-gradient(
+    135deg,
+    var(--color-gray-400) 0%,
+    var(--color-gray-500) 100%
+  );
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   VARIANT: LEVEL
+
+   Purple gradient for boxer level badges.
+   ========================================================================== */
+
+.badge-level {
+  background: linear-gradient(
+    135deg,
+    #6366f1 0%,
+    #8b5cf6 100%
+  );
+  color: var(--color-white);
+}
+
+/* High level badge - gold gradient for VIP/high-level boxers */
+.badge-level-high {
+  background: linear-gradient(
+    135deg,
+    #fbbf24 0%,
+    #f59e0b 100%
+  );
+  color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+/* ==========================================================================
+   VARIANT: TRAINING
+
+   Blue/teal for active training status.
+   ========================================================================== */
+
+.badge-training {
+  background: linear-gradient(
+    135deg,
+    var(--color-success) 0%,
+    #059669 100%
+  );
+  color: var(--color-white);
+  box-shadow: 0 2px 4px rgba(var(--color-success), 0.3);
+}
+
+/* ==========================================================================
+   VARIANT: FIGHT STATUS
+
+   Status indicators for fights (scheduled, completed, cancelled).
+   ========================================================================== */
+
+/* Scheduled - purple/indigo */
+.badge-fight-status-scheduled {
+  background: linear-gradient(
+    135deg,
+    #7c3aed 0%,
+    #6d28d9 100%
+  );
+  color: var(--color-white);
+}
+
+/* Completed - green */
+.badge-fight-status-completed {
+  background: linear-gradient(
+    135deg,
+    var(--color-success) 0%,
+    #059669 100%
+  );
+  color: var(--color-white);
+}
+
+/* Cancelled - red */
+.badge-fight-status-cancelled {
+  background: linear-gradient(
+    135deg,
+    var(--color-danger) 0%,
+    #dc2626 100%
+  );
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   VARIANT: WINNER
+
+   Gold/yellow for victory/winner badges.
+   ========================================================================== */
+
+.badge-winner {
+  background: linear-gradient(
+    135deg,
+    var(--color-victory-light) 0%,
+    var(--color-warning) 100%
+  );
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(252, 211, 74, 0.4);
+}
