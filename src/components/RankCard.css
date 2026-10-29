@@ -41,7 +41,7 @@
    ======================================== */
 
 .rank-card.rank-1 {
-  background: linear-gradient(135deg, #fffbeb 0%, var(--color-warning-bright) 100%);
+  background: linear-gradient(135deg, var(--color-gold-tier-bg) 0%, var(--color-warning-bright) 100%);
   border: 2px solid var(--color-warning-dark);
   box-shadow: 0 4px 16px rgba(var(--color-warning), 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
 }
@@ -61,8 +61,8 @@
 }
 
 .rank-card.rank-3 {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border: 2px solid #b45309;
+  background: linear-gradient(135deg, var(--color-bronze-tier-start) 0%, var(--color-bronze-tier-end) 100%);
+  border: 2px solid var(--color-bronze-border);
   box-shadow: 0 4px 16px rgba(180, 83, 9, 0.2), inset 0 0 20px rgba(205, 127, 50, 0.1);
 }
 
@@ -147,7 +147,7 @@
 }
 
 .rank-1 .boxer-name {
-  background: linear-gradient(90deg, #b45309, var(--color-warning));
+  background: linear-gradient(90deg, var(--color-bronze-border), var(--color-warning));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -158,7 +158,7 @@
 }
 
 .rank-3 .boxer-name {
-  color: #92400e;
+  color: var(--color-bronze-dark);
 }
 
 .boxer-nickname {
@@ -218,7 +218,7 @@
 }
 
 .rank-stats .stat-display.stat-mini .stat-value {
-  color: #7c3aed;
+  color: var(--color-accent-purple);
 }
 
 /* Record styling */
@@ -234,7 +234,7 @@
 }
 
 .rank-1 .stat-value-highlight {
-  color: #b45309;
+  color: var(--color-bronze-border);
 }
 
 /* ========================================

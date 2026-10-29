@@ -137,8 +137,8 @@
 .badge-fight-status-scheduled {
   background: linear-gradient(
     135deg,
-    #7c3aed 0%,
-    #6d28d9 100%
+    var(--color-accent-purple) 0%,
+    var(--color-accent-purple-dark) 100%
   );
   color: var(--color-white);
 }

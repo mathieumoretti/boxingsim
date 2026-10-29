@@ -15,10 +15,10 @@
    ======================================== */
 
 :root {
-  --chart-bg: #0f0f1a;
-  --chart-grid: #2a2a40;
-  --chart-tooltip-bg: #1a1a2e;
-  --chart-tooltip-border: #2a2a40;
+  --chart-bg: var(--color-chart-bg);
+  --chart-grid: var(--color-navy-border);
+  --chart-tooltip-bg: var(--color-navy-medium);
+  --chart-tooltip-border: var(--color-navy-border);
 }
 
 /* ========================================
@@ -74,9 +74,9 @@
   border-radius: var(--radius-full);
 }
 
-.legend-dot.strength { background-color: #dc2626; box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); }
-.legend-dot.defense { background-color: #2563eb; box-shadow: 0 0 8px rgba(37, 99, 235, 0.5); }
-.legend-dot.agility { background-color: #eab308; box-shadow: 0 0 8px rgba(234, 179, 8, 0.5); }
+.legend-dot.strength { background-color: var(--color-stat-strength-dark); box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); }
+.legend-dot.defense { background-color: var(--color-stat-defense-dark); box-shadow: 0 0 8px rgba(37, 99, 235, 0.5); }
+.legend-dot.agility { background-color: var(--color-stat-agility); box-shadow: 0 0 8px rgba(234, 179, 8, 0.5); }
 
 /* ========================================
    SVG CHART AREA
@@ -114,17 +114,17 @@
 }
 
 .stat-line.strength {
-  stroke: #dc2626;
+  stroke: var(--color-stat-strength-dark);
   filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.5));
 }
 
 .stat-line.defense {
-  stroke: #2563eb;
+  stroke: var(--color-stat-defense-dark);
   filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.5));
 }
 
 .stat-line.agility {
-  stroke: #eab308;
+  stroke: var(--color-stat-agility);
   filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.5));
 }
 
@@ -147,17 +147,17 @@
 }
 
 .stat-point.strength {
-  stroke: #dc2626;
+  stroke: var(--color-stat-strength-dark);
   filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.5));
 }
 
 .stat-point.defense {
-  stroke: #2563eb;
+  stroke: var(--color-stat-defense-dark);
   filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.5));
 }
 
 .stat-point.agility {
-  stroke: #eab308;
+  stroke: var(--color-stat-agility);
   filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.5));
 }
 
@@ -234,9 +234,9 @@
 }
 
 /* Color-coded stat labels */
-.tooltip-stat-row.strength .tooltip-stat-label { color: #dc2626; }
-.tooltip-stat-row.defense .tooltip-stat-label { color: #2563eb; }
-.tooltip-stat-row.agility .tooltip-stat-label { color: #eab308; }
+.tooltip-stat-row.strength .tooltip-stat-label { color: var(--color-stat-strength-dark); }
+.tooltip-stat-row.defense .tooltip-stat-label { color: var(--color-stat-defense-dark); }
+.tooltip-stat-row.agility .tooltip-stat-label { color: var(--color-stat-agility); }
 
 /* ========================================
    TOOLTIP ARROW

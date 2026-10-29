@@ -86,7 +86,7 @@
 }
 
 .cross-nav-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-accent-purple-light);
   outline-offset: 2px;
 }
 

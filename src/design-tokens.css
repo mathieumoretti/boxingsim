@@ -49,12 +49,71 @@
   --color-danger-bright: #f87171;
   --color-danger: #ef4444;
   --color-danger-dark: #dc2626;
+  --color-danger-darker: #b91c1c;
 
+  /* Error / Alert Variants */
+  --color-error-bg-light: #fef2f2;
+  --color-error-bg-dark: #fee2e2;
+  --color-error-border: #fecaca;
+  --color-error-text: #991b1b;
+
+  /* Warning / Amber Variants */
+  --color-warning-bright: #fef3c7;
   --color-warning: #f59e0b;
   --color-warning-dark: #d97706;
+  --color-warning-bg-light: #fffbeb;
+  --color-warning-border: #fb923c;
+  --color-warning-text: #b45309;
+  --color-warning-text-dark: #78350f;
+
+  /* Gold / Bronze tier variants */
+  --color-gold-tier-bg: #fffbeb;
+  --color-bronze-tier-start: #fff7ed;
+  --color-bronze-tier-end: #ffedd5;
+  --color-bronze-border: #b45309;
+  --color-bronze-dark: #92400e;
+
+  /* Navy borders and backgrounds */
+  --color-navy-border: #2a2a40;
+  --color-navy-deep: #1a1a2e;
+  --color-navy-darkest: #0a0a18;
+  --color-navy-brown-dark: #0f0f23;
+
+  /* Health bar secondary colors */
+  --color-health-high-secondary: #059669;
+  --color-health-medium-secondary: #ea580c;
+
+  /* Health bar variants for FightDetails */
+  --color-health-low-start: #fc8181;
+  --color-health-low-end: #f56565;
+  --color-health-medium-start: #f6e05e;
+  --color-health-medium-end: #ecc94b;
+
+  /* Fatigue bar backgrounds */
+  --color-fatigue-bg: #fefce8;
+  --color-fatigue-ok-light: #4ade80;
+
+  /* XP bar background */
+  --color-xp-bg: #1e293b;
+
+  /* Stat label text */
+  --color-stat-label: #6b7280;
+
+  /* Button hover colors */
+  --color-warning-brightest: #fcd34a;
+  --color-danger-brightest: #f87171;
+  --color-gray-hover: #788ca3;
 
   --color-victory-gold: #ffd700;
   --color-victory-light: #ffed4e;
+
+  /* --- Accent Colors (for UI highlights, gradients) --- */
+  --color-accent-purple: #7c3aed;
+  --color-accent-purple-dark: #6d28d9;
+  --color-accent-purple-light: #a78bfa;
+  --color-accent-indigo: #6366f1;
+  --color-info-light: #63b3ed;
+  --color-info-dark: #4299e1;
 
   /* --- Neutral / Gray Scale --- */
   --color-gray-50: #f9fafb;
@@ -69,6 +128,10 @@
   --color-white: #ffffff;
   --color-black: #000000;
 
+  /* --- Arena / Theater Mode Colors (dark browns) --- */
+  --color-arena-dark: #4a2a2a;
+  --color-arena-darker: #2d1a1a;
+
   /* --- Combat Stat Colors (Domain-Specific) --- */
   --color-stat-strength: #ef4444;
   --color-stat-strength-dark: #dc2626;
@@ -78,6 +141,35 @@
   --color-stat-agility-dark: #ca8a04;
   --color-stat-health: #10b981;
   --color-stat-energy: #eab308;
+  --color-energy: #fbbf24;
+
+  /* Success / Green variants */
+  --color-success-bg-light: #d1fae5;
+  --color-success-dark: #065f46;
+  --color-success-darker: #38a169;
+
+  /* Text on colored backgrounds */
+  --color-text-on-success: #0d2b1e;
+
+  /* KO / Victory banner colors */
+  --color-ko-victory-light: #ff6b6b;
+  --color-ko-victory: #ee5a5a;
+
+  /* VS badge danger variant */
+  --color-danger-brighter: #f56565;
+
+  /* Blue variants for round markers */
+  --color-primary-deepest: #1d4ed8;
+  --color-primary-darkest: #1e40af;
+
+  /* Text on gold background */
+  --color-text-on-gold: #2d0e0e;
+
+  /* Log line accent colors */
+  --color-log-warning-bg: #f6e05e;
+  --color-log-knockout: #fc8181;
+  --color-log-miss: #a8ffff;
+  --color-log-exchange: #fca5a5;
 
   /* --- Level Badge Gradients --- */
   --color-level-1-start: #718096;
@@ -90,6 +182,52 @@
   --color-level-4-end: #704ada;
   --color-level-5-start: #d69e2e;
   --color-level-5-end: #fbbf24;
+
+  /* Teal / Recovery variants */
+  --color-teal-dark: #0f766e;
+  --color-teal-medium: #0d9488;
+  --color-teal-light: #14b8a6;
+
+  /* Match quality colors (green/emerald) */
+  --color-match-excellent: #10b981;
+  --color-match-excellent-dark: #059669;
+  --color-match-excellent-light: #34d399;
+
+  /* Scrollbar theme colors */
+  --color-scrollbar-track: #151520;
+  --color-scrollbar-thumb-hover: #991b1b;
+
+  /* Text colors */
+  --color-text-muted: #9ca3af;
+  --color-text-bright: #e5e7eb;
+  --color-navy-muted: #a0aec0;
+
+  /* Card content background */
+  --color-card-content-dark: #2a2a40;
+  --color-scrollbar-bg: #151520;
+
+  /* Indigo/accent for reasoning box */
+  --color-accent-indigo-light: #6366f1;
+  --color-reasoning-text: #c7d2fe;
+
+  /* Fight booking page arena colors */
+  --color-arena-charcoal: #151520;
+  --color-fight-red-dark: #991b1b;
+  --color-arena-brown-dark: #2a0a0a;
+  --color-arena-neutral: #1a1a1a;
+  --color-danger-brightest: #ff4444;
+
+  /* Slate colors for UI elements */
+  --color-slate-dark: #1e293b;
+  --color-slate-darker: #334155;
+
+  /* Purple/indigo variants for sliders and filters */
+  --color-purple-light: #c7d2fe;
+  --color-purple-medium: #818cf8;
+  --color-indigo-dark: #4f46e5;
+
+  /* Chart theme colors */
+  --color-chart-bg: #0f0f1a;
 
   /* ==========================================================================
      TYPOGRAPHY TOKENS
@@ -172,12 +310,20 @@
      BREAKPOINT TOKENS
 
      Responsive breakpoints from DESIGN.md Section 2.5.
-     Used in media queries: @media (min-width: var(--breakpoint-tablet))
+     Used in media queries: @media max-width and breakpoint token
+
+     Standard Pattern:
+     - Tablet and below    --breakpoint-tablet 1024px
+     - Mobile portrait     --breakpoint-mobile 768px
+     - Small mobile        --breakpoint-mobile-sm 480px
      ========================================================================== */
 
-  --breakpoint-mobile: 480px;
-  --breakpoint-tablet: 768px;
-  --breakpoint-desktop: 1024px;
+  --breakpoint-mobile-sm: 480px;   /* Small mobile devices */
+  --breakpoint-mobile: 768px;      /* Mobile portrait / tablet landscape */
+  --breakpoint-tablet: 1024px;     /* Tablet / small desktop */
+
+  /* Backward compatibility alias (for legacy code) */
+  --breakpoint-desktop: 1024px;    /* Alias for --breakpoint-tablet */
 
   /* ==========================================================================
      ANIMATION / TRANSITION TOKENS

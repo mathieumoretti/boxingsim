@@ -23,3 +23,7 @@ export { LoadingSpinner } from './LoadingSpinner.jsx';
 export { StatDisplay } from './StatDisplay.jsx';
 export { Badge } from './Badge.jsx';
 export { Alert } from './Alert.jsx';
+
+// MAT-154 Phase 2 - Card & Form Components
+export { Card, CardHeader, CardBody, CardFooter } from './Card.jsx';
+export { Form, FormGroup, FormRow } from './Form.jsx';

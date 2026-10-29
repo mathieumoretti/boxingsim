@@ -79,13 +79,8 @@
 }
 
 .fight-status-badge.completed {
-  background: linear-gradient(135deg, var(--color-success), #38a169);
-  color: #0d2b1e;
-}
-
-.fight-status-badge.canceled {
-  background: linear-gradient(135deg, var(--color-gray-600), var(--color-gray-700));
-  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-success), var(--color-success-darker));
+  color: var(--color-text-on-success);
 }
 
 /* Badge component spacing in fight info header */
@@ -140,14 +135,14 @@
 /* Decision Victory - Gold */
 .victory-banner:not(.ko):not(.draw) {
   background: linear-gradient(135deg, var(--color-victory-gold), var(--color-warning));
-  color: #2d0e0e;
+  color: var(--color-text-on-gold);
   box-shadow: 0 8px 24px rgba(var(--color-victory-gold), 0.4);
 }
 
 /* KO Victory - Lighter Red */
 .victory-banner.ko {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-  color: #2d0e0e;
+  background: linear-gradient(135deg, var(--color-ko-victory-light), var(--color-ko-victory));
+  color: var(--color-text-on-gold);
   box-shadow: 0 8px 24px rgba(255, 107, 107, 0.5);
 }
 
@@ -198,7 +193,7 @@
   font-weight: 800;
   color: var(--color-white);
   padding: var(--space-3) 0;
-  background: linear-gradient(135deg, #f56565, var(--color-danger));
+  background: linear-gradient(135deg, var(--color-danger-brighter), var(--color-danger));
   border-radius: var(--radius-full);
   width: 56px;
   height: 56px;
@@ -307,9 +302,9 @@
   border-radius: var(--radius-sm);
 }
 
-.health-low { background: linear-gradient(90deg, #fc8181, #f56565); }
-.health-medium { background: linear-gradient(90deg, #f6e05e, #ecc94b); }
-.health-high { background: linear-gradient(90deg, var(--color-success), #38a169); }
+.health-low { background: linear-gradient(90deg, var(--color-health-low-start), var(--color-health-low-end)); }
+.health-medium { background: linear-gradient(90deg, var(--color-health-medium-start), var(--color-health-medium-end)); }
+.health-high { background: linear-gradient(90deg, var(--color-success), var(--color-success-darker)); }
 
 .health-value {
   font-size: var(--font-size-sm);
@@ -395,8 +390,8 @@
 }
 
 .round-marker.completed {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  border-color: #1e40af;
+  background: linear-gradient(135deg, var(--color-primary-deepest), var(--color-primary-darkest));
+  border-color: var(--color-primary-darkest);
   color: var(--color-white);
 }
 
@@ -409,8 +404,8 @@
 }
 
 .round-marker.final.ko {
-  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
-  border-color: #b91c1c;
+  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-darker));
+  border-color: var(--color-danger-darker);
   box-shadow: 0 4px 16px rgba(var(--color-danger), 0.6);
 }
 
@@ -472,12 +467,12 @@ h4.log-header {
 
 .log-line.victory {
   background: linear-gradient(90deg, rgba(253, 224, 71, 0.25), rgba(253, 224, 71, 0.05));
-  color: #f6e05e;
+  color: var(--color-log-warning-bg);
 }
 
 .log-line.knockout {
   background: linear-gradient(90deg, rgba(245, 101, 101, 0.25), rgba(245, 101, 101, 0.05));
-  color: #fc8181;
+  color: var(--color-log-knockout);
 }
 
 .log-line.damage {
@@ -486,12 +481,12 @@ h4.log-header {
 
 .log-line.miss {
   background: linear-gradient(90deg, rgba(164, 237, 236, 0.2), rgba(164, 237, 236, 0.05));
-  color: #a8ffff;
+  color: var(--color-log-miss);
 }
 
 .log-line.exchange {
   background: linear-gradient(90deg, rgba(254, 202, 202, 0.2), rgba(254, 202, 202, 0.05));
-  color: #fca5a5;
+  color: var(--color-log-exchange);
 }
 
 .no-log {

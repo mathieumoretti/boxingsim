@@ -29,7 +29,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  background: linear-gradient(135deg, var(--color-teal-medium) 0%, var(--color-teal-dark) 100%);
   box-shadow: 0 2px 6px rgba(13, 148, 136, 0.35), 0 1px 3px rgba(13, 148, 136, 0.2);
   transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(8px);
@@ -40,7 +40,7 @@
 .resting-badge:hover {
   transform: translateY(calc(var(--space-1) * -0.5));
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.45), 0 2px 6px rgba(13, 148, 136, 0.25);
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  background: linear-gradient(135deg, var(--color-teal-light) 0%, var(--color-teal-medium) 100%);
 }
 
 /* Rest Icon */
@@ -55,12 +55,12 @@
    ======================================== */
 
 .resting-badge.voluntary {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  background: linear-gradient(135deg, var(--color-teal-medium) 0%, var(--color-teal-dark) 100%);
   box-shadow: 0 2px 6px rgba(13, 148, 136, 0.35), 0 1px 3px rgba(13, 148, 136, 0.2);
 }
 
 .resting-badge.voluntary:hover {
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  background: linear-gradient(135deg, var(--color-teal-light) 0%, var(--color-teal-medium) 100%);
 }
 
 /* ========================================
@@ -68,13 +68,13 @@
    ======================================== */
 
 .resting-badge.forced {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
   box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35), 0 1px 3px rgba(245, 158, 11, 0.2);
   animation: restPulse 1.5s ease-in-out infinite;
 }
 
 .resting-badge.forced:hover {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, var(--color-warning-brightest) 0%, var(--color-warning) 100%);
 }
 
 @keyframes restPulse {
@@ -91,13 +91,13 @@
    ======================================== */
 
 .resting-badge.critical {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35), 0 1px 3px rgba(239, 68, 68, 0.2);
   animation: restCriticalPulse 1s ease-in-out infinite;
 }
 
 .resting-badge.critical:hover {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  background: linear-gradient(135deg, var(--color-danger-bright) 0%, var(--color-danger) 100%);
 }
 
 @keyframes restCriticalPulse {
