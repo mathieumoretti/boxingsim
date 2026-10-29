@@ -30,7 +30,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, var(--color-accent-purple) 0%, var(--color-accent-purple-dark) 100%);
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35), 0 1px 3px rgba(124, 58, 237, 0.2);
   transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(8px);
@@ -41,7 +41,7 @@
 .fight-badge:hover {
   transform: translateX(-50%) translateY(calc(var(--space-1) * -0.5));
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.45), 0 2px 4px rgba(124, 58, 237, 0.25);
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-accent-indigo) 0%, var(--color-accent-purple) 100%);
 }
 
 /* Fight Icon */

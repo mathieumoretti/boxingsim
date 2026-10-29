@@ -399,7 +399,7 @@
   width: 20px;
   height: 20px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.4);
   cursor: pointer;
   transition: transform var(--transition-fast);
@@ -413,7 +413,7 @@
   width: 20px;
   height: 20px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.4);
   cursor: pointer;
   border: none;
@@ -471,7 +471,7 @@
 
 .gain-bar-progress {
   height: 100%;
-  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(90deg, var(--color-accent-indigo), var(--color-accent-purple));
   border-radius: var(--radius-xs);
   transition: width var(--transition-normal);
 }
@@ -501,7 +501,7 @@
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
   color: var(--color-white);
   border: none;
   border-radius: var(--radius-lg);
@@ -514,7 +514,7 @@
 }
 
 .start-training-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--color-accent-indigo), var(--color-accent-purple));
   transform: translateY(calc(var(--space-1) * -0.5));
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
 }

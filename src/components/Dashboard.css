@@ -251,7 +251,7 @@
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(135deg, var(--color-gray-700) 0%, #334155 100%);
+  background: linear-gradient(135deg, var(--color-gray-700) 0%, var(--color-slate-darker) 100%);
   transform: translateY(calc(var(--space-1) * -0.5));
   box-shadow: var(--shadow-card);
 }
@@ -650,8 +650,8 @@
 
 @media (prefers-color-scheme: dark) {
   .boxer-card-skeleton {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--color-slate-dark);
+    border-color: var(--color-slate-darker);
   }
 
   .skeleton-avatar,

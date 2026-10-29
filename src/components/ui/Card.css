@@ -1,0 +1,297 @@
+/**
+ * CARD COMPONENT - Shared Card System (MAT-154 Phase 2)
+ *
+ * Reusable card container with header/body/footer structure.
+ * Extracts ~200 lines of duplicated card patterns from BoxerCard, RankCard, FightDetails.
+ *
+ * DESIGN TOKENS:
+ * - Colors: var(--color-navy-*), var(--color-gray-*)
+ * - Spacing: var(--space-*)
+ * - Radius: var(--radius-md), var(--radius-lg), var(--radius-xl)
+ * - Shadows: var(--shadow-card), var(--shadow-elevated)
+ * - Transitions: var(--transition-normal), var(--transition-fast)
+ *
+ * BREAKPOINTS:
+ * - @media (max-width: var(--breakpoint-tablet))   Tablet landscape
+ * - @media (max-width: var(--breakpoint-mobile))    Mobile portrait
+ *
+ * RELATED ISSUES:
+ * - MAT-154 Phase 2: Card Component System
+ * - MAT-150: Shared UI Component Library
+ * - MAT-146: Design Tokens Foundation
+ */
+
+/* ===== CARD CONTAINER ===== */
+
+.card {
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-dark) 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  border: 1px solid #2a2a40;
+  transition: all var(--transition-normal) ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Clickable card variant */
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:hover {
+  transform: translateY(calc(var(--space-1) * -1));
+  box-shadow: var(--shadow-elevated);
+}
+
+.card-clickable:active {
+  transform: translateY(0);
+}
+
+/* ===== CARD VARIANTS ===== */
+
+/* Default variant (navy gradient - used above) */
+.card-default {
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-dark) 100%);
+}
+
+/* Light variant for theater mode / premium content */
+.card-light {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: #334155;
+}
+
+/* Winner variant with gold accent */
+.card-winner {
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow: var(--shadow-card), 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+/* ===== CARD HEADER ===== */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-header .card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #2a2a40 0%, #1a1a2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  line-height: var(--line-height-tight);
+}
+
+.card-header .nickname {
+  margin: calc(var(--space-1) * -0.5) 0 0 0;
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+/* ===== CARD BODY ===== */
+
+.card-body {
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-body .card-section {
+  padding: var(--space-3) 0;
+}
+
+.card-body .card-section:first-child {
+  padding-top: 0;
+}
+
+.card-body .card-section:last-child {
+  padding-bottom: 0;
+}
+
+/* ===== CARD FOOTER ===== */
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: var(--font-size-sm);
+}
+
+.card-footer .label {
+  color: #9ca3af;
+  font-weight: var(--font-weight-semibold);
+}
+
+.card-footer .value {
+  color: var(--color-white);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===== HEALTH ROW (FightDetails pattern) ===== */
+
+.health-row {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) 0;
+}
+
+.health-row .label {
+  font-size: var(--font-size-sm);
+  color: #9ca3af;
+  font-weight: var(--font-weight-semibold);
+}
+
+.health-bar-wrapper {
+  height: 8px;
+  width: 100%;
+  background: #2a2a40;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.health-bar {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width 500ms ease;
+}
+
+.health-high {
+  background: linear-gradient(90deg, var(--color-success), #059669);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.health-medium {
+  background: linear-gradient(90deg, var(--color-warning-dark), #ea580c);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.health-low {
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.health-row .health-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
+  min-width: 42px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== COMBAT STATS GRID (Card pattern) ===== */
+
+.card-combat-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid #2a2a40;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: var(--breakpoint-tablet)) {
+  .card {
+    padding: var(--space-3);
+  }
+
+  .card-header .card-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .card-header h4 {
+    font-size: var(--font-size-base);
+  }
+
+  .health-row {
+    grid-template-columns: 60px 1fr auto;
+    gap: var(--space-1);
+  }
+
+  .health-row .label {
+    font-size: var(--font-size-xs);
+  }
+
+  .card-combat-stats {
+    gap: var(--space-1);
+  }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .health-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .health-row .label {
+    font-size: var(--font-size-xs);
+  }
+
+  .health-bar-wrapper {
+    height: 6px;
+  }
+
+  .health-row .health-value {
+    text-align: left;
+    margin-left: var(--space-1);
+  }
+
+  .card-combat-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+.card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card-clickable,
+  .health-bar {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

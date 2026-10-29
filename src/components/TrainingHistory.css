@@ -15,9 +15,9 @@
    ======================================== */
 
 :root {
-  --training-strength-border: #dc2626;
-  --training-defense-border: #2563eb;
-  --training-agility-border: #eab308;
+  --training-strength-border: var(--color-danger);
+  --training-defense-border: var(--color-stat-defense);
+  --training-agility-border: var(--color-stat-agility);
   --training-recovery-border: #0d9488;
 }
 
@@ -53,7 +53,7 @@
 
 .training-history-error {
   padding: var(--space-8) var(--space-6);
-  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  background: linear-gradient(135deg, var(--color-error-bg-light), #fee2e2);
   border-radius: var(--radius-lg);
 }
 
@@ -64,7 +64,7 @@
 
 .training-history-error h3 {
   margin: 0 0 var(--space-2) 0;
-  color: #991b1b;
+  color: var(--color-error-text);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
 }
@@ -81,7 +81,7 @@
 }
 
 .retry-btn:hover {
-  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
+  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-darker));
   transform: translateY(calc(var(--space-1) * -0.5));
 }
 
@@ -174,23 +174,23 @@
 }
 
 .training-type-badge.strength {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  color: #991b1b;
+  background: linear-gradient(135deg, #fee2e2, var(--color-error-border));
+  color: var(--color-error-text);
 }
 
 .training-type-badge.defense {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  background: linear-gradient(135deg, var(--color-gray-100), #bfdbfe);
   color: #1e40af;
 }
 
 .training-type-badge.agility {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  background: linear-gradient(135deg, var(--color-warning-bright), #fde68a);
   color: #92400e;
 }
 
 .training-type-badge.recovery {
   background: linear-gradient(135deg, #ccfbf1, #99f6e4);
-  color: #0f766e;
+  color: var(--color-teal-dark);
 }
 
 /* Training Icon */
@@ -241,30 +241,30 @@
 /* XP Gain */
 .gain-tag.xp {
   background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-  color: #5b21b6;
+  color: var(--color-accent-purple-dark);
 }
 
-.gain-tag.xp .gain-icon { color: #7c3aed; }
+.gain-tag.xp .gain-icon { color: var(--color-accent-purple); }
 
 /* Stat Gains */
 .gain-tag.strength-gain {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  color: #991b1b;
+  background: linear-gradient(135deg, #fee2e2, var(--color-error-border));
+  color: var(--color-error-text);
 }
 
 .gain-tag.defense-gain {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  background: linear-gradient(135deg, var(--color-gray-100), #bfdbfe);
   color: #1e40af;
 }
 
 .gain-tag.agility-gain {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  background: linear-gradient(135deg, var(--color-warning-bright), #fde68a);
   color: #92400e;
 }
 
 .gain-tag.recovery-gain {
   background: linear-gradient(135deg, #ccfbf1, #99f6e4);
-  color: #0f766e;
+  color: var(--color-teal-dark);
 }
 
 /* Energy Cost */
@@ -280,7 +280,7 @@
   color: var(--color-gray-600);
 }
 
-.energy-cost .gain-icon { color: #fbbf24; }
+.energy-cost .gain-icon { color: var(--color-energy); }
 
 /* ========================================
    TRAINING SUMMARY FOOTER
@@ -314,12 +314,12 @@
 }
 
 .session-status.completed {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  color: #065f46;
+  background: linear-gradient(135deg, var(--color-success-bg-light), #a7f3d0);
+  color: var(--color-success-dark);
 }
 
 .session-status.scheduled {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  background: linear-gradient(135deg, var(--color-gray-100), #bfdbfe);
   color: #1e40af;
 }
 

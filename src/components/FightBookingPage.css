@@ -19,12 +19,12 @@
   --arena-navy-dark: var(--color-navy-dark);
   --arena-navy-medium: var(--color-navy-medium);
   --arena-navy-light: var(--color-navy-light);
-  --arena-charcoal: #151520;
+  --arena-charcoal: var(--color-arena-charcoal);
 
   /* Fight Night Accents */
   --fight-red: var(--color-danger);
-  --fight-red-bright: #ef4444;
-  --fight-red-dark: #991b1b;
+  --fight-red-bright: var(--color-danger-bright);
+  --fight-red-dark: var(--color-fight-red-dark);
 
   --spotlight-gold: var(--color-victory-gold);
   --spotlight-gold-dim: var(--color-warning);
@@ -33,7 +33,7 @@
 
   /* Gradients */
   --gradient-ring-dark: linear-gradient(180deg, var(--arena-navy-dark) 0%, var(--arena-charcoal) 50%, var(--arena-navy-dark) 100%);
-  --gradient-fight-night: linear-gradient(135deg, #2a0a0a 0%, #1a1a1a 50%, #2a0a0a 100%);
+  --gradient-fight-night: linear-gradient(135deg, var(--color-arena-brown-dark) 0%, var(--color-arena-neutral) 50%, var(--color-arena-brown-dark) 100%);
   --gradient-spotlight: radial-gradient(ellipse at center, rgba(var(--color-victory-gold), 0.15) 0%, transparent 70%);
 
   /* Shadows & Glows */
@@ -42,7 +42,7 @@
   --glow-gold: 0 0 20px rgba(var(--color-victory-gold), 0.5);
 
   /* Border colors */
-  --border-gray: #2a2a40;
+  --border-gray: var(--color-navy-border);
 }
 
 /* ========================================
@@ -125,7 +125,7 @@
 }
 
 .stats-mini span:first-child { color: var(--fight-red-bright); }
-.stats-mini span:nth-child(2) { color: #60a5fa; }
+.stats-mini span:nth-child(2) { color: var(--color-primary-light); }
 .stats-mini span:last-child { color: var(--spotlight-gold); }
 
 /* ========================================
@@ -265,7 +265,7 @@
   margin: 0;
   padding-left: var(--space-5);
   font-size: var(--font-size-sm);
-  color: #fef3c7;
+  color: var(--color-warning-bright);
 }
 
 .match-validation-warnings li {
@@ -344,7 +344,7 @@
 }
 
 .book-fight-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ff4444 0%, var(--fight-red-bright) 50%, var(--fight-red) 100%);
+  background: linear-gradient(135deg, var(--color-danger-brightest) 0%, var(--fight-red-bright) 50%, var(--fight-red) 100%);
   transform: translateY(calc(var(--space-1) * -1.5));
   box-shadow: 0 0 30px rgba(var(--color-danger), 0.8),
     0 8px 24px rgba(0, 0, 0, 0.6);
@@ -356,7 +356,7 @@
 
 .book-fight-btn:disabled {
   background: var(--border-gray);
-  color: #6b7280;
+  color: var(--color-gray-500);
   cursor: not-allowed;
   box-shadow: none;
   opacity: 0.5;

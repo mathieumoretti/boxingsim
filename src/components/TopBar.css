@@ -57,7 +57,7 @@
 }
 
 .nav-link {
-  color: #a0aec0;
+  color: var(--color-navy-muted);
   text-decoration: none;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -79,7 +79,7 @@
 
 .user-welcome {
   font-size: var(--font-size-sm);
-  color: #a0aec0;
+  color: var(--color-navy-muted);
   font-weight: var(--font-weight-medium);
 }
 

@@ -9,6 +9,15 @@
    - Spacing uses var(--space-*) values
    - Typography uses var(--font-*) scale
    - Shadows use var(--shadow-*) elevations
+
+   RESPONSIVE BREAKPOINTS:
+   - 1024px (--breakpoint-tablet): Tablet landscape - compact padding, stack badges
+   - 768px (--breakpoint-mobile): Mobile portrait - smaller stat bars, tight spacing
+
+   RELATED ISSUES:
+   - MAT-150: Shared UI Component Library (ProgressBar, Button)
+   - MAT-154: StatDisplay & Badge migrations
+   - MAT-151: CSS Cleanup & Responsive Standardization
    ======================================== */
 
 /* ===== CARD BASE ===== */
@@ -18,7 +27,7 @@
   border-radius: var(--radius-2xl);
   padding: var(--space-5);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 2px 12px rgba(0, 0, 0, 0.4);
-  border: 1px solid #2a2a40;
+  border: 1px solid var(--color-navy-border);
   position: relative;
   transition: all var(--transition-normal) var(--transition-timing-default);
   overflow: visible;
@@ -134,7 +143,7 @@
   letter-spacing: 0.5px;
   color: var(--color-white);
   text-transform: uppercase;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--color-accent-indigo) 0%, #8b5cf6 100%);
   box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2);
   z-index: var(--z-dropdown);
   display: flex;
@@ -207,13 +216,13 @@
   width: 56px;
   height: 56px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #2a2a40 0%, #1a1a2e 100%);
+  background: linear-gradient(135deg, var(--color-navy-border) 0%, var(--color-navy-deep) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 2px solid #7c3aed;
+  border: 2px solid var(--color-accent-purple);
   flex-shrink: 0;
   transition: all var(--transition-fast) ease;
 }
@@ -241,7 +250,7 @@
   margin: var(--space-1) 0 0 0;
   font-size: var(--font-size-sm);
   font-style: italic;
-  color: #9ca3af;
+  color: var(--color-gray-400);
   font-weight: var(--font-weight-normal);
   line-height: 1.4;
 }
@@ -259,7 +268,7 @@
 .stat-label {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: #9ca3af;
+  color: var(--color-gray-400);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   text-align: left;
@@ -268,7 +277,7 @@
 .bar-wrapper {
   height: var(--stat-bar-height-lg);
   width: 100%;
-  background: #2a2a40;
+  background: var(--color-navy-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
   position: relative;
@@ -312,12 +321,12 @@
 
 /* Health Bar */
 .bg-health-high {
-  background: linear-gradient(90deg, var(--color-success), #059669);
+  background: linear-gradient(90deg, var(--color-success), var(--color-health-high-secondary));
   box-shadow: 0 0 8px rgba(var(--color-success), 0.4);
 }
 
 .bg-health-medium {
-  background: linear-gradient(90deg, var(--color-warning-dark), #ea580c);
+  background: linear-gradient(90deg, var(--color-warning-dark), var(--color-health-medium-secondary));
   box-shadow: 0 0 8px rgba(var(--color-warning), 0.4);
 }
 
@@ -339,12 +348,12 @@
 }
 
 .bar-fatigue {
-  background: #fefce8;
+  background: var(--color-fatigue-bg);
 }
 
 /* Fatigue Bar */
 .bg-fatigue-ok {
-  background: linear-gradient(90deg, #4ade80, var(--color-success));
+  background: linear-gradient(90deg, var(--color-fatigue-ok-light), var(--color-success));
   box-shadow: 0 0 8px rgba(var(--color-success), 0.35);
 }
 
@@ -365,7 +374,7 @@
 }
 
 .bar-xp {
-  background: #1e293b;
+  background: var(--color-xp-bg);
 }
 
 .bg-xp {
@@ -384,7 +393,7 @@
 
 .stat-value small {
   font-size: var(--font-size-xs);
-  color: #6b7280;
+  color: var(--color-stat-label);
   font-weight: var(--font-weight-normal);
   margin-left: var(--space-1);
 }
@@ -397,7 +406,7 @@
   gap: var(--space-2);
   margin-top: var(--space-4);
   padding-top: var(--space-4);
-  border-top: 1px solid #2a2a40;
+  border-top: 1px solid var(--color-navy-border);
 }
 
 /* StatDisplay component wrapper styles for BoxerCard context */
@@ -406,7 +415,7 @@
   padding: calc(var(--space-2) + var(--space-1)) var(--space-2);
   border-radius: var(--radius-lg);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border: 1px solid #2a2a40;
+  border: 1px solid var(--color-navy-border);
   transition: all var(--transition-fast) ease;
 }
 
@@ -427,7 +436,7 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--color-gray-400);
 }
 
 .stat-value-sm {
@@ -514,12 +523,12 @@
 /* Training Button - Gold */
 .train-btn {
   background: linear-gradient(135deg, var(--color-victory-light) 0%, var(--color-warning) 100%);
-  color: #1e293b;
+  color: var(--color-xp-bg);
   box-shadow: 0 2px 4px rgba(var(--color-warning), 0.25);
 }
 
 .train-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #fcd34a 0%, var(--color-victory-light) 100%);
+  background: linear-gradient(135deg, var(--color-warning-brightest) 0%, var(--color-victory-light) 100%);
   transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 8px rgba(var(--color-warning), 0.35);
 }
@@ -543,7 +552,7 @@
 }
 
 .fight-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f87171 0%, var(--color-danger) 100%);
+  background: linear-gradient(135deg, var(--color-danger-brightest) 0%, var(--color-danger) 100%);
   transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 8px rgba(var(--color-danger), 0.35);
 }
@@ -567,7 +576,7 @@
 }
 
 .history-btn:hover {
-  background: linear-gradient(135deg, #788ca3 0%, var(--color-gray-600) 100%);
+  background: linear-gradient(135deg, var(--color-gray-hover) 0%, var(--color-gray-600) 100%);
   transform: translateY(calc(var(--space-1) * -1));
   box-shadow: 0 4px 8px rgba(var(--color-gray-600), 0.35);
 }
@@ -718,24 +727,24 @@
 
 @media (prefers-color-scheme: dark) {
   .boxer-card {
-    background: linear-gradient(135deg, #0f0f23 0%, #0a0a18 100%);
+    background: linear-gradient(135deg, var(--color-navy-brown-dark) 0%, var(--color-navy-darkest) 100%);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8), 0 2px 12px rgba(0, 0, 0, 0.6);
-    border-color: #1a1a2e;
+    border-color: var(--color-navy-deep);
   }
 
   .bar-wrapper {
-    background: #1a1a2e;
+    background: var(--color-navy-deep);
   }
 
   .combat-stats {
-    border-top-color: #1a1a2e;
+    border-top-color: var(--color-navy-deep);
   }
 
   .stat-item {
-    border-color: #1a1a2e;
+    border-color: var(--color-navy-deep);
   }
 
   .position-text {
-    color: #9ca3af;
+    color: var(--color-gray-400);
   }
 }

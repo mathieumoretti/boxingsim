@@ -5,6 +5,20 @@
  *
  * Standard page layout handled by PageLayout component (MAT-152).
  * All design tokens reference src/design-tokens.css (MAT-146).
+ *
+ * RESPONSIVE BREAKPOINTS:
+ * - 1024px (--breakpoint-tablet): Tablet landscape / small desktop
+ *   - Stack avatar/info vertically, adjust padding
+ * - 768px (--breakpoint-mobile): Mobile portrait
+ *   - Compact sections, stack grid layouts
+ * - 480px (--breakpoint-mobile-sm): Small mobile
+ *   - Minimal padding, full-width buttons
+ *
+ * RELATED ISSUES:
+ * - MAT-148: Boxer Profile Page
+ * - MAT-152: Page Layout Wrapper Component
+ * - MAT-154: Shared UI Components (StatDisplay, Badge migrations)
+ * - MAT-151: CSS Cleanup & Responsive Standardization
  */
 
 /* ============================================
@@ -323,7 +337,7 @@
 
 /* StatDisplay color overrides for profile page */
 .stats-grid .stat-bar-strength .stat-bar-fill > div {
-  background: linear-gradient(90deg, var(--color-danger), #dc2626);
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
   box-shadow: 0 0 10px rgba(var(--color-danger), 0.3);
 }
 
@@ -333,7 +347,7 @@
 }
 
 .stats-grid .stat-bar-agility .stat-bar-fill > div {
-  background: linear-gradient(90deg, var(--color-warning), #d97706);
+  background: linear-gradient(90deg, var(--color-warning), var(--color-warning-dark));
   box-shadow: 0 0 10px rgba(var(--color-warning), 0.3);
 }
 
@@ -392,9 +406,9 @@
 }
 
 .rest-indicator:not(.forced) {
-  background: rgba(99, 102, 241, 0.2);
-  color: #6366f1;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(var(--color-accent-indigo), 0.2);
+  color: var(--color-accent-indigo);
+  border: 1px solid rgba(var(--color-accent-indigo), 0.3);
 }
 
 .rest-indicator.forced {
@@ -460,17 +474,17 @@
 
 /* Health colors */
 .bg-health-high > div {
-  background: linear-gradient(90deg, var(--color-success), #059669);
+  background: linear-gradient(90deg, var(--color-success), var(--color-success-dark));
   box-shadow: 0 0 8px rgba(var(--color-success), 0.5);
 }
 
 .bg-health-medium > div {
-  background: linear-gradient(90deg, var(--color-warning), #d97706);
+  background: linear-gradient(90deg, var(--color-warning), var(--color-warning-dark));
   box-shadow: 0 0 8px rgba(var(--color-warning), 0.5);
 }
 
 .bg-health-low > div {
-  background: linear-gradient(90deg, var(--color-danger), #dc2626);
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
   box-shadow: 0 0 8px rgba(var(--color-danger), 0.5);
 }
 
@@ -482,15 +496,15 @@
 
 /* Fatigue colors */
 .bg-fatigue-ok > div {
-  background: linear-gradient(90deg, var(--color-success), #059669);
+  background: linear-gradient(90deg, var(--color-success), var(--color-success-dark));
 }
 
 .bg-fatigue-warning > div {
-  background: linear-gradient(90deg, var(--color-warning), #d97706);
+  background: linear-gradient(90deg, var(--color-warning), var(--color-warning-dark));
 }
 
 .bg-fatigue-critical > div {
-  background: linear-gradient(90deg, var(--color-danger), #dc2626);
+  background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
 }
 
 .status-value-container {
@@ -646,12 +660,12 @@
 }
 
 .activity-item.bg-activity-upcoming {
-  border-left-color: #8b5cf6;
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.1), rgba(255, 255, 255, 0.03));
+  border-left-color: var(--color-accent-purple);
+  background: linear-gradient(90deg, rgba(var(--color-accent-purple), 0.1), rgba(255, 255, 255, 0.03));
 }
 
 .activity-item.bg-activity-upcoming:hover {
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(255, 255, 255, 0.06));
+  background: linear-gradient(90deg, rgba(var(--color-accent-purple), 0.15), rgba(255, 255, 255, 0.06));
 }
 
 .activity-icon {
@@ -758,8 +772,14 @@
 
 /* ============================================
    Responsive Design
+
+   Breakpoints (using design tokens):
+   - 1024px (--breakpoint-tablet): Tablet landscape
+   - 768px (--breakpoint-mobile): Mobile portrait
+   - 480px (--breakpoint-mobile-sm): Small mobile
    ============================================ */
 
+/* TABLET LANDSCAPE / SMALL DESKTOP (max-width: 1024px) */
 @media (max-width: var(--breakpoint-tablet)) {
   .boxer-profile-content {
     padding: 0 var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0));
@@ -819,6 +839,7 @@
   }
 }
 
+/* MOBILE PORTRAIT (max-width: 768px) */
 @media (max-width: var(--breakpoint-mobile)) {
   .boxer-header {
     padding: var(--space-4);
@@ -839,5 +860,34 @@
 
   .section-title {
     font-size: var(--font-size-lg);
+  }
+}
+
+/* SMALL MOBILE (max-width: 480px) */
+@media (max-width: var(--breakpoint-mobile-sm)) {
+  .boxer-profile-content {
+    padding: 0 var(--space-3) calc(var(--space-5) + env(safe-area-inset-bottom, 0));
+  }
+
+  .boxer-header,
+  .career-record-section,
+  .stats-overview-section,
+  .current-status-section,
+  .recent-activity-section {
+    padding: var(--space-3);
+  }
+
+  .record-item {
+    padding: var(--space-2) var(--space-3);
+    min-width: 55px;
+  }
+
+  .record-number {
+    font-size: var(--font-size-lg);
+  }
+
+  .action-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
   }
 }

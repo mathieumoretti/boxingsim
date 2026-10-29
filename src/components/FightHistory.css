@@ -40,7 +40,7 @@
 
 .fight-history-error {
   padding: var(--space-8) var(--space-6);
-  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  background: linear-gradient(135deg, var(--color-error-bg-light), var(--color-error-bg-dark));
   border-radius: var(--radius-lg);
 }
 
@@ -51,14 +51,14 @@
 
 .fight-history-error h3 {
   margin: 0 0 var(--space-2) 0;
-  color: #991b1b;
+  color: var(--color-error-text);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
 }
 
 .fight-history-error p {
   margin: 0 0 var(--space-4) 0;
-  color: #b91c1c;
+  color: var(--color-danger-darker);
   font-size: var(--font-size-sm);
 }
 
@@ -74,7 +74,7 @@
 }
 
 .retry-btn:hover {
-  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
+  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-darker));
   transform: translateY(calc(var(--space-1) * -0.5));
 }
 
@@ -224,7 +224,7 @@
 }
 
 .fight-result.loss {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-darker));
   color: var(--color-white);
 }
 
