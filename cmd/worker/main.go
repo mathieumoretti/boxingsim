@@ -132,7 +132,13 @@ func main() {
 	// Initialize event processor (for scheduled events)
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, *lg)
 
+	// MAT-143: Initialize cleanup service for old failed events
+	cleanupService := service.NewEventCleanupService(eventStore, fightStore, cfg.Events.Cleanup, lg)
+
 	lg.Info("Starting worker event loop")
+
+	// Start the automatic cleanup goroutine (MAT-143)
+	startCleanupGoroutine(ctx, cleanupService, db, cfg.Events.Cleanup.RunIntervalMinutes, lg)
 
 	// Start the worker loop with configurable poll interval
 	pollInterval := time.Duration(cfg.Worker.PollIntervalMS) * time.Millisecond
@@ -269,4 +275,61 @@ func logFailedEvents(ctx context.Context, eventStore *store.ScheduledEventStore,
 			lg.Warn("Failed event details", "event_id", event.ID, "event_type", event.EventType, "boxer_id", event.BoxerID, "error", errorMsg)
 		}
 	}
+}
+
+// startCleanupGoroutine starts a background goroutine that runs the automatic cleanup job (MAT-143).
+// It checks for old failed events and resolves them according to the configured interval.
+func startCleanupGoroutine(
+	ctx context.Context,
+	cleanupService *service.EventCleanupService,
+	db *database.PostgresDB,
+	intervalMinutes int,
+	lg *logger.Logger,
+) {
+	interval := time.Duration(intervalMinutes) * time.Minute
+
+	// Run initial cleanup immediately (to handle existing zombie events)
+	go func() {
+		summary, err := cleanupService.Run(ctx, db.DB)
+		if err != nil {
+			lg.Error("Initial cleanup job failed", "error", err.Error())
+		} else if summary.TotalProcessed > 0 {
+			lg.Info("Initial cleanup completed",
+				"processed", summary.TotalProcessed,
+				"fights_cancelled", summary.FightsCancelled,
+				"events_completed", summary.EventsMarkedCompleted)
+		}
+	}()
+
+	// Start periodic cleanup at configured interval
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		lg.Info("Cleanup goroutine started", "interval_minutes", intervalMinutes)
+
+		for {
+			select {
+			case <-ctx.Done():
+				lg.Info("Cleanup goroutine shutting down")
+				return
+			case <-ticker.C:
+				summary, err := cleanupService.Run(ctx, db.DB)
+				if err != nil {
+					lg.Error("Cleanup job failed", "error", err.Error())
+					continue
+				}
+
+				if summary.TotalProcessed > 0 {
+					lg.Info("Periodic cleanup completed",
+						"processed", summary.TotalProcessed,
+						"fights_cancelled", summary.FightsCancelled,
+						"events_completed", summary.EventsMarkedCompleted,
+						"events_skipped", summary.EventsSkipped)
+				} else {
+					lg.Debug("No old failed events to clean up")
+				}
+			}
+		}
+	}()
 }

@@ -31,3 +31,8 @@ worker:
 
 fight:
   min_schedule_hours: 24      # Fights must be scheduled at least 24 hours from current game time
+
+events:
+  cleanup:
+    abandon_age_hours: 168    # Clean up failed events older than 1 week (MAT-143)
+    run_interval_minutes: 60  # Run cleanup job every hour

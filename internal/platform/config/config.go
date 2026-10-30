@@ -16,6 +16,7 @@ type Config struct {
 	Logging  LoggingConfig  `mapstructure:"logging"`
 	Worker   WorkerConfig   `mapstructure:"worker"`
 	Fight    FightConfig    `mapstructure:"fight"`
+	Events   EventsConfig   `mapstructure:"events"`
 }
 
 // DatabaseConfig holds PostgreSQL connection settings.
@@ -70,6 +71,17 @@ type FightSimulationConfig struct {
 type FightConfig struct {
 	MinScheduleHours int                   `mapstructure:"min_schedule_hours"`
 	Simulation       FightSimulationConfig `mapstructure:"simulation"`
+}
+
+// EventsConfig holds scheduled event management settings.
+type EventsConfig struct {
+	Cleanup CleanupConfig `mapstructure:"cleanup"`
+}
+
+// CleanupConfig holds automatic cleanup job settings for old failed events (MAT-143).
+type CleanupConfig struct {
+	AbandonAgeHours    int `mapstructure:"abandon_age_hours"`    // Default: 168 hours (1 week)
+	RunIntervalMinutes int `mapstructure:"run_interval_minutes"` // Default: 60 minutes
 }
 
 // TestDBConfig represents test database configuration for integration tests.
@@ -169,6 +181,14 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Fight.Simulation.ExperienceGain == 0 {
 		cfg.Fight.Simulation.ExperienceGain = 50.0
+	}
+
+	// Events cleanup defaults (MAT-143)
+	if cfg.Events.Cleanup.AbandonAgeHours == 0 {
+		cfg.Events.Cleanup.AbandonAgeHours = 168 // 1 week default
+	}
+	if cfg.Events.Cleanup.RunIntervalMinutes == 0 {
+		cfg.Events.Cleanup.RunIntervalMinutes = 60 // Run cleanup every hour
 	}
 }
 
