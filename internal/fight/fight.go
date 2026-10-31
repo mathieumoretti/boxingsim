@@ -391,15 +391,29 @@ func (s *FightService) SimulateFight(fightID int) error {
 
 	// Determine winner and finalize fight (within transaction)
 	var winnerID *int
+	var isDraw bool
+
 	if boxer1.Health > boxer2.Health {
 		winnerID = &fight.Boxer1ID
 		s.logger.Info("Fight winner", "winner", boxer1.Name)
 	} else if boxer2.Health > boxer1.Health {
 		winnerID = &fight.Boxer2ID
 		s.logger.Info("Fight winner", "winner", boxer2.Name)
+	} else {
+		isDraw = true
 	}
 
-	if winnerID != nil {
+	// Check for knockout (winner has more than 50% health remaining)
+	var isKnockout bool
+	if winnerID != nil && !isDraw {
+		winningBoxer := boxer1
+		if *winnerID == fight.Boxer2ID {
+			winningBoxer = boxer2
+		}
+		isKnockout = winningBoxer.Health > 50
+	}
+
+	if winnerID != nil && !isDraw {
 		// Set winner and mark as completed (atomic update)
 		if err := s.fightStore.SetWinnerTx(ctx, tx, fightID, *winnerID); err != nil {
 			return fmt.Errorf("failed to set winner: %w", err)
@@ -411,6 +425,12 @@ func (s *FightService) SimulateFight(fightID int) error {
 			boxerToUpdate = boxer2
 		}
 		boxerToUpdate.Experience += experienceGain
+
+		// Update wins counter for winner (MAT-98)
+		boxerToUpdate.Wins += 1
+		if isKnockout {
+			boxerToUpdate.Knockouts += 1
+		}
 
 		// Check for level up
 		oldLevel := boxerToUpdate.Level
@@ -424,18 +444,76 @@ func (s *FightService) SimulateFight(fightID int) error {
 		if err := s.boxerStore.UpdateTx(ctx, tx, boxerToUpdate); err != nil {
 			return fmt.Errorf("failed to update winner experience: %w", err)
 		}
+
+		// Update losses counter for loser (MAT-98)
+		loserBoxer := boxer2
+		if *winnerID == fight.Boxer1ID {
+			loserBoxer = boxer1
+		}
+		loserBoxer.Losses += 1
+		if err := s.boxerStore.UpdateTx(ctx, tx, loserBoxer); err != nil {
+			return fmt.Errorf("failed to update loser losses: %w", err)
+		}
+
+		s.logger.Info("Career stats updated", "winner", boxerToUpdate.Name, "winner_wins", boxerToUpdate.Wins, "loser", loserBoxer.Name, "loser_losses", loserBoxer.Losses)
 	} else {
 		// Draw - just mark as completed
 		if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "completed"); err != nil {
 			return fmt.Errorf("failed to mark draw: %w", err)
 		}
-		s.logger.Info("Fight ended in a draw")
+
+		// Update draws counter for both boxers (MAT-98)
+		boxer1.Draws += 1
+		boxer2.Draws += 1
+
+		if err := s.boxerStore.UpdateTx(ctx, tx, boxer1); err != nil {
+			return fmt.Errorf("failed to update boxer1 draws: %w", err)
+		}
+		if err := s.boxerStore.UpdateTx(ctx, tx, boxer2); err != nil {
+			return fmt.Errorf("failed to update boxer2 draws: %w", err)
+		}
+
+		s.logger.Info("Fight ended in a draw", "boxer1_draws", boxer1.Draws, "boxer2_draws", boxer2.Draws)
 	}
 
 	// MAT-114: Record simulation version for replay compatibility
 	if err := s.fightStore.SetSimulationVersionTx(ctx, tx, fightID, simVersion); err != nil {
 		s.logger.Error("Failed to record simulation version", "fight_id", fightID, "version", simVersion, "error", err)
 		// Don't fail the entire transaction - just log the error
+	}
+
+	// Store final fight data with outcome details (MAT-104, MAT-103)
+	finalData := map[string]any{
+		"round":         fight.Round,
+		"boxer1_health": boxer1.Health,
+		"boxer1_energy": boxer1.Energy,
+		"boxer2_health": boxer2.Health,
+		"boxer2_energy": boxer2.Energy,
+		"winner_health": 0.0,
+		"loser_health":  0.0,
+		"method":        "decision", // default to decision
+		"xp_gained":     experienceGain,
+		"is_knockout":   false,
+	}
+
+	if winnerID != nil && !isDraw {
+		winningBoxer := boxer1
+		losingBoxer := boxer2
+		if *winnerID == fight.Boxer2ID {
+			winningBoxer = boxer2
+			losingBoxer = boxer1
+		}
+		finalData["winner_health"] = winningBoxer.Health
+		finalData["loser_health"] = losingBoxer.Health
+		if isKnockout {
+			finalData["method"] = "knockout"
+			finalData["is_knockout"] = true
+		}
+	}
+
+	if err := s.fightStore.SetDataTx(ctx, tx, fightID, finalData); err != nil {
+		s.logger.Error("Failed to store final fight data", "fight_id", fightID, "error", err)
+		// Don't fail the transaction - just log
 	}
 
 	// Commit the entire transaction - all updates happen atomically
