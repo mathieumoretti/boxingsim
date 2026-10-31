@@ -12,13 +12,16 @@ import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
 const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Convert myBoxerId to integer for proper comparison (URL params are strings)
+  const myBoxerIdInt = typeof myBoxerId === 'string' ? parseInt(myBoxerId, 10) : myBoxerId;
+
   // Determine if this was a win, loss, or draw for my boxer
-  const isWin = fight.winner_id === myBoxerId;
-  const isLoss = fight.winner_id !== null && fight.winner_id !== myBoxerId;
+  const isWin = fight.winner_id === myBoxerIdInt;
+  const isLoss = fight.winner_id !== null && fight.winner_id !== myBoxerIdInt;
   const isDraw = fight.winner_id === null && fight.status === 'completed';
 
   // Determine opponent boxer ID
-  const opponentId = fight.boxer1_id === myBoxerId ? fight.boxer2_id : fight.boxer1_id;
+  const opponentId = fight.boxer1_id === myBoxerIdInt ? fight.boxer2_id : fight.boxer1_id;
 
   // Get result badge class and letter
   const getResultBadge = () => {
@@ -205,9 +208,11 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
         const fightsArray = Array.isArray(data) ? data : [];
         setFights(fightsArray);
 
-        // Group fights by date range (using game time)
-        if (fightsArray.length > 0 && currentGameTime) {
-          const groups = groupFightsByDate(fightsArray, currentGameTime);
+        // Group fights by date range (using game time or real time as fallback)
+        if (fightsArray.length > 0) {
+          const groups = currentGameTime
+            ? groupFightsByDate(fightsArray, currentGameTime)
+            : groupFightsByRealDate(fightsArray); // Fallback to real dates
           setGroupedFights(groups);
         }
       } catch (err) {
@@ -233,8 +238,10 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
       const fightsArray = Array.isArray(data) ? data : [];
       setFights(fightsArray);
 
-      if (fightsArray.length > 0 && currentGameTime) {
-        const groups = groupFightsByDate(fightsArray, currentGameTime);
+      if (fightsArray.length > 0) {
+        const groups = currentGameTime
+          ? groupFightsByDate(fightsArray, currentGameTime)
+          : groupFightsByRealDate(fightsArray); // Fallback to real dates
         setGroupedFights(groups);
       }
       setError(null);
@@ -251,6 +258,40 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
   // Group fights by date range for timeline view (using game time)
   const groupFightsByDate = (fightsList, gameTime) => {
     const now = new Date(gameTime);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+
+    const groups = {
+      today: [],
+      yesterday: [],
+      lastWeek: [],
+      older: []
+    };
+
+    fightsList.forEach(fight => {
+      const fightDate = new Date(fight.end_time || fight.created_at);
+      const fightDateOnly = new Date(fightDate.getFullYear(), fightDate.getMonth(), fightDate.getDate());
+
+      if (fightDateOnly.getTime() === today.getTime()) {
+        groups.today.push(fight);
+      } else if (fightDateOnly.getTime() === yesterday.getTime()) {
+        groups.yesterday.push(fight);
+      } else if (fightDate > lastWeek) {
+        groups.lastWeek.push(fight);
+      } else {
+        groups.older.push(fight);
+      }
+    });
+
+    return groups;
+  };
+
+  // Fallback: Group fights by real dates when game time is unavailable
+  const groupFightsByRealDate = (fightsList) => {
+    const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);

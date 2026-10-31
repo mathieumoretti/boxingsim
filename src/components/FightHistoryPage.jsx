@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import FightHistory from './FightHistory';
 import PageLayout from './PageLayout';
+import { fetchWorldTime } from '../api/world';
 import './FightHistoryPage.css';
 
 /**
@@ -16,6 +17,25 @@ import './FightHistoryPage.css';
 const FightHistoryPage = ({ user, onLogout }) => {
   const { id } = useParams(); // boxerId from URL
   const navigate = useNavigate();
+  const [currentGameTime, setCurrentGameTime] = useState(null);
+
+  useEffect(() => {
+    const loadWorldTime = async () => {
+      try {
+        const timeData = await fetchWorldTime();
+        setCurrentGameTime(timeData?.current_game_time || null);
+      } catch (err) {
+        // World time is optional - log but don't fail
+        console.debug('Failed to load world time:', err.message);
+      }
+    };
+
+    loadWorldTime();
+
+    // Refresh game time periodically
+    const refreshInterval = setInterval(loadWorldTime, 10000);
+    return () => clearInterval(refreshInterval);
+  }, []);
 
   return (
     <>
@@ -26,7 +46,7 @@ const FightHistoryPage = ({ user, onLogout }) => {
       >
         {/* Wrapper div for CSS selectors */}
         <div className="fight-history-page">
-          <FightHistory boxerId={id} currentGameTime={null} />
+          <FightHistory boxerId={id} currentGameTime={currentGameTime} />
         </div>
       </PageLayout>
     </>
