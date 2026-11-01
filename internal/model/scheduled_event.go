@@ -133,6 +133,7 @@ type ScheduledEvent struct {
 	EventData    EventData   `db:"event_data" dbtype:"jsonb" json:"-"`
 	ErrorMessage *string     `db:"error_message" json:"error_message,omitempty"`
 	ProcessedAt  *time.Time  `db:"processed_at" json:"processed_at,omitempty"`
+	RetryCount   int         `db:"retry_count" json:"retry_count"`
 
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }

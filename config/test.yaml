@@ -33,3 +33,13 @@ worker:
 
 fight:
   min_schedule_hours: 1       # Shorter minimum for faster testing
+
+events:
+  cleanup:
+    abandon_age_hours: 24     # Faster cleanup for tests (1 day)
+    run_interval_minutes: 5   # Run cleanup more frequently in tests
+
+  retry:
+    max_retries:        3     # Maximum retry attempts for failed events
+    base_delay_seconds: 5     # Shorter delay for faster test execution
+    max_delay_seconds:  60    # Lower max delay cap for tests (1 minute)

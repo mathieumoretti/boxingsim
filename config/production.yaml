@@ -31,3 +31,13 @@ worker:
 
 fight:
   min_schedule_hours: 24      # Fights must be scheduled at least 24 hours from current game time
+
+events:
+  cleanup:
+    abandon_age_hours: 168    # Clean up failed events older than 1 week
+    run_interval_minutes: 60  # Run cleanup job every hour
+
+  retry:
+    max_retries:        3     # Maximum retry attempts for failed events
+    base_delay_seconds: 300   # 5 minute base delay in production
+    max_delay_seconds:  7200  # 2 hour max delay cap

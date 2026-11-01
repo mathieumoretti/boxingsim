@@ -142,7 +142,7 @@ func main() {
 
 	// Start the worker loop with configurable poll interval
 	pollInterval := time.Duration(cfg.Worker.PollIntervalMS) * time.Millisecond
-	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg, pollInterval)
+	startWorkerLoop(ctx, db, worldClock, eventStore, eventProcessor, trainingService, lg, pollInterval, cfg.Events.Retry.MaxRetries, cfg.Events.Retry.BaseDelaySeconds, cfg.Events.Retry.MaxDelaySeconds)
 
 	lg.Info("World worker shutdown complete")
 }
@@ -164,9 +164,15 @@ func startWorkerLoop(
 	trainingService *service.TrainingService,
 	lg *logger.Logger,
 	pollInterval time.Duration,
+	maxRetries int,
+	baseDelaySeconds int,
+	maxDelaySeconds int,
 ) {
 	// MAT-113: Crash recovery - check for events stuck in 'processing' state from previous crashes
 	recoverProcessingEvents(ctx, eventStore, lg)
+
+	// MAT-142: Retry failed events that are eligible (after exponential backoff delay)
+	retryFailedEvents(ctx, eventStore, eventProcessor, lg, maxRetries, baseDelaySeconds, maxDelaySeconds)
 
 	// Check for failed events and log them for visibility
 	logFailedEvents(ctx, eventStore, lg)
@@ -332,4 +338,114 @@ func startCleanupGoroutine(
 			}
 		}
 	}()
+}
+
+// retryFailedEvents attempts to retry failed events that are eligible based on exponential backoff.
+// This is called on worker startup after crash recovery (MAT-142).
+func retryFailedEvents(
+	ctx context.Context,
+	eventStore *store.ScheduledEventStore,
+	eventProcessor *service.EventProcessor,
+	lg *logger.Logger,
+	maxRetries int,
+	baseDelaySeconds int,
+	maxDelaySeconds int,
+) {
+	currentTime := time.Now()
+	
+	// Get failed events that are eligible for retry
+	events, err := eventStore.GetFailedEventsEligibleForRetry(
+		ctx, maxRetries, baseDelaySeconds, maxDelaySeconds, currentTime,
+	)
+	if err != nil {
+		lg.Error("Failed to query eligible events for retry", "error", err.Error())
+		return
+	}
+
+	if len(events) == 0 {
+		lg.Debug("No failed events eligible for retry")
+		return
+	}
+
+	lg.Info("Found failed events eligible for retry", "count", len(events), 
+		"max_retries", maxRetries, "base_delay_sec", baseDelaySeconds, "max_delay_sec", maxDelaySeconds)
+
+	retryCount := 0
+	skipCount := 0
+	successCount := 0
+
+	for _, event := range events {
+		// Calculate what the delay would be for this retry attempt
+		nextRetryCount := event.RetryCount + 1
+		delaySeconds := storeCalculateBackoffDelay(event.RetryCount, baseDelaySeconds, maxDelaySeconds)
+		
+		if nextRetryCount > maxRetries {
+			lg.Warn("Max retries exceeded, marking as abandoned",
+				"event_id", event.ID,
+				"type", event.EventType,
+				"boxer_id", event.BoxerID,
+				"retry_count", event.RetryCount,
+				"max_retries", maxRetries,
+				"last_error", getErrorMessage(event.ErrorMessage))
+			skipCount++
+			continue
+		}
+
+		lg.Info("Retry scheduled",
+			"event_id", event.ID,
+			"type", event.EventType,
+			"boxer_id", event.BoxerID,
+			"retry_count", nextRetryCount,
+			"max_retries", maxRetries,
+			"delay_sec", delaySeconds,
+			"last_error", getErrorMessage(event.ErrorMessage))
+
+		// Increment retry count and reset to pending
+		if err := eventStore.IncrementRetryCount(ctx, event.ID); err != nil {
+			if errors.Is(err, store.ErrEventNotFound) {
+				lg.Debug("Event already processed during retry setup", "event_id", event.ID)
+			} else {
+				lg.Error("Failed to increment retry count", "event_id", event.ID, "error", err.Error())
+			}
+			skipCount++
+			continue
+		}
+
+		retryCount++
+
+		// Immediately process the retried event
+		if err := eventProcessor.ProcessScheduledEvent(ctx, event); err != nil {
+			lg.Error("Retry processing failed", "event_id", event.ID, "error", err.Error())
+			skipCount++
+		} else {
+			lg.Info("Retry succeeded", "event_id", event.ID, "retry_count", nextRetryCount)
+			successCount++
+		}
+	}
+
+	lg.Info("Retry batch completed",
+		"total_eligible", len(events),
+		"retried", retryCount,
+		"succeeded", successCount,
+		"skipped", skipCount)
+}
+
+// storeCalculateBackoffDelay mirrors the logic in scheduled_event_store.go for logging purposes.
+func storeCalculateBackoffDelay(attempt int, baseDelaySeconds int, maxDelaySeconds int) int {
+	if attempt <= 0 || baseDelaySeconds <= 0 {
+		return baseDelaySeconds
+	}
+	delay := baseDelaySeconds << attempt
+	if delay > maxDelaySeconds {
+		delay = maxDelaySeconds
+	}
+	return delay
+}
+
+// getErrorMessage returns the error message or "unknown" if nil.
+func getErrorMessage(errorMessage *string) string {
+	if errorMessage == nil {
+		return "unknown"
+	}
+	return *errorMessage
 }
