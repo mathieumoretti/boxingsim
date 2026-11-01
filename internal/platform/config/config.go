@@ -76,12 +76,20 @@ type FightConfig struct {
 // EventsConfig holds scheduled event management settings.
 type EventsConfig struct {
 	Cleanup CleanupConfig `mapstructure:"cleanup"`
+	Retry   RetryConfig   `mapstructure:"retry"`
 }
 
 // CleanupConfig holds automatic cleanup job settings for old failed events (MAT-143).
 type CleanupConfig struct {
 	AbandonAgeHours    int `mapstructure:"abandon_age_hours"`    // Default: 168 hours (1 week)
 	RunIntervalMinutes int `mapstructure:"run_interval_minutes"` // Default: 60 minutes
+}
+
+// RetryConfig holds retry mechanism settings for failed events (MAT-142).
+type RetryConfig struct {
+	MaxRetries       int `mapstructure:"max_retries"`        // Default: 3
+	BaseDelaySeconds int `mapstructure:"base_delay_seconds"` // Default: 60 seconds
+	MaxDelaySeconds  int `mapstructure:"max_delay_seconds"`  // Default: 3600 seconds (1 hour)
 }
 
 // TestDBConfig represents test database configuration for integration tests.
@@ -189,6 +197,17 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Events.Cleanup.RunIntervalMinutes == 0 {
 		cfg.Events.Cleanup.RunIntervalMinutes = 60 // Run cleanup every hour
+	}
+
+	// Events retry defaults (MAT-142)
+	if cfg.Events.Retry.MaxRetries == 0 {
+		cfg.Events.Retry.MaxRetries = 3 // Default: 3 retries
+	}
+	if cfg.Events.Retry.BaseDelaySeconds == 0 {
+		cfg.Events.Retry.BaseDelaySeconds = 60 // Default: 60 seconds
+	}
+	if cfg.Events.Retry.MaxDelaySeconds == 0 {
+		cfg.Events.Retry.MaxDelaySeconds = 3600 // Default: 1 hour max delay
 	}
 }
 
