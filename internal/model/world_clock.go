@@ -6,16 +6,17 @@ import (
 	"errors"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/platform/logger"
 )
 
-// WorldClockStatus represents the global clock state.
-type WorldClockStatus string
+// WorldClockStatus is an alias for domain.WorldClockStatus
+type WorldClockStatus = domain.WorldClockStatus
 
 const (
-	WorldClockRunning WorldClockStatus = "running"
-	WorldClockPaused  WorldClockStatus = "paused"
-	WorldClockStopped WorldClockStatus = "stopped"
+	WorldClockRunning WorldClockStatus = domain.WorldClockRunning
+	WorldClockPaused  WorldClockStatus = domain.WorldClockPaused
+	WorldClockStopped WorldClockStatus = domain.WorldClockStopped
 )
 
 // Default constants for world clock initialization.
