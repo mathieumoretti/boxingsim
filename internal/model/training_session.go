@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/mormm/boxing/internal/domain"
+)
 
 // TrainingType represents a type of training available in the system (reference data)
 type TrainingType struct {
@@ -15,13 +19,13 @@ type TrainingType struct {
 	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 }
 
-// TrainingSessionStatus represents the status of a training session
-type TrainingSessionStatus string
+// TrainingSessionStatus is an alias for domain.TrainingSessionStatus
+type TrainingSessionStatus = domain.TrainingSessionStatus
 
 const (
-	TrainingSessionPending   TrainingSessionStatus = "pending"
-	TrainingSessionCompleted TrainingSessionStatus = "completed"
-	TrainingSessionCancelled TrainingSessionStatus = "cancelled"
+	TrainingSessionPending   TrainingSessionStatus = domain.TrainingSessionPending
+	TrainingSessionCompleted TrainingSessionStatus = domain.TrainingSessionCompleted
+	TrainingSessionCancelled TrainingSessionStatus = domain.TrainingSessionCancelled
 )
 
 // TrainingSession represents an individual training session for a boxer

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/mormm/boxing/internal/domain"
 )
 
 // EventType represents the type of scheduled event.
@@ -112,14 +114,14 @@ func (e *EventData) ToMap() map[string]any {
 	return m
 }
 
-// EventStatus represents the lifecycle state of a scheduled event.
-type EventStatus string
+// EventStatus is an alias for domain.EventStatus
+type EventStatus = domain.EventStatus
 
 const (
-	EventStatusPending    EventStatus = "pending"    // Awaiting processing by worker
-	EventStatusProcessing EventStatus = "processing" // Currently being handled
-	EventStatusCompleted  EventStatus = "completed"  // Successfully processed
-	EventStatusFailed     EventStatus = "failed"     // Processing error occurred
+	EventStatusPending    EventStatus = domain.EventStatusPending
+	EventStatusProcessing EventStatus = domain.EventStatusProcessing
+	EventStatusCompleted  EventStatus = domain.EventStatusCompleted
+	EventStatusFailed     EventStatus = domain.EventStatusFailed
 )
 
 // ScheduledEvent represents a scheduled event for a boxer with idempotent processing support.

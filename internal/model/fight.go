@@ -1,15 +1,19 @@
 package model
 
-import "time"
+import (
+	"time"
 
-// FightStatus represents the status of a fight
-type FightStatus string
+	"github.com/mormm/boxing/internal/domain"
+)
+
+// FightStatus is an alias for domain.FightStatus
+type FightStatus = domain.FightStatus
 
 const (
-	FightStatusScheduled  FightStatus = "scheduled"
-	FightStatusInProgress FightStatus = "in_progress"
-	FightStatusCompleted  FightStatus = "completed"
-	FightStatusCancelled  FightStatus = "canceled"
+	FightStatusScheduled  FightStatus = domain.FightStatusScheduled
+	FightStatusInProgress FightStatus = domain.FightStatusInProgress
+	FightStatusCompleted  FightStatus = domain.FightStatusCompleted
+	FightStatusCancelled  FightStatus = domain.FightStatusCancelled
 )
 
 // Fight represents a boxing match

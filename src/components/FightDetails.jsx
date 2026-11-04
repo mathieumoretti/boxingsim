@@ -317,7 +317,7 @@ const FightDetails = () => {
         {fight?.status === 'scheduled' && <Badge variant="fight-status-scheduled" icon="📅">Scheduled</Badge>}
         {fight?.status === 'in_progress' && <Badge variant="winner" icon="🥊">In Progress</Badge>}
         {fight?.status === 'completed' && <Badge variant="fight-status-completed" icon="✅">Completed</Badge>}
-        {fight?.status === 'canceled' && <Badge variant="fight-status-cancelled" icon="❌">Canceled</Badge>}
+        {(fight?.status === 'canceled' || fight?.status === 'cancelled') && <Badge variant="fight-status-cancelled" icon="❌">Canceled</Badge>}
 
         {/* Scheduled Time for future fights */}
         {fight?.status === 'scheduled' && fight?.scheduled_time && (

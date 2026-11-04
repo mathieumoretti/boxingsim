@@ -151,7 +151,7 @@ func TestFight(t *testing.T) {
 		assert.Equal(t, FightStatusScheduled, FightStatus("scheduled"))
 		assert.Equal(t, FightStatusInProgress, FightStatus("in_progress"))
 		assert.Equal(t, FightStatusCompleted, FightStatus("completed"))
-		assert.Equal(t, FightStatusCancelled, FightStatus("canceled"))
+		assert.Equal(t, FightStatusCancelled, FightStatus("cancelled"))
 	})
 
 	t.Run("Fight struct creation", func(t *testing.T) {
