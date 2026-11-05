@@ -6,11 +6,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
 // GetPendingByBoxerIDAndTypeDebug adds debug logging for integration tests
-func (s *ScheduledEventStore) GetPendingByBoxerIDAndTypeDebug(ctx context.Context, boxerID int, eventType model.EventType, t *testing.T) ([]*model.ScheduledEvent, error) {
+func (s *ScheduledEventStore) GetPendingByBoxerIDAndTypeDebug(ctx context.Context, boxerID domain.BoxerID, eventType model.EventType, t *testing.T) ([]*model.ScheduledEvent, error) {
 	events, err := s.GetPendingByBoxerIDAndType(ctx, boxerID, eventType)
 	if err != nil {
 		return nil, err
