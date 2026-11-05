@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -96,7 +97,7 @@ func TestScheduledEventStore_CreateAndProcessIfPastTime(t *testing.T) {
 	ctx := context.Background()
 
 	store := NewScheduledEventStore(nil) // nil DB - integration test would use real connection
-	boxerID := 1
+	boxerID := domain.BoxerID(1)
 	eventType := model.EventTypeTraining
 	eventTime := time.Now().Add(-1 * time.Hour)
 	data := []byte(`{"strength": 5}`)
@@ -116,7 +117,7 @@ func TestScheduledEventStore_DeleteByBoxerID(t *testing.T) {
 	ctx := context.Background()
 
 	store := NewScheduledEventStore(nil) // nil DB - integration test would use real connection
-	boxerID := 1
+	boxerID := domain.BoxerID(1)
 
 	err := store.DeleteByBoxerID(ctx, boxerID)
 	assert.Error(t, err, "DeleteByBoxerID should fail with nil database") // Expected for stubbed connection

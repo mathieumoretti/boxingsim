@@ -3,11 +3,16 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
+
+var ErrInvalidBoxerID = errors.New("invalid boxer ID")
 
 // BoxerStore implements the BoxerRepository interface
 type BoxerStore struct {
@@ -18,6 +23,14 @@ func NewBoxerStore(db *sql.DB) *BoxerStore {
 	return &BoxerStore{
 		db: db,
 	}
+}
+
+// validateBoxerID checks if the boxer ID is valid (> 0).
+func validateBoxerID(id domain.BoxerID) error {
+	if !id.IsValid() {
+		return ErrInvalidBoxerID
+	}
+	return nil
 }
 
 // Create creates a new boxer in the database
@@ -49,7 +62,11 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 }
 
 // GetByID retrieves a boxer by ID
-func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) {
+func (s *BoxerStore) GetByID(ctx context.Context, id domain.BoxerID) (*model.Boxer, error) {
+	if err := validateBoxerID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
@@ -58,7 +75,7 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 		       created_at, updated_at
 		FROM boxers WHERE id = $1`
 
-	row := s.db.QueryRowContext(ctx, query, id)
+	row := s.db.QueryRowContext(ctx, query, int(id))
 
 	boxer := &model.Boxer{}
 	err := row.Scan(
@@ -77,7 +94,11 @@ func (s *BoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) 
 
 // GetByIDWithLock retrieves a boxer by ID with an exclusive row lock (SELECT FOR UPDATE).
 // Must be called within a transaction to properly hold the lock.
-func (s *BoxerStore) GetByIDWithLock(ctx context.Context, id int) (*model.Boxer, error) {
+func (s *BoxerStore) GetByIDWithLock(ctx context.Context, id domain.BoxerID) (*model.Boxer, error) {
+	if err := validateBoxerID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
@@ -87,7 +108,7 @@ func (s *BoxerStore) GetByIDWithLock(ctx context.Context, id int) (*model.Boxer,
 		FROM boxers WHERE id = $1
 		FOR UPDATE`
 
-	row := s.db.QueryRowContext(ctx, query, id)
+	row := s.db.QueryRowContext(ctx, query, int(id))
 
 	boxer := &model.Boxer{}
 	err := row.Scan(
@@ -105,7 +126,11 @@ func (s *BoxerStore) GetByIDWithLock(ctx context.Context, id int) (*model.Boxer,
 }
 
 // GetByIDWithLockTx retrieves a boxer by ID with an exclusive row lock within a transaction.
-func (s *BoxerStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.Boxer, error) {
+func (s *BoxerStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id domain.BoxerID) (*model.Boxer, error) {
+	if err := validateBoxerID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
@@ -115,7 +140,7 @@ func (s *BoxerStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) 
 		FROM boxers WHERE id = $1
 		FOR UPDATE`
 
-	row := tx.QueryRowContext(ctx, query, id)
+	row := tx.QueryRowContext(ctx, query, int(id))
 
 	boxer := &model.Boxer{}
 	err := row.Scan(
@@ -132,8 +157,20 @@ func (s *BoxerStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) 
 	return boxer, nil
 }
 
+// validateUserID checks if the user ID is valid (> 0).
+func validateUserID(id domain.UserID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("invalid user ID: %d", id)
+	}
+	return nil
+}
+
 // GetByUserID retrieves all boxers for a user
-func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxer, error) {
+func (s *BoxerStore) GetByUserID(ctx context.Context, userID domain.UserID) ([]*model.Boxer, error) {
+	if err := validateUserID(userID); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
@@ -142,7 +179,7 @@ func (s *BoxerStore) GetByUserID(ctx context.Context, userID int) ([]*model.Boxe
 		       created_at, updated_at
 		FROM boxers WHERE user_id = $1 ORDER BY created_at DESC`
 
-	rows, err := s.db.QueryContext(ctx, query, userID)
+	rows, err := s.db.QueryContext(ctx, query, int(userID))
 	if err != nil {
 		return nil, err
 	}
@@ -224,18 +261,29 @@ func (s *BoxerStore) UpdateTx(ctx context.Context, tx *sql.Tx, boxer *model.Boxe
 }
 
 // Delete deletes a boxer by ID
-func (s *BoxerStore) Delete(ctx context.Context, id int) error {
+func (s *BoxerStore) Delete(ctx context.Context, id domain.BoxerID) error {
+	if err := validateBoxerID(id); err != nil {
+		return err
+	}
+
 	query := "DELETE FROM boxers WHERE id = $1"
-	_, err := s.db.ExecContext(ctx, query, id)
+	_, err := s.db.ExecContext(ctx, query, int(id))
 	return err
 }
 
 // UpdateFightResult atomically updates fight statistics for two boxers
 func (s *BoxerStore) UpdateFightResult(
 	ctx context.Context,
-	boxer1ID, boxer2ID int,
+	boxer1ID, boxer2ID domain.BoxerID,
 	result boxer.FightResult,
 ) error {
+	if err := validateBoxerID(boxer1ID); err != nil {
+		return err
+	}
+	if err := validateBoxerID(boxer2ID); err != nil {
+		return err
+	}
+
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -250,21 +298,21 @@ func (s *BoxerStore) UpdateFightResult(
 
 	if result.IsDraw {
 		boxer1SQL = "UPDATE boxers SET draws = draws + $1, updated_at = $2 WHERE id = $3"
-		boxer1Args = []interface{}{1, time.Now(), boxer1ID}
+		boxer1Args = []interface{}{1, time.Now(), int(boxer1ID)}
 	} else if result.Boxer1Wins {
 		boxer1SQL = "UPDATE boxers SET wins = wins + 1"
 		if result.IsKnockout {
 			boxer1SQL += ", knockouts = knockouts + 1"
 		}
 		boxer1SQL += ", updated_at = $1 WHERE id = $2"
-		boxer1Args = []interface{}{time.Now(), boxer1ID}
+		boxer1Args = []interface{}{time.Now(), int(boxer1ID)}
 	} else {
 		boxer1SQL = "UPDATE boxers SET losses = losses + 1"
 		if result.Boxer1Knockdowned {
 			boxer1SQL += ", knockdowns_suffered = knockdowns_suffered + 1"
 		}
 		boxer1SQL += ", updated_at = $1 WHERE id = $2"
-		boxer1Args = []interface{}{time.Now(), boxer1ID}
+		boxer1Args = []interface{}{time.Now(), int(boxer1ID)}
 	}
 
 	// Execute boxer 1 update
@@ -279,21 +327,21 @@ func (s *BoxerStore) UpdateFightResult(
 
 	if result.IsDraw {
 		boxer2SQL = "UPDATE boxers SET draws = draws + $1, updated_at = $2 WHERE id = $3"
-		boxer2Args = []interface{}{1, time.Now(), boxer2ID}
+		boxer2Args = []interface{}{1, time.Now(), int(boxer2ID)}
 	} else if !result.Boxer1Wins { // boxer 2 wins
 		boxer2SQL = "UPDATE boxers SET wins = wins + 1"
 		if result.IsKnockout {
 			boxer2SQL += ", knockouts = knockouts + 1"
 		}
 		boxer2SQL += ", updated_at = $1 WHERE id = $2"
-		boxer2Args = []interface{}{time.Now(), boxer2ID}
+		boxer2Args = []interface{}{time.Now(), int(boxer2ID)}
 	} else {
 		boxer2SQL = "UPDATE boxers SET losses = losses + 1"
 		if result.Boxer2Knockdowned {
 			boxer2SQL += ", knockdowns_suffered = knockdowns_suffered + 1"
 		}
 		boxer2SQL += ", updated_at = $1 WHERE id = $2"
-		boxer2Args = []interface{}{time.Now(), boxer2ID}
+		boxer2Args = []interface{}{time.Now(), int(boxer2ID)}
 	}
 
 	// Execute boxer 2 update

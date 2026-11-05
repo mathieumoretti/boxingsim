@@ -4,16 +4,43 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
 var (
-	ErrEventNotFound    = errors.New("scheduled event not found")
-	ErrAlreadyProcessed = errors.New("event already marked as processed")
-	ErrFailedToInsert   = errors.New("failed to insert scheduled event")
+	ErrEventNotFound      = errors.New("scheduled event not found")
+	ErrAlreadyProcessed   = errors.New("event already marked as processed")
+	ErrFailedToInsert     = errors.New("failed to insert scheduled event")
+	ErrInvalidEventID     = errors.New("invalid scheduled event ID")
 )
+
+// validateScheduledEventID validates a scheduled event ID.
+func validateScheduledEventID(id domain.ScheduledEventID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidEventID, id)
+	}
+	return nil
+}
+
+// storeValidateBoxerIDForEvent validates a boxer ID for scheduled event operations.
+func storeValidateBoxerIDForEvent(id domain.BoxerID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidBoxerID, id)
+	}
+	return nil
+}
+
+// validateFightIDForEvent validates a fight ID for scheduled event operations.
+func validateFightIDForEvent(id domain.FightID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidFightID, id)
+	}
+	return nil
+}
 
 // ScheduledEventStore implements CRUD operations for scheduled events with idempotent processing support.
 type ScheduledEventStore struct {
@@ -34,10 +61,10 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 	}
 
 	query := `
-					INSERT INTO scheduled_events (
-						boxer_id, event_type, event_time, processed, status, event_data, created_at
-					) VALUES ($1, $2, $3, $4, 'pending', NULLIF($5::jsonb, '{}'::jsonb), CURRENT_TIMESTAMP)
-					RETURNING id`
+						INSERT INTO scheduled_events (
+							boxer_id, event_type, event_time, processed, status, event_data, created_at
+						) VALUES ($1, $2, $3, $4, 'pending', NULLIF($5::jsonb, '{}'::jsonb), CURRENT_TIMESTAMP)
+						RETURNING id`
 
 	err := s.db.QueryRowContext(ctx, query,
 		event.BoxerID, event.EventType, event.EventTime, event.Processed, event.EventData).Scan(&event.ID)
@@ -48,19 +75,23 @@ func (s *ScheduledEventStore) Create(ctx context.Context, event *model.Scheduled
 }
 
 // GetByID retrieves a scheduled event by its ID. Returns ErrEventNotFound if the event doesn't exist.
-func (s *ScheduledEventStore) GetByID(ctx context.Context, id int) (*model.ScheduledEvent, error) {
+func (s *ScheduledEventStore) GetByID(ctx context.Context, id domain.ScheduledEventID) (*model.ScheduledEvent, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
 	}
 
+	if err := validateScheduledEventID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
-					SELECT
-						id, boxer_id, event_type, event_time, processed, status, event_data,
-						error_message, processed_at, created_at
-					FROM scheduled_events WHERE id = $1`
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events WHERE id = $1`
 
 	event := &model.ScheduledEvent{}
-	row := s.db.QueryRowContext(ctx, query, id)
+	row := s.db.QueryRowContext(ctx, query, int(id))
 
 	err := row.Scan(
 		&event.ID, &event.BoxerID, &event.EventType, &event.EventTime,
@@ -77,18 +108,22 @@ func (s *ScheduledEventStore) GetByID(ctx context.Context, id int) (*model.Sched
 }
 
 // GetByBoxerID retrieves all scheduled events for a specific boxer.
-func (s *ScheduledEventStore) GetByBoxerID(ctx context.Context, boxerID int) ([]*model.ScheduledEvent, error) {
+func (s *ScheduledEventStore) GetByBoxerID(ctx context.Context, boxerID domain.BoxerID) ([]*model.ScheduledEvent, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
 	}
 
-	query := `
-					SELECT
-						id, boxer_id, event_type, event_time, processed, status, event_data,
-						error_message, processed_at, created_at
-					FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
+	if err := storeValidateBoxerIDForEvent(boxerID); err != nil {
+		return nil, err
+	}
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	query := `
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events WHERE boxer_id = $1 ORDER BY event_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID))
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +161,12 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 	}
 
 	query := `
-					SELECT
-						id, boxer_id, event_type, event_time, processed, status, event_data,
-						error_message, processed_at, created_at
-					FROM scheduled_events
-					WHERE event_time <= $1 AND processed = FALSE AND status IN ('pending', 'processing')
-					ORDER BY event_time ASC LIMIT $2`
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events
+						WHERE event_time <= $1 AND processed = FALSE AND status IN ('pending', 'processing')
+						ORDER BY event_time ASC LIMIT $2`
 
 	rows, err := s.db.QueryContext(ctx, query, gameTime, limit)
 	if err != nil {
@@ -161,17 +196,21 @@ func (s *ScheduledEventStore) GetPendingEventsBeforeGameTime(
 
 // MarkAsProcessing marks an event as currently being processed (for crash recovery tracking).
 // Returns ErrAlreadyProcessed if the event was already processed or failed.
-func (s *ScheduledEventStore) MarkAsProcessing(ctx context.Context, eventId int) error {
+func (s *ScheduledEventStore) MarkAsProcessing(ctx context.Context, eventId domain.ScheduledEventID) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
-	query := `
-					UPDATE scheduled_events
-					SET status = 'processing', processed_at = NULL
-					WHERE id = $1 AND status IN ('pending', 'processing')`
+	if err := validateScheduledEventID(eventId); err != nil {
+		return err
+	}
 
-	result, err := s.db.ExecContext(ctx, query, eventId)
+	query := `
+						UPDATE scheduled_events
+						SET status = 'processing', processed_at = NULL
+						WHERE id = $1 AND status IN ('pending', 'processing')`
+
+	result, err := s.db.ExecContext(ctx, query, int(eventId))
 	if err != nil {
 		return err
 	}
@@ -186,17 +225,21 @@ func (s *ScheduledEventStore) MarkAsProcessing(ctx context.Context, eventId int)
 
 // MarkAsCompleted marks a scheduled event as successfully processed atomically.
 // Returns ErrAlreadyProcessed if the event was already processed or failed.
-func (s *ScheduledEventStore) MarkAsCompleted(ctx context.Context, eventId int) error {
+func (s *ScheduledEventStore) MarkAsCompleted(ctx context.Context, eventId domain.ScheduledEventID) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
-	query := `
-					UPDATE scheduled_events
-					SET processed = TRUE, status = 'completed', processed_at = CURRENT_TIMESTAMP, error_message = NULL
-					WHERE id = $1 AND status IN ('pending', 'processing')`
+	if err := validateScheduledEventID(eventId); err != nil {
+		return err
+	}
 
-	result, err := s.db.ExecContext(ctx, query, eventId)
+	query := `
+						UPDATE scheduled_events
+						SET processed = TRUE, status = 'completed', processed_at = CURRENT_TIMESTAMP, error_message = NULL
+						WHERE id = $1 AND status IN ('pending', 'processing')`
+
+	result, err := s.db.ExecContext(ctx, query, int(eventId))
 	if err != nil {
 		return err
 	}
@@ -211,17 +254,21 @@ func (s *ScheduledEventStore) MarkAsCompleted(ctx context.Context, eventId int) 
 
 // MarkAsFailed marks a scheduled event as failed with an error message.
 // This allows for debugging and potential retry mechanisms.
-func (s *ScheduledEventStore) MarkAsFailed(ctx context.Context, eventId int, errorMessage string) error {
+func (s *ScheduledEventStore) MarkAsFailed(ctx context.Context, eventId domain.ScheduledEventID, errorMessage string) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
-	query := `
-					UPDATE scheduled_events
-					SET status = 'failed', processed_at = CURRENT_TIMESTAMP, error_message = $2
-					WHERE id = $1 AND status IN ('pending', 'processing')`
+	if err := validateScheduledEventID(eventId); err != nil {
+		return err
+	}
 
-	result, err := s.db.ExecContext(ctx, query, eventId, errorMessage)
+	query := `
+						UPDATE scheduled_events
+						SET status = 'failed', processed_at = CURRENT_TIMESTAMP, error_message = $2
+						WHERE id = $1 AND status IN ('pending', 'processing')`
+
+	result, err := s.db.ExecContext(ctx, query, int(eventId), errorMessage)
 	if err != nil {
 		return err
 	}
@@ -237,7 +284,7 @@ func (s *ScheduledEventStore) MarkAsFailed(ctx context.Context, eventId int, err
 // MarkAsProcessed marks a scheduled event as processed atomically using row-level locking.
 // Returns ErrAlreadyProcessed if the event was already marked as processed (idempotent operation).
 // Deprecated: Use MarkAsCompleted or MarkAsFailed instead for better visibility.
-func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId int) error {
+func (s *ScheduledEventStore) MarkAsProcessed(ctx context.Context, eventId domain.ScheduledEventID) error {
 	return s.MarkAsCompleted(ctx, eventId)
 }
 
@@ -248,13 +295,13 @@ func (s *ScheduledEventStore) GetFailedEvents(ctx context.Context, limit int) ([
 	}
 
 	query := `
-					SELECT
-						id, boxer_id, event_type, event_time, processed, status, event_data,
-						error_message, processed_at, created_at
-					FROM scheduled_events
-					WHERE status = 'failed'
-					ORDER BY processed_at DESC
-					LIMIT $1`
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events
+						WHERE status = 'failed'
+						ORDER BY processed_at DESC
+						LIMIT $1`
 
 	rows, err := s.db.QueryContext(ctx, query, limit)
 	if err != nil {
@@ -289,12 +336,12 @@ func (s *ScheduledEventStore) GetProcessingEvents(ctx context.Context) ([]*model
 	}
 
 	query := `
-					SELECT
-						id, boxer_id, event_type, event_time, processed, status, event_data,
-						error_message, processed_at, created_at
-					FROM scheduled_events
-					WHERE status = 'processing'
-					ORDER BY created_at ASC`
+						SELECT
+							id, boxer_id, event_type, event_time, processed, status, event_data,
+							error_message, processed_at, created_at
+						FROM scheduled_events
+						WHERE status = 'processing'
+						ORDER BY created_at ASC`
 
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
@@ -323,14 +370,18 @@ func (s *ScheduledEventStore) GetProcessingEvents(ctx context.Context) ([]*model
 }
 
 // ResetToPending resets an event from 'processing' state back to 'pending' for crash recovery.
-func (s *ScheduledEventStore) ResetToPending(ctx context.Context, eventId int) error {
+func (s *ScheduledEventStore) ResetToPending(ctx context.Context, eventId domain.ScheduledEventID) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
-	query := `UPDATE scheduled_events SET status = 'pending', processed_at = NULL WHERE id = $1 AND status = 'processing'`
+	if err := validateScheduledEventID(eventId); err != nil {
+		return err
+	}
 
-	result, err := s.db.ExecContext(ctx, query, eventId)
+	query := "UPDATE scheduled_events SET status = 'pending', processed_at = NULL WHERE id = $1 AND status = 'processing'"
+
+	result, err := s.db.ExecContext(ctx, query, int(eventId))
 	if err != nil {
 		return err
 	}
@@ -347,13 +398,17 @@ func (s *ScheduledEventStore) ResetToPending(ctx context.Context, eventId int) e
 // if the specified time is less than or equal to current game time (for instant completion testing scenarios).
 func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 	ctx context.Context,
-	boxerID int,
+	boxerID domain.BoxerID,
 	eventType model.EventType,
 	eventTime time.Time,
 	data []byte, // JSONB data as raw bytes
 ) (*model.ScheduledEvent, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := storeValidateBoxerIDForEvent(boxerID); err != nil {
+		return nil, err
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -363,19 +418,19 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 	defer func() { _ = tx.Rollback() }() // Will be ignored if committed
 
 	insertQuery := `
-					INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, status, event_data, created_at)
-					VALUES ($1, $2, $3, FALSE, 'pending', COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
-					RETURNING id`
+						INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, status, event_data, created_at)
+						VALUES ($1, $2, $3, FALSE, 'pending', COALESCE($4::bytea, 'null'::jsonb), CURRENT_TIMESTAMP)
+						RETURNING id`
 
 	var eventId int
-	err = tx.QueryRowContext(ctx, insertQuery, boxerID, eventType, eventTime, data).Scan(&eventId)
+	err = tx.QueryRowContext(ctx, insertQuery, int(boxerID), eventType, eventTime, data).Scan(&eventId)
 	if err != nil {
 		return nil, ErrFailedToInsert
 	}
 
 	event := &model.ScheduledEvent{
 		ID:        eventId,
-		BoxerID:   boxerID,
+		BoxerID:   int(boxerID),
 		EventType: eventType,
 		EventTime: eventTime,
 		Status:    model.EventStatusPending,
@@ -391,35 +446,43 @@ func (s *ScheduledEventStore) CreateAndProcessIfPastTime(
 }
 
 // DeleteByBoxerID deletes all scheduled events for a specific boxer. Used for cleanup when boxing is deleted.
-func (s *ScheduledEventStore) DeleteByBoxerID(ctx context.Context, boxerID int) error {
+func (s *ScheduledEventStore) DeleteByBoxerID(ctx context.Context, boxerID domain.BoxerID) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
 	}
 
+	if err := storeValidateBoxerIDForEvent(boxerID); err != nil {
+		return err
+	}
+
 	query := "DELETE FROM scheduled_events WHERE boxer_id = $1"
-	_, err := s.db.ExecContext(ctx, query, boxerID)
+	_, err := s.db.ExecContext(ctx, query, int(boxerID))
 	return err
 }
 
 // GetPendingByBoxerIDAndType returns pending unprocessed events for a boxer filtered by event type.
 // This is used to check if a boxer has active rest periods before allowing new training sessions.
-func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, boxerID int, eventType model.EventType) ([]*model.ScheduledEvent, error) {
+func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, boxerID domain.BoxerID, eventType model.EventType) ([]*model.ScheduledEvent, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
 	}
 
-	query := `
-						SELECT
-							id, boxer_id, event_type, event_time, processed, status, event_data,
-							error_message, processed_at, created_at
-						FROM scheduled_events
-						WHERE boxer_id = $1
-						AND event_type = $2
-						AND processed = FALSE
-						AND status IN ('pending', 'processing')
-						ORDER BY event_time ASC`
+	if err := storeValidateBoxerIDForEvent(boxerID); err != nil {
+		return nil, err
+	}
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID, eventType)
+	query := `
+							SELECT
+								id, boxer_id, event_type, event_time, processed, status, event_data,
+								error_message, processed_at, created_at
+							FROM scheduled_events
+							WHERE boxer_id = $1
+							AND event_type = $2
+							AND processed = FALSE
+							AND status IN ('pending', 'processing')
+							ORDER BY event_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID), eventType)
 	if err != nil {
 		return nil, err
 	}
@@ -446,22 +509,26 @@ func (s *ScheduledEventStore) GetPendingByBoxerIDAndType(ctx context.Context, bo
 }
 
 // GetByFightID retrieves scheduled events for a specific fight (for cancellation cleanup).
-func (s *ScheduledEventStore) GetByFightID(ctx context.Context, fightID int) ([]*model.ScheduledEvent, error) {
+func (s *ScheduledEventStore) GetByFightID(ctx context.Context, fightID domain.FightID) ([]*model.ScheduledEvent, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
 	}
 
-	query := `
-						SELECT
-							id, boxer_id, event_type, event_time, processed, status, event_data,
-							error_message, processed_at, created_at
-						FROM scheduled_events
-						WHERE (event_data->>'fight_id')::int = $1
-						AND processed = FALSE
-						AND status IN ('pending', 'processing')
-						ORDER BY event_time ASC`
+	if err := validateFightIDForEvent(fightID); err != nil {
+		return nil, err
+	}
 
-	rows, err := s.db.QueryContext(ctx, query, fightID)
+	query := `
+							SELECT
+								id, boxer_id, event_type, event_time, processed, status, event_data,
+								error_message, processed_at, created_at
+							FROM scheduled_events
+							WHERE (event_data->>'fight_id')::int = $1
+							AND processed = FALSE
+							AND status IN ('pending', 'processing')
+							ORDER BY event_time ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, int(fightID))
 	if err != nil {
 		return nil, err
 	}

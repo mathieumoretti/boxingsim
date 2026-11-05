@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
 )
@@ -40,7 +41,7 @@ const (
 
 // boxerRepository defines the interface for boxer data access
 type boxerRepository interface {
-	GetByID(ctx context.Context, id int) (*model.Boxer, error)
+	GetByID(ctx context.Context, id domain.BoxerID) (*model.Boxer, error)
 	Update(ctx context.Context, boxer *model.Boxer) error
 }
 
@@ -103,7 +104,7 @@ func (s *FatigueService) CheckCanTrain(boxer *model.Boxer) (bool, string) {
 
 // ApplyFatigueIncrease adds fatigue points to a boxer after training
 // Updates the boxer record and validates bounds
-func (s *FatigueService) ApplyFatigueIncrease(ctx context.Context, boxerID int, increase float64) error {
+func (s *FatigueService) ApplyFatigueIncrease(ctx context.Context, boxerID domain.BoxerID, increase float64) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -137,7 +138,7 @@ func (s *FatigueService) ApplyFatigueIncrease(ctx context.Context, boxerID int, 
 }
 
 // ReduceFatigue reduces fatigue points after recovery/rest
-func (s *FatigueService) ReduceFatigue(ctx context.Context, boxerID int, reduction float64) error {
+func (s *FatigueService) ReduceFatigue(ctx context.Context, boxerID domain.BoxerID, reduction float64) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -166,12 +167,12 @@ func (s *FatigueService) ReduceFatigue(ctx context.Context, boxerID int, reducti
 
 // ApplyFatigueDecay applies daily natural fatigue decay to all boxers
 // This is called by the world clock worker once per game day
-func (s *FatigueService) ApplyFatigueDecay(ctx context.Context, boxerID int) error {
+func (s *FatigueService) ApplyFatigueDecay(ctx context.Context, boxerID domain.BoxerID) error {
 	return s.ReduceFatigue(ctx, boxerID, DailyFatigueDecay)
 }
 
 // ScheduleForcedRest sets a forced rest period for an exhausted boxer (in days)
-func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID int, durationDays int) error {
+func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID domain.BoxerID, durationDays int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -196,7 +197,7 @@ func (s *FatigueService) ScheduleForcedRest(ctx context.Context, boxerID int, du
 // Note: Uses real time, not game time. This is intentional because forced rest is checked
 // directly by the handler against real time, not processed by the worker. For consistency
 // with the rest event system, consider passing gameTime as a parameter in future refactoring.
-func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID int, durationHours int) error {
+func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID domain.BoxerID, durationHours int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -219,7 +220,7 @@ func (s *FatigueService) ScheduleForcedRestHours(ctx context.Context, boxerID in
 }
 
 // ClearForcedRest removes the forced rest restriction from a boxer
-func (s *FatigueService) ClearForcedRest(ctx context.Context, boxerID int) error {
+func (s *FatigueService) ClearForcedRest(ctx context.Context, boxerID domain.BoxerID) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -299,7 +300,7 @@ func (s *FatigueService) GetRecoveryBenefits(restHours int) RecoveryBenefits {
 }
 
 // ApplyRecovery applies recovery benefits based on rest duration in hours to a boxer.
-func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID int, restHours int) error {
+func (s *FatigueService) ApplyRecovery(ctx context.Context, boxerID domain.BoxerID, restHours int) error {
 	boxer, err := s.boxerStore.GetByID(ctx, boxerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

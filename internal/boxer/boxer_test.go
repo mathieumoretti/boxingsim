@@ -1,4 +1,4 @@
-package boxer
+﻿package boxer
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -22,12 +23,12 @@ func (m *MockBoxerRepository) Create(ctx context.Context, boxer *model.Boxer) er
 	return args.Error(0)
 }
 
-func (m *MockBoxerRepository) GetByID(ctx context.Context, id int) (*model.Boxer, error) {
+func (m *MockBoxerRepository) GetByID(ctx context.Context, id domain.BoxerID) (*model.Boxer, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*model.Boxer), args.Error(1)
 }
 
-func (m *MockBoxerRepository) GetByUserID(ctx context.Context, userID int) ([]*model.Boxer, error) {
+func (m *MockBoxerRepository) GetByUserID(ctx context.Context, userID domain.UserID) ([]*model.Boxer, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]*model.Boxer), args.Error(1)
 }
@@ -37,12 +38,12 @@ func (m *MockBoxerRepository) Update(ctx context.Context, boxer *model.Boxer) er
 	return args.Error(0)
 }
 
-func (m *MockBoxerRepository) Delete(ctx context.Context, id int) error {
+func (m *MockBoxerRepository) Delete(ctx context.Context, id domain.BoxerID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *MockBoxerRepository) UpdateFightResult(ctx context.Context, boxer1ID, boxer2ID int, result FightResult) error {
+func (m *MockBoxerRepository) UpdateFightResult(ctx context.Context, boxer1ID domain.BoxerID, boxer2ID domain.BoxerID, result FightResult) error {
 	args := m.Called(ctx, boxer1ID, boxer2ID, result)
 	return args.Error(0)
 }
@@ -154,9 +155,9 @@ func TestBoxerServiceGetBoxer(t *testing.T) {
 			UpdatedAt:  time.Now(),
 		}
 
-		mockRepo.On("GetByID", mock.Anything, 1).Return(expectedBoxer, nil)
+		mockRepo.On("GetByID", mock.Anything, domain.BoxerID(1)).Return(expectedBoxer, nil)
 
-		result, err := service.GetBoxer(context.Background(), 1)
+		result, err := service.GetBoxer(context.Background(), domain.BoxerID(1))
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -170,9 +171,9 @@ func TestBoxerServiceGetBoxer(t *testing.T) {
 		service := NewBoxerService(mockRepo)
 
 		expectedError := errors.New("not found")
-		mockRepo.On("GetByID", mock.Anything, 1).Return((*model.Boxer)(nil), expectedError)
+		mockRepo.On("GetByID", mock.Anything, domain.BoxerID(1)).Return((*model.Boxer)(nil), expectedError)
 
-		result, err := service.GetBoxer(context.Background(), 1)
+		result, err := service.GetBoxer(context.Background(), domain.BoxerID(1))
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -224,9 +225,9 @@ func TestBoxerServiceGetBoxersByUser(t *testing.T) {
 			},
 		}
 
-		mockRepo.On("GetByUserID", mock.Anything, 1).Return(expectedBoxers, nil)
+		mockRepo.On("GetByUserID", mock.Anything, domain.UserID(1)).Return(expectedBoxers, nil)
 
-		result, err := service.GetBoxersByUser(context.Background(), 1)
+		result, err := service.GetBoxersByUser(context.Background(), domain.UserID(1))
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -241,9 +242,9 @@ func TestBoxerServiceGetBoxersByUser(t *testing.T) {
 		service := NewBoxerService(mockRepo)
 
 		expectedError := errors.New("database error")
-		mockRepo.On("GetByUserID", mock.Anything, 1).Return([]*model.Boxer(nil), expectedError)
+		mockRepo.On("GetByUserID", mock.Anything, domain.UserID(1)).Return([]*model.Boxer(nil), expectedError)
 
-		result, err := service.GetBoxersByUser(context.Background(), 1)
+		result, err := service.GetBoxersByUser(context.Background(), domain.UserID(1))
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -288,10 +289,10 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 		}
 
 		// Instead of using exact time expectations, let's just mock with anything
-		mockRepo.On("GetByID", mock.Anything, 1).Return(existingBoxer, nil)
+		mockRepo.On("GetByID", mock.Anything, domain.BoxerID(1)).Return(existingBoxer, nil)
 		mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
-		result, err := service.UpdateBoxer(context.Background(), 1, updateReq)
+		result, err := service.UpdateBoxer(context.Background(), domain.BoxerID(1), updateReq)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -311,9 +312,9 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 		service := NewBoxerService(mockRepo)
 
 		expectedError := errors.New("not found")
-		mockRepo.On("GetByID", mock.Anything, 1).Return((*model.Boxer)(nil), expectedError)
+		mockRepo.On("GetByID", mock.Anything, domain.BoxerID(1)).Return((*model.Boxer)(nil), expectedError)
 
-		result, err := service.UpdateBoxer(context.Background(), 1, &model.BoxerUpdate{})
+		result, err := service.UpdateBoxer(context.Background(), domain.BoxerID(1), &model.BoxerUpdate{})
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -348,10 +349,10 @@ func TestBoxerServiceUpdateBoxer(t *testing.T) {
 			Name: stringPtr("New Name"),
 		}
 
-		mockRepo.On("GetByID", mock.Anything, 1).Return(existingBoxer, nil)
+		mockRepo.On("GetByID", mock.Anything, domain.BoxerID(1)).Return(existingBoxer, nil)
 		mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("update error"))
 
-		result, err := service.UpdateBoxer(context.Background(), 1, updateReq)
+		result, err := service.UpdateBoxer(context.Background(), domain.BoxerID(1), updateReq)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -382,9 +383,9 @@ func TestBoxerServiceUpdateFightResult(t *testing.T) {
 			Boxer2Knockdowned: true,
 		}
 
-		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+		mockRepo.On("UpdateFightResult", mock.Anything, domain.BoxerID(1), domain.BoxerID(2), result).Return(nil)
 
-		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+		err := service.UpdateFightResult(context.Background(), domain.BoxerID(1), domain.BoxerID(2), result)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
@@ -402,9 +403,9 @@ func TestBoxerServiceUpdateFightResult(t *testing.T) {
 			Boxer2Knockdowned: false,
 		}
 
-		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+		mockRepo.On("UpdateFightResult", mock.Anything, domain.BoxerID(1), domain.BoxerID(2), result).Return(nil)
 
-		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+		err := service.UpdateFightResult(context.Background(), domain.BoxerID(1), domain.BoxerID(2), result)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
@@ -422,9 +423,9 @@ func TestBoxerServiceUpdateFightResult(t *testing.T) {
 			Boxer2Knockdowned: false,
 		}
 
-		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(nil)
+		mockRepo.On("UpdateFightResult", mock.Anything, domain.BoxerID(1), domain.BoxerID(2), result).Return(nil)
 
-		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+		err := service.UpdateFightResult(context.Background(), domain.BoxerID(1), domain.BoxerID(2), result)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
@@ -441,9 +442,9 @@ func TestBoxerServiceUpdateFightResult(t *testing.T) {
 		}
 
 		expectedError := errors.New("database error")
-		mockRepo.On("UpdateFightResult", mock.Anything, 1, 2, result).Return(expectedError)
+		mockRepo.On("UpdateFightResult", mock.Anything, domain.BoxerID(1), domain.BoxerID(2), result).Return(expectedError)
 
-		err := service.UpdateFightResult(context.Background(), 1, 2, result)
+		err := service.UpdateFightResult(context.Background(), domain.BoxerID(1), domain.BoxerID(2), result)
 
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mormm/boxing/internal/auth"
+	"github.com/mormm/boxing/internal/domain"
 	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/service"
@@ -102,7 +103,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	// 1. Validate boxer exists and belongs to user
-	boxer, err := h.boxerStore.GetByID(ctx, boxerID)
+	boxer, err := h.boxerStore.GetByID(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
@@ -114,7 +115,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 2. Validate training type exists
-	trainingType, err := h.trainingTypeStore.GetByID(ctx, req.TrainingTypeID)
+	trainingType, err := h.trainingTypeStore.GetByID(ctx, domain.TrainingTypeID(req.TrainingTypeID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.NotFound("training type"))
 		return
@@ -140,7 +141,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 7. Check for pending training sessions (boxer can only do one training at a time)
-	pendingSessions, err := h.trainingSessionStore.GetPendingByBoxerID(ctx, boxerID)
+	pendingSessions, err := h.trainingSessionStore.GetPendingByBoxerID(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to check pending training sessions"))
 		return
@@ -153,7 +154,7 @@ func (h *TrainingHandler) ScheduleTraining(w http.ResponseWriter, r *http.Reques
 
 	// 8. Check if boxer has active rest period (MAT-88: Rest Period Validation)
 	if h.scheduledEventStore != nil {
-		pendingRestEvents, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxerID, model.EventTypeRest)
+		pendingRestEvents, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(boxerID), model.EventTypeRest)
 		if err != nil {
 			pkgerrors.WriteError(w, pkgerrors.Internal("Failed to check rest events"))
 			return
@@ -274,7 +275,7 @@ func (h *TrainingHandler) GetTrainingSessionsForBoxer(w http.ResponseWriter, r *
 		return
 	}
 
-	sessions, err := h.trainingSessionStore.GetPendingByBoxerID(r.Context(), boxerID)
+	sessions, err := h.trainingSessionStore.GetPendingByBoxerID(r.Context(), domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve training sessions"))
 		return
@@ -396,7 +397,7 @@ func (h *TrainingHandler) GetTrainingHistory(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 
 	// Validate boxer exists and belongs to user
-	boxer, err := h.boxerStore.GetByID(ctx, boxerID)
+	boxer, err := h.boxerStore.GetByID(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
 		return
@@ -408,7 +409,7 @@ func (h *TrainingHandler) GetTrainingHistory(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Fetch completed training sessions with training type details
-	history, err := h.trainingSessionStore.GetCompletedHistoryWithTypes(ctx, boxerID)
+	history, err := h.trainingSessionStore.GetCompletedHistoryWithTypes(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve training history"))
 		return
@@ -449,7 +450,7 @@ func (h *TrainingHandler) GetStatProgression(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 
 	// Fetch stat progression data (points array with date and STR/DEF/AGI values)
-	progression, err := h.trainingSessionStore.GetStatProgression(ctx, boxerID)
+	progression, err := h.trainingSessionStore.GetStatProgression(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve stat progression"))
 		return

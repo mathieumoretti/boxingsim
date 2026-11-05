@@ -1,4 +1,4 @@
-package service
+﻿package service
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ type MockBoxerStore struct {
 	mock.Mock
 }
 
-func (m *MockBoxerStore) GetByID(ctx context.Context, id int) (*model.Boxer, error) {
+func (m *MockBoxerStore) GetByID(ctx context.Context, id domain.BoxerID) (*model.Boxer, error) {
 	args := m.Called(ctx, id)
 	if args.Get(1) != nil {
 		return nil, args.Error(1)
@@ -210,7 +211,7 @@ func TestFatigueService_ApplyFatigueIncrease(t *testing.T) {
 			FatigueScore: 50.0,
 		}
 
-		mockStore.On("GetByID", ctx, 1).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(1)).Return(existingBoxer, nil)
 		// Update is called with mutated boxer (FatigueScore increased by 15)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 1 && b.FatigueScore == 65.0
@@ -230,7 +231,7 @@ func TestFatigueService_ApplyFatigueIncrease(t *testing.T) {
 			FatigueScore: 95.0,
 		}
 
-		mockStore.On("GetByID", ctx, 2).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(2)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 2 && b.FatigueScore == 100.0
 		})).Return(nil)
@@ -243,7 +244,7 @@ func TestFatigueService_ApplyFatigueIncrease(t *testing.T) {
 	})
 
 	t.Run("returns error when boxer not found", func(t *testing.T) {
-		mockStore.On("GetByID", ctx, 999).Return(nil, sql.ErrNoRows)
+		mockStore.On("GetByID", ctx, domain.BoxerID(999)).Return(nil, sql.ErrNoRows)
 
 		err := fatigueService.ApplyFatigueIncrease(ctx, 999, 15.0)
 
@@ -260,7 +261,7 @@ func TestFatigueService_ApplyFatigueIncrease(t *testing.T) {
 		}
 
 		dbError := errors.New("database connection lost")
-		mockStore.On("GetByID", ctx, 3).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(3)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 3 && b.FatigueScore == 65.0
 		})).Return(dbError)
@@ -287,7 +288,7 @@ func TestFatigueService_ReduceFatigue(t *testing.T) {
 			FatigueScore: 50.0,
 		}
 
-		mockStore.On("GetByID", ctx, 10).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(10)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 10 && b.FatigueScore == 35.0
 		})).Return(nil)
@@ -306,7 +307,7 @@ func TestFatigueService_ReduceFatigue(t *testing.T) {
 			FatigueScore: 5.0,
 		}
 
-		mockStore.On("GetByID", ctx, 11).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(11)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 11 && b.FatigueScore == 0.0
 		})).Return(nil)
@@ -319,7 +320,7 @@ func TestFatigueService_ReduceFatigue(t *testing.T) {
 	})
 
 	t.Run("returns error when boxer not found", func(t *testing.T) {
-		mockStore.On("GetByID", ctx, 999).Return(nil, sql.ErrNoRows)
+		mockStore.On("GetByID", ctx, domain.BoxerID(999)).Return(nil, sql.ErrNoRows)
 
 		err := fatigueService.ReduceFatigue(ctx, 999, 10.0)
 
@@ -336,7 +337,7 @@ func TestFatigueService_ReduceFatigue(t *testing.T) {
 		}
 
 		dbError := errors.New("database lock timeout")
-		mockStore.On("GetByID", ctx, 12).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(12)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 12 && b.FatigueScore == 35.0
 		})).Return(dbError)
@@ -363,7 +364,7 @@ func TestFatigueService_ScheduleForcedRest(t *testing.T) {
 			FatigueScore: 85.0,
 		}
 
-		mockStore.On("GetByID", ctx, 20).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(20)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 20 && b.ForcedRestUntil != nil
 		})).Return(nil)
@@ -385,7 +386,7 @@ func TestFatigueService_ScheduleForcedRest(t *testing.T) {
 			FatigueScore: 90.0,
 		}
 
-		mockStore.On("GetByID", ctx, 21).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(21)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 21 && b.ForcedRestUntil != nil
 		})).Return(nil)
@@ -398,7 +399,7 @@ func TestFatigueService_ScheduleForcedRest(t *testing.T) {
 	})
 
 	t.Run("returns error when boxer not found", func(t *testing.T) {
-		mockStore.On("GetByID", ctx, 998).Return(nil, sql.ErrNoRows)
+		mockStore.On("GetByID", ctx, domain.BoxerID(998)).Return(nil, sql.ErrNoRows)
 
 		err := fatigueService.ScheduleForcedRest(ctx, 998, 3)
 
@@ -415,7 +416,7 @@ func TestFatigueService_ScheduleForcedRest(t *testing.T) {
 		}
 
 		dbError := errors.New("database constraint violation")
-		mockStore.On("GetByID", ctx, 22).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(22)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 22 && b.ForcedRestUntil != nil
 		})).Return(dbError)
@@ -444,12 +445,12 @@ func TestFatigueService_ClearForcedRest(t *testing.T) {
 			ForcedRestUntil: &futureTime,
 		}
 
-		mockStore.On("GetByID", ctx, 30).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(30)).Return(existingBoxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 30 && b.ForcedRestUntil == nil
 		})).Return(nil)
 
-		err := fatigueService.ClearForcedRest(ctx, 30)
+		err := fatigueService.ClearForcedRest(ctx, domain.BoxerID(30))
 
 		assert.NoError(t, err)
 		assert.Nil(t, existingBoxer.ForcedRestUntil, "Forced rest should be cleared")
@@ -464,9 +465,9 @@ func TestFatigueService_ClearForcedRest(t *testing.T) {
 			ForcedRestUntil: nil,
 		}
 
-		mockStore.On("GetByID", ctx, 31).Return(existingBoxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(31)).Return(existingBoxer, nil)
 
-		err := fatigueService.ClearForcedRest(ctx, 31)
+		err := fatigueService.ClearForcedRest(ctx, domain.BoxerID(31))
 
 		assert.NoError(t, err)
 		mockStore.AssertExpectations(t)
@@ -536,7 +537,7 @@ func TestFatigueService_Integration(t *testing.T) {
 		var fatigueHistory []float64
 
 		for i := 0; i < 3; i++ {
-			mockStore.On("GetByID", ctx, 40).Return(boxer, nil)
+			mockStore.On("GetByID", ctx, domain.BoxerID(40)).Return(boxer, nil)
 			mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 				return b.ID == 40 && b.FatigueScore <= 100.0
 			})).Run(func(args mock.Arguments) {
@@ -566,7 +567,7 @@ func TestFatigueService_Integration(t *testing.T) {
 			FatigueScore: 25.0,
 		}
 
-		mockStore.On("GetByID", ctx, 41).Return(boxer, nil)
+		mockStore.On("GetByID", ctx, domain.BoxerID(41)).Return(boxer, nil)
 		mockStore.On("Update", mock.Anything, mock.MatchedBy(func(b *model.Boxer) bool {
 			return b.ID == 41 && b.FatigueScore == 0.0
 		})).Return(nil)

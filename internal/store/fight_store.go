@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -20,7 +22,29 @@ var (
 
 	// ErrFightCannotCancel is returned when a fight cannot be cancelled (already started or completed).
 	ErrFightCannotCancel = errors.New("fight cannot be cancelled")
+
+	// ErrInvalidFightID is returned when a fight ID is invalid.
+	ErrInvalidFightID = errors.New("invalid fight ID")
 )
+
+// validateFightID validates a fight ID.
+func validateFightID(id domain.FightID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidFightID, id)
+	}
+	return nil
+}
+
+// validateBoxerIDForFight validates a boxer ID for use in FightStore methods.
+func validateBoxerIDForFight(id domain.BoxerID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", storeErrInvalidBoxerID, id)
+	}
+	return nil
+}
+
+// storeErrInvalidBoxerID is used internally for boxer ID validation in FightStore.
+var storeErrInvalidBoxerID = errors.New("invalid boxer ID")
 
 // FightStore implements data access operations for fights.
 type FightStore struct {
@@ -33,30 +57,42 @@ func NewFightStore(db *sql.DB) *FightStore {
 }
 
 // Create inserts a new fight into the database and returns the generated ID.
-func (s *FightStore) Create(ctx context.Context, boxer1ID, boxer2ID int, scheduledTime *time.Time, round int) (int, error) {
+func (s *FightStore) Create(ctx context.Context, boxer1ID, boxer2ID domain.BoxerID, scheduledTime *time.Time, round int) (domain.FightID, error) {
+	// Validate boxer IDs at entry point
+	if err := validateBoxerIDForFight(boxer1ID); err != nil {
+		return 0, err
+	}
+	if err := validateBoxerIDForFight(boxer2ID); err != nil {
+		return 0, err
+	}
+
 	query := `
 		INSERT INTO fights (boxer1_id, boxer2_id, scheduled_time, round)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
 
 	var id int
-	err := s.db.QueryRowContext(ctx, query, boxer1ID, boxer2ID, scheduledTime, round).Scan(&id)
+	err := s.db.QueryRowContext(ctx, query, int(boxer1ID), int(boxer2ID), scheduledTime, round).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
-	return id, nil
+	return domain.FightID(id), nil
 }
 
 // GetByID retrieves a fight by its ID.
-func (s *FightStore) GetByID(ctx context.Context, id int) (*model.Fight, error) {
+func (s *FightStore) GetByID(ctx context.Context, id domain.FightID) (*model.Fight, error) {
+	if err := validateFightID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
 		       winner_id, round, simulation_version, data, created_at, updated_at
 		FROM fights
 		WHERE id = $1`
 
-	row := s.db.QueryRowContext(ctx, query, id)
+	row := s.db.QueryRowContext(ctx, query, int(id))
 	fight, err := s.scanFightWithVersion(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -71,7 +107,11 @@ func (s *FightStore) GetByID(ctx context.Context, id int) (*model.Fight, error) 
 // GetByIDWithLock retrieves a fight by its ID with an exclusive row lock (SELECT FOR UPDATE).
 // This prevents concurrent modifications during fight simulation.
 // Must be called within a transaction to properly hold the lock.
-func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight, error) {
+func (s *FightStore) GetByIDWithLock(ctx context.Context, id domain.FightID) (*model.Fight, error) {
+	if err := validateFightID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
 		       winner_id, round, simulation_version, data, created_at, updated_at
@@ -79,7 +119,7 @@ func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight,
 		WHERE id = $1
 		FOR UPDATE`
 
-	row := s.db.QueryRowContext(ctx, query, id)
+	row := s.db.QueryRowContext(ctx, query, int(id))
 	fight, err := s.scanFightWithVersion(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -93,7 +133,11 @@ func (s *FightStore) GetByIDWithLock(ctx context.Context, id int) (*model.Fight,
 
 // GetByIDWithLockTx retrieves a fight by its ID with an exclusive row lock using the provided transaction.
 // This is the preferred method when performing fight simulation within a transaction.
-func (s *FightStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.Fight, error) {
+func (s *FightStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id domain.FightID) (*model.Fight, error) {
+	if err := validateFightID(id); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
 		       winner_id, round, simulation_version, data, created_at, updated_at
@@ -136,7 +180,11 @@ func (s *FightStore) GetActiveFights(ctx context.Context, statuses []string) ([]
 }
 
 // GetByBoxer retrieves fights involving a specific boxer.
-func (s *FightStore) GetByBoxer(ctx context.Context, boxerID int, limit int) ([]*model.Fight, error) {
+func (s *FightStore) GetByBoxer(ctx context.Context, boxerID domain.BoxerID, limit int) ([]*model.Fight, error) {
+	if err := validateBoxerIDForFight(boxerID); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT id, boxer1_id, boxer2_id, status, scheduled_time, start_time, end_time,
 		       winner_id, round, simulation_version, data, created_at, updated_at
@@ -145,7 +193,7 @@ func (s *FightStore) GetByBoxer(ctx context.Context, boxerID int, limit int) ([]
 		ORDER BY scheduled_time DESC
 		LIMIT $2`
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID, limit)
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +222,11 @@ func (s *FightStore) GetCompleted(ctx context.Context, limit int) ([]*model.Figh
 }
 
 // GetUpcomingFightForBoxer retrieves the next upcoming fight for a specific boxer (MAT-106).
-func (s *FightStore) GetUpcomingFightForBoxer(ctx context.Context, boxerID int) (*db.UpcomingFightResponse, error) {
+func (s *FightStore) GetUpcomingFightForBoxer(ctx context.Context, boxerID domain.BoxerID) (*db.UpcomingFightResponse, error) {
+	if err := validateBoxerIDForFight(boxerID); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT
 			f.id,
@@ -193,7 +245,7 @@ func (s *FightStore) GetUpcomingFightForBoxer(ctx context.Context, boxerID int) 
 		LIMIT 1`
 
 	var resp db.UpcomingFightResponse
-	err := s.db.QueryRowContext(ctx, query, boxerID).Scan(
+	err := s.db.QueryRowContext(ctx, query, int(boxerID)).Scan(
 		&resp.FightID,
 		&resp.OpponentID,
 		&resp.OpponentName,
@@ -213,7 +265,11 @@ func (s *FightStore) GetUpcomingFightForBoxer(ctx context.Context, boxerID int) 
 }
 
 // GetFightHistoryWithOpponents retrieves fight history for a boxer with opponent names (MAT-103).
-func (s *FightStore) GetFightHistoryWithOpponents(ctx context.Context, boxerID int) ([]*db.FightHistoryWithOpponent, error) {
+func (s *FightStore) GetFightHistoryWithOpponents(ctx context.Context, boxerID domain.BoxerID) ([]*db.FightHistoryWithOpponent, error) {
+	if err := validateBoxerIDForFight(boxerID); err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT f.id, f.boxer1_id, f.boxer2_id, f.status, f.scheduled_time, f.start_time, f.end_time,
 		       f.winner_id, f.round, f.data, f.created_at, f.updated_at,
@@ -228,7 +284,7 @@ func (s *FightStore) GetFightHistoryWithOpponents(ctx context.Context, boxerID i
 		ORDER BY f.end_time DESC, f.created_at DESC
 		LIMIT 50`
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID))
 	if err != nil {
 		return nil, err
 	}
@@ -273,16 +329,20 @@ func (s *FightStore) GetFightHistoryWithOpponents(ctx context.Context, boxerID i
 }
 
 // UpdateStatus updates the status of a fight.
-func (s *FightStore) UpdateStatus(ctx context.Context, id int, status string) error {
+func (s *FightStore) UpdateStatus(ctx context.Context, id domain.FightID, status string) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	var query string
 	var args []interface{}
 
 	if status == "completed" {
 		query = `UPDATE fights SET status = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2`
-		args = []interface{}{status, id}
+		args = []interface{}{status, int(id)}
 	} else {
 		query = `UPDATE fights SET status = $1 WHERE id = $2`
-		args = []interface{}{status, id}
+		args = []interface{}{status, int(id)}
 	}
 
 	result, err := s.db.ExecContext(ctx, query, args...)
@@ -302,16 +362,20 @@ func (s *FightStore) UpdateStatus(ctx context.Context, id int, status string) er
 }
 
 // UpdateStatusTx updates the status of a fight within a transaction.
-func (s *FightStore) UpdateStatusTx(ctx context.Context, tx *sql.Tx, id int, status string) error {
+func (s *FightStore) UpdateStatusTx(ctx context.Context, tx *sql.Tx, id domain.FightID, status string) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	var query string
 	var args []interface{}
 
 	if status == "completed" {
 		query = `UPDATE fights SET status = $1, end_time = CURRENT_TIMESTAMP WHERE id = $2`
-		args = []interface{}{status, id}
+		args = []interface{}{status, int(id)}
 	} else {
 		query = `UPDATE fights SET status = $1 WHERE id = $2`
-		args = []interface{}{status, id}
+		args = []interface{}{status, int(id)}
 	}
 
 	result, err := tx.ExecContext(ctx, query, args...)
@@ -331,9 +395,13 @@ func (s *FightStore) UpdateStatusTx(ctx context.Context, tx *sql.Tx, id int, sta
 }
 
 // UpdateRound updates the current round of a fight.
-func (s *FightStore) UpdateRound(ctx context.Context, id, round int) error {
+func (s *FightStore) UpdateRound(ctx context.Context, id domain.FightID, round int) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	query := `UPDATE fights SET round = $1 WHERE id = $2`
-	result, err := s.db.ExecContext(ctx, query, round, id)
+	result, err := s.db.ExecContext(ctx, query, round, int(id))
 	if err != nil {
 		return err
 	}
@@ -350,9 +418,13 @@ func (s *FightStore) UpdateRound(ctx context.Context, id, round int) error {
 }
 
 // UpdateRoundTx updates the current round of a fight within a transaction.
-func (s *FightStore) UpdateRoundTx(ctx context.Context, tx *sql.Tx, id, round int) error {
+func (s *FightStore) UpdateRoundTx(ctx context.Context, tx *sql.Tx, id domain.FightID, round int) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	query := `UPDATE fights SET round = $1 WHERE id = $2`
-	result, err := tx.ExecContext(ctx, query, round, id)
+	result, err := tx.ExecContext(ctx, query, round, int(id))
 	if err != nil {
 		return err
 	}
@@ -369,9 +441,16 @@ func (s *FightStore) UpdateRoundTx(ctx context.Context, tx *sql.Tx, id, round in
 }
 
 // SetWinner sets the winner of a fight and marks it as completed.
-func (s *FightStore) SetWinner(ctx context.Context, id, winnerID int) error {
+func (s *FightStore) SetWinner(ctx context.Context, id domain.FightID, winnerID domain.BoxerID) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+	if err := validateBoxerIDForFight(winnerID); err != nil {
+		return err
+	}
+
 	query := `UPDATE fights SET winner_id = $1, status = 'completed' WHERE id = $2`
-	result, err := s.db.ExecContext(ctx, query, winnerID, id)
+	result, err := s.db.ExecContext(ctx, query, int(winnerID), int(id))
 	if err != nil {
 		return err
 	}
@@ -388,9 +467,16 @@ func (s *FightStore) SetWinner(ctx context.Context, id, winnerID int) error {
 }
 
 // SetWinnerTx sets the winner of a fight and marks it as completed within a transaction.
-func (s *FightStore) SetWinnerTx(ctx context.Context, tx *sql.Tx, id, winnerID int) error {
+func (s *FightStore) SetWinnerTx(ctx context.Context, tx *sql.Tx, id domain.FightID, winnerID domain.BoxerID) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+	if err := validateBoxerIDForFight(winnerID); err != nil {
+		return err
+	}
+
 	query := `UPDATE fights SET winner_id = $1, status = 'completed' WHERE id = $2`
-	result, err := tx.ExecContext(ctx, query, winnerID, id)
+	result, err := tx.ExecContext(ctx, query, int(winnerID), int(id))
 	if err != nil {
 		return err
 	}
@@ -407,9 +493,13 @@ func (s *FightStore) SetWinnerTx(ctx context.Context, tx *sql.Tx, id, winnerID i
 }
 
 // SetSimulationVersion sets the simulation version of a fight (MAT-114).
-func (s *FightStore) SetSimulationVersionTx(ctx context.Context, tx *sql.Tx, id int, version string) error {
+func (s *FightStore) SetSimulationVersionTx(ctx context.Context, tx *sql.Tx, id domain.FightID, version string) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	query := `UPDATE fights SET simulation_version = $1 WHERE id = $2`
-	result, err := tx.ExecContext(ctx, query, version, id)
+	result, err := tx.ExecContext(ctx, query, version, int(id))
 	if err != nil {
 		return err
 	}
@@ -426,9 +516,22 @@ func (s *FightStore) SetSimulationVersionTx(ctx context.Context, tx *sql.Tx, id 
 }
 
 // GetByIDs retrieves multiple fights by their IDs.
-func (s *FightStore) GetByIDs(ctx context.Context, ids []int) ([]*model.Fight, error) {
+func (s *FightStore) GetByIDs(ctx context.Context, ids []domain.FightID) ([]*model.Fight, error) {
 	if len(ids) == 0 {
 		return []*model.Fight{}, nil
+	}
+
+	// Validate all IDs
+	for _, id := range ids {
+		if err := validateFightID(id); err != nil {
+			return nil, err
+		}
+	}
+
+	// Convert to int slice for SQL query
+	intIDs := make([]int, len(ids))
+	for i, id := range ids {
+		intIDs[i] = int(id)
 	}
 
 	query := `
@@ -438,7 +541,7 @@ func (s *FightStore) GetByIDs(ctx context.Context, ids []int) ([]*model.Fight, e
 		WHERE id = ANY($1)
 		ORDER BY created_at DESC`
 
-	rows, err := s.db.QueryContext(ctx, query, ids)
+	rows, err := s.db.QueryContext(ctx, query, intIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -448,14 +551,18 @@ func (s *FightStore) GetByIDs(ctx context.Context, ids []int) ([]*model.Fight, e
 }
 
 // SetData updates the data field of a fight (used for storing fight simulation results).
-func (s *FightStore) SetData(ctx context.Context, id int, data map[string]interface{}) error {
+func (s *FightStore) SetData(ctx context.Context, id domain.FightID, data map[string]interface{}) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
 	query := `UPDATE fights SET data = $1 WHERE id = $2`
-	result, err := s.db.ExecContext(ctx, query, dataJSON, id)
+	result, err := s.db.ExecContext(ctx, query, dataJSON, int(id))
 	if err != nil {
 		return err
 	}
@@ -472,14 +579,18 @@ func (s *FightStore) SetData(ctx context.Context, id int, data map[string]interf
 }
 
 // SetDataTx updates the data field of a fight within a transaction.
-func (s *FightStore) SetDataTx(ctx context.Context, tx *sql.Tx, id int, data map[string]interface{}) error {
+func (s *FightStore) SetDataTx(ctx context.Context, tx *sql.Tx, id domain.FightID, data map[string]interface{}) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
 	query := `UPDATE fights SET data = $1 WHERE id = $2`
-	result, err := tx.ExecContext(ctx, query, dataJSON, id)
+	result, err := tx.ExecContext(ctx, query, dataJSON, int(id))
 	if err != nil {
 		return err
 	}
@@ -496,9 +607,13 @@ func (s *FightStore) SetDataTx(ctx context.Context, tx *sql.Tx, id int, data map
 }
 
 // Delete removes a fight from the database.
-func (s *FightStore) Delete(ctx context.Context, id int) error {
+func (s *FightStore) Delete(ctx context.Context, id domain.FightID) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	query := `DELETE FROM fights WHERE id = $1`
-	result, err := s.db.ExecContext(ctx, query, id)
+	result, err := s.db.ExecContext(ctx, query, int(id))
 	if err != nil {
 		return err
 	}
@@ -522,7 +637,11 @@ func (s *FightStore) BeginFightTx(ctx context.Context) (*sql.Tx, error) {
 }
 
 // BoxerInFight checks if a boxer is currently involved in an active fight.
-func (s *FightStore) BoxerInFight(ctx context.Context, boxerID int) (bool, error) {
+func (s *FightStore) BoxerInFight(ctx context.Context, boxerID domain.BoxerID) (bool, error) {
+	if err := validateBoxerIDForFight(boxerID); err != nil {
+		return false, err
+	}
+
 	query := `
 		SELECT COUNT(*) > 0
 		FROM fights
@@ -530,7 +649,7 @@ func (s *FightStore) BoxerInFight(ctx context.Context, boxerID int) (bool, error
 		  AND status IN ('scheduled', 'in_progress')`
 
 	var inFight bool
-	err := s.db.QueryRowContext(ctx, query, boxerID).Scan(&inFight)
+	err := s.db.QueryRowContext(ctx, query, int(boxerID)).Scan(&inFight)
 	return inFight, err
 }
 
@@ -624,7 +743,11 @@ func (s *FightStore) GetZombieFights(ctx context.Context) ([]*ZombieFight, error
 
 // CancelZombieFight cancels a fight that is stuck in scheduled state.
 // It sets the status to 'cancelled' and records the cancellation reason in the data field.
-func (s *FightStore) CancelZombieFight(ctx context.Context, fightID int, reason string) error {
+func (s *FightStore) CancelZombieFight(ctx context.Context, fightID domain.FightID, reason string) error {
+	if err := validateFightID(fightID); err != nil {
+		return err
+	}
+
 	query := `
 		UPDATE fights
 		SET
@@ -642,7 +765,7 @@ func (s *FightStore) CancelZombieFight(ctx context.Context, fightID int, reason 
 			)
 		WHERE id = $1 AND status = 'scheduled'`
 
-	result, err := s.db.ExecContext(ctx, query, fightID, reason)
+	result, err := s.db.ExecContext(ctx, query, int(fightID), reason)
 	if err != nil {
 		return err
 	}
@@ -661,7 +784,11 @@ func (s *FightStore) CancelZombieFight(ctx context.Context, fightID int, reason 
 // CancelFight cancels a scheduled fight by setting its status to 'cancelled'.
 // This is used for user-initiated cancellation (MAT-140).
 // Returns ErrFightCannotCancel if the fight is not in 'scheduled' state.
-func (s *FightStore) CancelFight(ctx context.Context, id int, reason string) error {
+func (s *FightStore) CancelFight(ctx context.Context, id domain.FightID, reason string) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
 	query := `
 		UPDATE fights
 		SET
@@ -674,7 +801,7 @@ func (s *FightStore) CancelFight(ctx context.Context, id int, reason string) err
 				)
 		WHERE id = $1 AND status = 'scheduled'`
 
-	result, err := s.db.ExecContext(ctx, query, id, reason)
+	result, err := s.db.ExecContext(ctx, query, int(id), reason)
 	if err != nil {
 		return err
 	}

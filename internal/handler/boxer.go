@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mormm/boxing/internal/auth"
+	"github.com/mormm/boxing/internal/domain"
 	pkgerrors "github.com/mormm/boxing/internal/errors"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/store"
@@ -54,7 +55,7 @@ func (h *BoxerHandler) enrichBoxerResponse(ctx context.Context, boxer *model.Box
 	// Check for active rest events (MAT-89, MAT-96)
 	// If there's any unprocessed rest event, the boxer is currently resting
 	if h.scheduledEventStore != nil {
-		pendingRest, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxer.ID, model.EventTypeRest)
+		pendingRest, err := h.scheduledEventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(boxer.ID), model.EventTypeRest)
 		if err == nil && len(pendingRest) > 0 {
 			response.HasActiveRest = true
 			if len(pendingRest) > 0 {
@@ -161,7 +162,7 @@ func (h *BoxerHandler) GetBoxer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
+	boxer, getErr := h.boxerStore.GetByID(r.Context(), domain.BoxerID(id))
 	if getErr != nil {
 		if getErr.Error() == "no rows in result set" {
 			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
@@ -204,7 +205,7 @@ func (h *BoxerHandler) UpdateBoxer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the existing boxer to update
-	boxer, getErr := h.boxerStore.GetByID(r.Context(), id)
+	boxer, getErr := h.boxerStore.GetByID(r.Context(), domain.BoxerID(id))
 	if getErr != nil {
 		if getErr.Error() == "no rows in result set" {
 			pkgerrors.WriteError(w, pkgerrors.NotFound("boxer"))
@@ -267,7 +268,7 @@ func (h *BoxerHandler) GetBoxersByUserID(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Get the boxers from the database using the boxerStore
-	boxers, err := h.boxerStore.GetByUserID(r.Context(), user.ID)
+	boxers, err := h.boxerStore.GetByUserID(r.Context(), domain.UserID(user.ID))
 	if err != nil {
 		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to retrieve boxers"))
 		return

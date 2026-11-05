@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -244,7 +245,7 @@ func recoverProcessingEvents(ctx context.Context, eventStore *store.ScheduledEve
 	if len(processingEvents) > 0 {
 		lg.Warn("Found events stuck in processing state", "count", len(processingEvents))
 		for _, event := range processingEvents {
-			if err := eventStore.ResetToPending(ctx, event.ID); err != nil {
+			if err := eventStore.ResetToPending(ctx, domain.ScheduledEventID(event.ID)); err != nil {
 				if !errors.Is(err, store.ErrEventNotFound) {
 					lg.Error("Failed to reset event to pending", "event_id", event.ID, "error", err.Error())
 				}

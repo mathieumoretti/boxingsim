@@ -10,6 +10,7 @@ import (
 	"time"
 
 	boxerdb "github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/store"
@@ -59,23 +60,23 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 	}
 
 	// Validate boxers exist using boxerStore
-	boxer1, err := s.boxerStore.GetByID(ctx, boxer1ID)
+	boxer1, err := s.boxerStore.GetByID(ctx, domain.BoxerID(boxer1ID))
 	if err != nil || boxer1 == nil {
 		return fmt.Errorf("boxer does not exist: ID %d", boxer1ID)
 	}
 
-	boxer2, err := s.boxerStore.GetByID(ctx, boxer2ID)
+	boxer2, err := s.boxerStore.GetByID(ctx, domain.BoxerID(boxer2ID))
 	if err != nil || boxer2 == nil {
 		return fmt.Errorf("boxer does not exist: ID %d", boxer2ID)
 	}
 
 	// Check if boxers are in active fights using fightStore
-	inUse, _ := s.fightStore.BoxerInFight(ctx, boxer1ID)
+	inUse, _ := s.fightStore.BoxerInFight(ctx, domain.BoxerID(boxer1ID))
 	if inUse {
 		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer1ID)
 	}
 
-	inUse2, _ := s.fightStore.BoxerInFight(ctx, boxer2ID)
+	inUse2, _ := s.fightStore.BoxerInFight(ctx, domain.BoxerID(boxer2ID))
 	if inUse2 {
 		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer2ID)
 	}
@@ -88,7 +89,7 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 	}
 
 	// Create the fight and get the ID using fightStore
-	fightID, err := s.fightStore.Create(ctx, boxer1ID, boxer2ID, &scheduledTime, round)
+	fightID, err := s.fightStore.Create(ctx, domain.BoxerID(boxer1ID), domain.BoxerID(boxer2ID), &scheduledTime, round)
 	if err != nil {
 		return fmt.Errorf("failed to create fight: %w", err)
 	}
@@ -131,7 +132,7 @@ func (s *FightService) GetFightByID(ctx context.Context, id int) (*model.Fight, 
 	if id <= 0 {
 		return nil, errors.New("invalid fight id")
 	}
-	return s.fightStore.GetByID(ctx, id)
+	return s.fightStore.GetByID(ctx, domain.FightID(id))
 }
 
 // GetUpcomingFightForBoxer retrieves the next upcoming fight for a specific boxer (MAT-106)
@@ -139,7 +140,7 @@ func (s *FightService) GetUpcomingFightForBoxer(ctx context.Context, boxerID int
 	if boxerID <= 0 {
 		return nil, errors.New("invalid boxer id")
 	}
-	return s.fightStore.GetUpcomingFightForBoxer(ctx, boxerID)
+	return s.fightStore.GetUpcomingFightForBoxer(ctx, domain.BoxerID(boxerID))
 }
 
 // GetFightHistoryWithOpponents retrieves fight history for a boxer with opponent names (MAT-103).
@@ -147,7 +148,7 @@ func (s *FightService) GetFightHistoryWithOpponents(ctx context.Context, boxerID
 	if boxerID <= 0 {
 		return nil, errors.New("invalid boxer id")
 	}
-	return s.fightStore.GetFightHistoryWithOpponents(ctx, boxerID)
+	return s.fightStore.GetFightHistoryWithOpponents(ctx, domain.BoxerID(boxerID))
 }
 
 // CancelFight cancels a scheduled fight (MAT-140).
@@ -177,7 +178,7 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 	}
 	defer func() { _ = tx.Rollback() }() // Will be ignored if committed
 
-	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, fightID)
+	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, domain.FightID(fightID))
 	if err != nil {
 		if errors.Is(err, store.ErrFightNotFound) {
 			return fmt.Errorf("fight not found: %w", boxerdb.ErrBoxerNotExists)
@@ -204,7 +205,7 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 		cancelReason = "User requested cancellation"
 	}
 
-	if err := s.fightStore.CancelFight(ctx, fightID, cancelReason); err != nil {
+	if err := s.fightStore.CancelFight(ctx, domain.FightID(fightID), cancelReason); err != nil {
 		if errors.Is(err, store.ErrFightCannotCancel) {
 			return fmt.Errorf("fight cannot be cancelled: %w", err)
 		}
@@ -213,13 +214,13 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 
 	// Clean up associated scheduled events (mark as completed to prevent processing)
 	if s.eventStore != nil {
-		events, err := s.eventStore.GetByFightID(ctx, fightID)
+		events, err := s.eventStore.GetByFightID(ctx, domain.FightID(fightID))
 		if err != nil {
 			// Log but don't fail - the fight is cancelled even if event cleanup fails
 			fmt.Printf("Warning: failed to retrieve events for fight %d: %v\n", fightID, err)
 		} else {
 			for _, event := range events {
-				if err := s.eventStore.MarkAsCompleted(ctx, event.ID); err != nil {
+				if err := s.eventStore.MarkAsCompleted(ctx, domain.ScheduledEventID(event.ID)); err != nil {
 					// Log but don't fail - other events may still be cleaned up
 					fmt.Printf("Warning: failed to mark event %d as completed: %v\n", event.ID, err)
 				}
@@ -246,13 +247,13 @@ func (s *FightService) ValidateOpponentMatch(boxer1ID, boxer2ID int) MatchValida
 	ctx := context.Background()
 
 	// Retrieve both boxers using boxerStore
-	boxer1, err := s.boxerStore.GetByID(ctx, boxer1ID)
+	boxer1, err := s.boxerStore.GetByID(ctx, domain.BoxerID(boxer1ID))
 	if err != nil || boxer1 == nil {
 		validation.Warnings = append(validation.Warnings, "Boxer 1 not found")
 		return validation
 	}
 
-	boxer2, err := s.boxerStore.GetByID(ctx, boxer2ID)
+	boxer2, err := s.boxerStore.GetByID(ctx, domain.BoxerID(boxer2ID))
 	if err != nil || boxer2 == nil {
 		validation.Warnings = append(validation.Warnings, "Boxer 2 not found")
 		return validation
