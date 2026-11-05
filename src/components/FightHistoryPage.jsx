@@ -8,6 +8,7 @@ import './FightHistoryPage.css';
 
 /**
  * FightHistoryPage - Dedicated page wrapper for FightHistory component (MAT-121)
+ * Redesigned with dark arena theme matching boxer profile pages.
  *
  * Migrates FightHistory from modal to dedicated page at /boxer/:id/fights
  * Provides bookmarkable URL, full page real estate, and natural navigation flow.
@@ -38,18 +39,15 @@ const FightHistoryPage = ({ user, onLogout }) => {
   }, []);
 
   return (
-    <>
+    <div className="fight-history-page">
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         onBack={() => navigate('/dashboard')}
         backButtonLabel="← Back to Dashboard"
       >
-        {/* Wrapper div for CSS selectors */}
-        <div className="fight-history-page">
-          <FightHistory boxerId={id} currentGameTime={currentGameTime} />
-        </div>
+        <FightHistory boxerId={id} currentGameTime={currentGameTime} />
       </PageLayout>
-    </>
+    </div>
   );
 };
 

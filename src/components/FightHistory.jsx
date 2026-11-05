@@ -76,7 +76,7 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
             vs {fight.opponent_name || `Boxer #${opponentId}`}
           </div>
           <div className="fight-summary">
-            Round {fight.round} • {isKnockout && '🔥 KO'} •
+            Round {fight.round} • {isKnockout && <span className="ko-indicator">🔥 KO</span>} •
             <Link to={`/fight/${fight.id}`} className="view-details-link">View Details →</Link>
           </div>
         </div>

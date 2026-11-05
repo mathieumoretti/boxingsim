@@ -18,7 +18,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--space-6) var(--space-4);
-  background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+  background: linear-gradient(180deg, var(--color-navy-deep) 0%, var(--color-navy-dark) 100%);
   min-height: 100vh;
 }
 
@@ -51,7 +51,7 @@
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: 800;
-  color: var(--color-gray-800);
+  color: var(--color-white);
   letter-spacing: -0.5px;
 }
 
@@ -68,21 +68,22 @@
 .search-input {
   width: 100%;
   padding: var(--space-3) var(--space-5);
-  border: 2px solid var(--color-gray-200);
+  border: 2px solid var(--color-navy-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   transition: all var(--transition-fast);
-  background: var(--color-white);
+  background: var(--color-navy-deep);
+  color: var(--color-white);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.1);
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
 .search-input::placeholder {
-  color: var(--color-gray-400);
+  color: var(--color-navy-muted);
 }
 
 .search-icon {
@@ -103,11 +104,12 @@
   gap: var(--space-6);
   align-items: center;
   padding: var(--space-4) var(--space-5);
-  background: var(--color-white);
+  background: var(--color-navy-deep);
   border-radius: var(--radius-lg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
+  border: 1px solid var(--color-navy-border);
 }
 
 .filter-group {
@@ -119,19 +121,21 @@
 .filter-group label {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-gray-600);
+  color: var(--color-navy-muted);
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Criteria Dropdown */
 .criteria-select {
   padding: var(--space-2) var(--space-6);
-  border: 2px solid var(--color-gray-200);
+  border: 2px solid var(--color-navy-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-gray-800);
-  background: var(--color-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat right var(--space-2) center;
+  color: var(--color-white);
+  background: var(--color-navy-dark) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0aec0' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat right var(--space-2) center;
   background-size: 12px;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -139,13 +143,15 @@
 }
 
 .criteria-select:hover {
-  border-color: var(--color-gray-300);
+  border-color: var(--color-navy-border);
+  background: var(--color-navy-medium) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0aec0' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat right var(--space-2) center;
+  background-size: 12px;
 }
 
 .criteria-select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.1);
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
 /* Level Slider */
@@ -166,7 +172,7 @@
   flex: 1;
   height: 6px;
   border-radius: var(--radius-xs);
-  background: linear-gradient(90deg, var(--color-purple-light) 0%, var(--color-purple-medium) 100%);
+  background: linear-gradient(90deg, var(--color-navy-border) 0%, var(--color-navy-deep) 100%);
   appearance: none;
   cursor: pointer;
   outline: none;
@@ -177,22 +183,23 @@
   width: 18px;
   height: 18px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-accent-indigo-light), var(--color-indigo-dark));
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, var(--color-accent-indigo-light), var(--color-accent-purple));
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.5), 0 0 12px rgba(124, 58, 237, 0.3);
   cursor: pointer;
   transition: transform var(--transition-fast);
 }
 
 .level-slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(124, 58, 237, 0.6), 0 0 16px rgba(124, 58, 237, 0.4);
 }
 
 .level-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-accent-indigo-light), var(--color-indigo-dark));
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, var(--color-accent-indigo-light), var(--color-accent-purple));
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.5), 0 0 12px rgba(124, 58, 237, 0.3);
   cursor: pointer;
   border: none;
 }
@@ -202,7 +209,7 @@
   justify-content: space-between;
   width: 80px;
   font-size: var(--font-size-xs);
-  color: var(--color-gray-500);
+  color: var(--color-navy-muted);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -214,21 +221,23 @@
   cursor: pointer;
   user-select: none;
   font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
+  color: var(--color-text-bright);
   font-weight: var(--font-weight-medium);
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--color-gray-300);
+  border: 2px solid var(--color-navy-border);
   border-radius: var(--radius-sm);
-  accent-color: var(--color-primary);
+  accent-color: var(--color-accent-purple);
   cursor: pointer;
+  background: var(--color-navy-deep);
 }
 
 .checkbox-label input[type="checkbox"]:checked {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
+  border-color: var(--color-accent-purple);
 }
 
 /* ========================================
@@ -241,7 +250,7 @@
 
 .results-count {
   font-size: var(--font-size-sm);
-  color: var(--color-gray-500);
+  color: var(--color-navy-muted);
   font-weight: var(--font-weight-medium);
 }
 
@@ -250,8 +259,8 @@
    ======================================== */
 
 .rankings-error {
-  background: linear-gradient(135deg, var(--color-error-bg-light), #fee2e2);
-  border: 1px solid var(--color-error-border);
+  background: linear-gradient(135deg, rgba(var(--color-danger), 0.1), rgba(var(--color-danger-dark), 0.15));
+  border: 1px solid rgba(var(--color-danger), 0.3);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   display: flex;
@@ -266,13 +275,13 @@
 
 .rankings-error p {
   margin: 0;
-  color: var(--color-error-text);
+  color: var(--color-danger-bright);
   font-weight: var(--font-weight-medium);
 }
 
 .retry-btn {
   padding: var(--space-2) var(--space-4);
-  background: linear-gradient(135deg, var(--color-danger-bright), var(--color-danger));
+  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
   color: var(--color-white);
   border: none;
   border-radius: var(--radius-md);
@@ -280,11 +289,13 @@
   cursor: pointer;
   margin-left: auto;
   transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(var(--color-danger), 0.3);
 }
 
 .retry-btn:hover {
-  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
+  background: linear-gradient(135deg, var(--color-danger-bright), var(--color-danger));
   transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: 0 4px 12px rgba(var(--color-danger), 0.4);
 }
 
 /* ========================================
@@ -310,7 +321,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-300) 50%, var(--color-gray-200) 75%);
+  background: linear-gradient(90deg, var(--color-navy-border) 25%, var(--color-navy-deep) 50%, var(--color-navy-border) 75%);
   background-size: 200% 100%;
   animation: skeletonLoading 1.5s ease-in-out infinite;
 }
@@ -326,7 +337,7 @@
   height: 20px;
   width: 60%;
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-300) 50%, var(--color-gray-200) 75%);
+  background: linear-gradient(90deg, var(--color-navy-border) 25%, var(--color-navy-deep) 50%, var(--color-navy-border) 75%);
   background-size: 200% 100%;
   animation: skeletonLoading 1.5s ease-in-out infinite;
 }
@@ -335,7 +346,7 @@
   height: 14px;
   width: 40%;
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-300) 50%, var(--color-gray-200) 75%);
+  background: linear-gradient(90deg, var(--color-navy-border) 25%, var(--color-navy-deep) 50%, var(--color-navy-border) 75%);
   background-size: 200% 100%;
   animation: skeletonLoading 1.5s ease-in-out infinite;
 }
@@ -352,27 +363,29 @@
 .rankings-empty {
   text-align: center;
   padding: var(--space-15) var(--space-5);
-  background: var(--color-white);
+  background: var(--color-navy-deep);
   border-radius: var(--radius-lg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-navy-border);
 }
 
 .empty-icon {
   font-size: var(--font-size-xxl);
   display: block;
   margin-bottom: var(--space-4);
+  opacity: 0.8;
 }
 
 .rankings-empty h2 {
   margin: 0 0 var(--space-2) 0;
-  color: var(--color-gray-700);
+  color: var(--color-text-bright);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
 }
 
 .rankings-empty p {
   margin: 0;
-  color: var(--color-gray-500);
+  color: var(--color-navy-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -391,10 +404,10 @@
 
 .pagination-btn {
   padding: var(--space-2) var(--space-5);
-  background: linear-gradient(135deg, var(--color-gray-100), var(--color-gray-200));
-  border: 1px solid var(--color-gray-300);
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-deep));
+  border: 1px solid var(--color-navy-border);
   border-radius: var(--radius-md);
-  color: var(--color-gray-700);
+  color: var(--color-text-bright);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -402,12 +415,14 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-gray-200), var(--color-gray-300));
+  background: linear-gradient(135deg, var(--color-navy-medium), var(--color-navy-dark));
+  border-color: var(--color-accent-purple);
   transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
 }
 
 .pagination-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -419,10 +434,10 @@
 .pagination-number {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--color-gray-200);
+  border: 1px solid var(--color-navy-border);
   border-radius: var(--radius-md);
-  background: var(--color-white);
-  color: var(--color-gray-700);
+  background: var(--color-navy-deep);
+  color: var(--color-text-bright);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -432,21 +447,23 @@
 }
 
 .pagination-number:hover {
-  background: var(--color-gray-100);
-  border-color: var(--color-gray-300);
+  background: var(--color-navy-medium);
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.2);
 }
 
 .pagination-number.active {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  border-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
+  border-color: var(--color-accent-purple);
   color: var(--color-white);
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Page Info */
 .rankings-page-info {
   text-align: center;
   margin-top: var(--space-4);
-  color: var(--color-gray-500);
+  color: var(--color-navy-muted);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
 }
