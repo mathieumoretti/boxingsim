@@ -10,68 +10,94 @@
  * - All values reference src/design-tokens.css
  */
 
-/* Base Card */
+/* Base Card - Navy/Collar Palette */
 .rank-card {
-  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-100) 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-dark) 100%);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  box-shadow: var(--shadow-subtle);
-  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-navy-border);
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: var(--space-4);
   align-items: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-normal) var(--transition-timing-default);
+  position: relative;
+  overflow: visible;
+}
+
+.rank-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-accent-purple), 0.15) 0%,
+    transparent 50%,
+    rgba(var(--color-accent-indigo-light), 0.15) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0, #fff 0) content-box, linear-gradient(#fff 0, #fff 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal) ease;
 }
 
 .rank-card:hover {
   transform: translateY(calc(var(--space-1) * -0.5));
-  box-shadow: var(--shadow-elevated);
-  border-color: var(--color-gray-300);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 3px 12px rgba(0, 0, 0, 0.4);
+  border-color: var(--color-navy-border);
+}
+
+.rank-card:hover::before {
+  opacity: 1;
 }
 
 .rank-card:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.3);
+  box-shadow: 0 4px 20px rgba(var(--color-primary), 0.3), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* ========================================
-   TIER STYLING - Gold/Silver/Bronze
+   TIER STYLING - Gold/Silver/Bronze (Navy Palette)
    ======================================== */
 
 .rank-card.rank-1 {
-  background: linear-gradient(135deg, var(--color-gold-tier-bg) 0%, var(--color-warning-bright) 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, #1a1a3e 100%);
   border: 2px solid var(--color-warning-dark);
-  box-shadow: 0 4px 16px rgba(var(--color-warning), 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(var(--color-warning), 0.25), inset 0 0 24px rgba(255, 215, 0, 0.08);
 }
 
 .rank-card.rank-1:hover {
-  box-shadow: 0 6px 24px rgba(var(--color-warning), 0.3), inset 0 0 20px rgba(255, 215, 0, 0.15);
+  box-shadow: 0 6px 28px rgba(var(--color-warning), 0.35), inset 0 0 32px rgba(255, 215, 0, 0.12);
 }
 
 .rank-card.rank-2 {
-  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-dark) 100%);
   border: 2px solid var(--color-gray-400);
-  box-shadow: 0 4px 16px rgba(var(--color-gray-400), 0.2), inset 0 0 20px rgba(192, 192, 192, 0.1);
+  box-shadow: 0 4px 20px rgba(156, 163, 175, 0.2), inset 0 0 24px rgba(192, 192, 192, 0.08);
 }
 
 .rank-card.rank-2:hover {
-  box-shadow: 0 6px 24px rgba(var(--color-gray-400), 0.3), inset 0 0 20px rgba(192, 192, 192, 0.15);
+  box-shadow: 0 6px 28px rgba(156, 163, 175, 0.3), inset 0 0 32px rgba(192, 192, 192, 0.12);
 }
 
 .rank-card.rank-3 {
-  background: linear-gradient(135deg, var(--color-bronze-tier-start) 0%, var(--color-bronze-tier-end) 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, #1a202c 100%);
   border: 2px solid var(--color-bronze-border);
-  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.2), inset 0 0 20px rgba(205, 127, 50, 0.1);
+  box-shadow: 0 4px 20px rgba(var(--color-bronze-border), 0.25), inset 0 0 24px rgba(205, 127, 50, 0.08);
 }
 
 .rank-card.rank-3:hover {
-  box-shadow: 0 6px 24px rgba(180, 83, 9, 0.3), inset 0 0 20px rgba(205, 127, 50, 0.15);
+  box-shadow: 0 6px 28px rgba(var(--color-bronze-border), 0.35), inset 0 0 32px rgba(205, 127, 50, 0.12);
 }
 
 .rank-card.rank-regular {
-  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
+  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-dark) 100%);
 }
 
 /* ========================================
@@ -140,25 +166,23 @@
 .boxer-name {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: var(--color-gray-800);
+  color: var(--color-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rank-1 .boxer-name {
-  background: linear-gradient(90deg, var(--color-bronze-border), var(--color-warning));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-victory-light);
+  text-shadow: 0 0 8px rgba(var(--color-warning), 0.4);
 }
 
 .rank-2 .boxer-name {
-  color: var(--color-gray-600);
+  color: var(--color-gray-300);
 }
 
 .rank-3 .boxer-name {
-  color: var(--color-bronze-dark);
+  color: #fdba74;
 }
 
 .boxer-nickname {
@@ -186,7 +210,7 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-md);
   min-width: fit-content;
 }
@@ -195,46 +219,46 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  color: var(--color-gray-400);
+  color: var(--color-navy-muted);
   text-transform: uppercase;
 }
 
 .stat-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: var(--color-gray-800);
+  color: var(--color-text-bright);
   font-variant-numeric: tabular-nums;
 }
 
 /* StatDisplay mini variant compatibility (MAT-154) */
 .rank-stats .stat-display.stat-mini {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-md);
   padding: var(--space-1) var(--space-2);
 }
 
 .rank-stats .stat-display.stat-mini .stat-label {
-  color: var(--color-gray-400);
+  color: var(--color-navy-muted);
 }
 
 .rank-stats .stat-display.stat-mini .stat-value {
-  color: var(--color-accent-purple);
+  color: var(--color-accent-indigo-light);
 }
 
 /* Record styling */
 .stat-record .stat-value {
-  color: var(--color-primary-dark);
+  color: var(--color-primary-light);
 }
 
 /* Win rate highlight */
 .stat-winrate .stat-value-highlight {
   font-size: var(--font-size-base);
   font-weight: 800;
-  color: var(--color-success-dark);
+  color: var(--color-success);
 }
 
 .rank-1 .stat-value-highlight {
-  color: var(--color-bronze-border);
+  color: var(--color-victory-light);
 }
 
 /* ========================================
@@ -247,16 +271,16 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--color-gray-200), var(--color-gray-300));
+  background: rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-full);
-  color: var(--color-gray-500);
+  color: var(--color-text-muted);
   font-size: var(--font-size-lg);
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .rank-card:hover .rank-nav-arrow {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
   color: var(--color-white);
   transform: translateX(var(--space-1));
 }
@@ -266,7 +290,7 @@
   display: none;
   width: 100%;
   padding: var(--space-2) var(--space-4);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-purple-dark));
   color: var(--color-white);
   border: none;
   border-radius: var(--radius-md);
@@ -278,8 +302,9 @@
 }
 
 .rank-mobile-btn:hover {
-  background: linear-gradient(135deg, var(--color-primary-dark), #1e40af);
+  background: linear-gradient(135deg, var(--color-accent-purple-dark), #5b21b6);
   transform: translateY(calc(var(--space-1) * -0.5));
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
 }
 
 /* ========================================
@@ -291,14 +316,12 @@
   opacity: 0.7;
 }
 
-.rank-card.loading .boxer-name,
-.rank-card.loading .stat-value {
-  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-300) 50%, var(--color-gray-200) 75%);
+.rank-card.loading .skeleton-badge,
+.rank-card.loading .skeleton-name,
+.rank-card.loading .skeleton-stats {
+  background: linear-gradient(90deg, var(--color-navy-border) 25%, var(--color-navy-deep) 50%, var(--color-navy-border) 75%);
   background-size: 200% 100%;
   animation: skeletonLoading 1.5s ease-in-out infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
 }
 
 @keyframes skeletonLoading {

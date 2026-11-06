@@ -195,3 +195,11 @@
   max-width: 100%; /* Full width for dramatic background */
   background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy-medium) 50%, var(--color-navy-light) 100%);
 }
+
+/* FightHistoryPage - Navy blue gradient */
+.fight-history-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy-medium) 50%, var(--color-navy-light) 100%);
+}
