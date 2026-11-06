@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mormm/boxing/internal/auth"
 	"github.com/mormm/boxing/internal/db"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/handler"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -144,7 +145,7 @@ func TestTrainingBlockedDuringRestPeriod(t *testing.T) {
 	}
 
 	// Debug: Verify the rest event was created correctly
-	pendingRestEvents, err := stores.ScheduledEventStore.GetPendingByBoxerIDAndType(context.Background(), boxerID, model.EventTypeRest)
+	pendingRestEvents, err := stores.ScheduledEventStore.GetPendingByBoxerIDAndType(context.Background(), domain.BoxerID(boxerID), model.EventTypeRest)
 	if err != nil {
 		t.Fatalf("Failed to query rest events: %v", err)
 	}
@@ -569,7 +570,7 @@ func TestTrainingCompletesSuccessfully(t *testing.T) {
 	}
 
 	// Verify session is now completed
-	completedSession, err := trainingSessionStore.GetByID(ctx, session.ID)
+	completedSession, err := trainingSessionStore.GetByID(ctx, domain.TrainingSessionID(session.ID))
 	if err != nil {
 		t.Fatalf("Failed to fetch completed session: %v", err)
 	}
@@ -579,7 +580,7 @@ func TestTrainingCompletesSuccessfully(t *testing.T) {
 	}
 
 	// Verify boxer stats changed (energy decreased, strength/defense/agility increased)
-	updatedBoxer, err := boxerStore.GetByID(ctx, boxer.ID)
+	updatedBoxer, err := boxerStore.GetByID(ctx, domain.BoxerID(boxer.ID))
 	if err != nil {
 		t.Fatalf("Failed to fetch updated boxer: %v", err)
 	}
@@ -667,7 +668,7 @@ func TestScheduledEventStoreGetPendingByBoxerIDAndType(t *testing.T) {
 	}
 
 	// Query for pending Rest events
-	pendingRestEvents, err := scheduledEventStore.GetPendingByBoxerIDAndType(ctx, boxer.ID, model.EventTypeRest)
+	pendingRestEvents, err := scheduledEventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(boxer.ID), model.EventTypeRest)
 	if err != nil {
 		t.Fatalf("Failed to get pending rest events: %v", err)
 	}

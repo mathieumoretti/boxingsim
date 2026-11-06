@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
 // BoxerRepository defines the interface for boxer operations
 type BoxerRepository interface {
 	Create(ctx context.Context, boxer *model.Boxer) error
-	GetByID(ctx context.Context, id int) (*model.Boxer, error)
-	GetByUserID(ctx context.Context, userID int) ([]*model.Boxer, error)
+	GetByID(ctx context.Context, id domain.BoxerID) (*model.Boxer, error)
+	GetByUserID(ctx context.Context, userID domain.UserID) ([]*model.Boxer, error)
 	Update(ctx context.Context, boxer *model.Boxer) error
-	Delete(ctx context.Context, id int) error
-	UpdateFightResult(ctx context.Context, boxer1ID, boxer2ID int, result FightResult) error
+	Delete(ctx context.Context, id domain.BoxerID) error
+	UpdateFightResult(ctx context.Context, boxer1ID, boxer2ID domain.BoxerID, result FightResult) error
 }
 
 // FightResult represents the outcome of a fight between two boxers
@@ -40,11 +41,11 @@ func NewBoxerService(repo BoxerRepository) *BoxerService {
 // CreateBoxer creates a new boxer for a user
 func (s *BoxerService) CreateBoxer(
 	ctx context.Context,
-	userID int,
+	userID domain.UserID,
 	createReq *model.BoxerCreate,
 ) (*model.Boxer, error) {
 	boxer := &model.Boxer{
-		UserID:     userID,
+		UserID:     int(userID),
 		Name:       createReq.Name,
 		Nickname:   createReq.Nickname,
 		PositionX:  createReq.PositionX,
@@ -69,17 +70,17 @@ func (s *BoxerService) CreateBoxer(
 }
 
 // GetBoxer gets a boxer by ID
-func (s *BoxerService) GetBoxer(ctx context.Context, id int) (*model.Boxer, error) {
+func (s *BoxerService) GetBoxer(ctx context.Context, id domain.BoxerID) (*model.Boxer, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // GetBoxersByUser gets all boxers for a user
-func (s *BoxerService) GetBoxersByUser(ctx context.Context, userID int) ([]*model.Boxer, error) {
+func (s *BoxerService) GetBoxersByUser(ctx context.Context, userID domain.UserID) ([]*model.Boxer, error) {
 	return s.repo.GetByUserID(ctx, userID)
 }
 
 // UpdateBoxer updates a boxer's information
-func (s *BoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model.BoxerUpdate) (*model.Boxer, error) {
+func (s *BoxerService) UpdateBoxer(ctx context.Context, id domain.BoxerID, updateReq *model.BoxerUpdate) (*model.Boxer, error) {
 	boxer, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (s *BoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model
 }
 
 // UpdateStats updates a boxer's stats (experience and level)
-func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.BoxerStats) error {
+func (s *BoxerService) UpdateStats(ctx context.Context, id domain.BoxerID, stats model.BoxerStats) error {
 	boxer, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.Boxe
 // UpdateFightResult atomically updates fight statistics for two boxers
 func (s *BoxerService) UpdateFightResult(
 	ctx context.Context,
-	boxer1ID, boxer2ID int,
+	boxer1ID, boxer2ID domain.BoxerID,
 	result FightResult,
 ) error {
 	return s.repo.UpdateFightResult(ctx, boxer1ID, boxer2ID, result)

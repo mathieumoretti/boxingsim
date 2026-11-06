@@ -13,6 +13,7 @@ import (
 
 	"github.com/mormm/boxing/internal/db"
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
@@ -126,7 +127,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 		}
 
 		// Verify fight was created
-		fight, err := fightStore.GetByID(ctx, 1) // First fight should have ID=1
+		fight, err := fightStore.GetByID(ctx, domain.FightID(1)) // First fight should have ID=1
 		if err != nil {
 			t.Fatalf("Failed to retrieve fight: %v", err)
 		}
@@ -141,7 +142,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 
 	// Step 3: Verify the scheduled event was created
 	t.Run("VerifyScheduledEventCreated", func(t *testing.T) {
-		events, err := eventStore.GetPendingByBoxerIDAndType(ctx, 1, model.EventTypeFightSimulate)
+		events, err := eventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(1), model.EventTypeFightSimulate)
 		if err != nil {
 			t.Fatalf("Failed to query events: %v", err)
 		}
@@ -171,7 +172,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 	// Step 4: Process the fight_simulate event (simulating what the worker does)
 	t.Run("ProcessEventWithFightService", func(t *testing.T) {
 		// Get the event that needs processing - use GetByID to avoid potential slice aliasing issues
-		event, err := eventStore.GetByID(ctx, 1) // We know event ID is 1 from step 3
+		event, err := eventStore.GetByID(ctx, domain.ScheduledEventID(1)) // We know event ID is 1 from step 3
 		if err != nil || event == nil {
 			t.Fatal("Event not found")
 		}
@@ -198,7 +199,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 
 	// Step 5: Verify fight was completed and has a winner
 	t.Run("VerifyFightCompletedWithWinner", func(t *testing.T) {
-		fight, err := fightStore.GetByID(ctx, fightID)
+		fight, err := fightStore.GetByID(ctx, domain.FightID(fightID))
 		if err != nil {
 			t.Fatalf("Failed to retrieve fight after processing: %v", err)
 		}
@@ -261,7 +262,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 			expectedWinnerID = 2
 		}
 
-		fight, _ := fightStore.GetByID(ctx, fightID)
+		fight, _ := fightStore.GetByID(ctx, domain.FightID(fightID))
 		if fight.WinnerID != nil && *fight.WinnerID != expectedWinnerID {
 			t.Errorf("Expected winner ID %d (higher health), got %d", expectedWinnerID, *fight.WinnerID)
 		}
@@ -269,7 +270,7 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 
 	// Step 7: Verify event status was updated to completed
 	t.Run("VerifyEventStatusUpdated", func(t *testing.T) {
-		event, err := eventStore.GetByID(ctx, 1) // First event should have ID=1
+		event, err := eventStore.GetByID(ctx, domain.ScheduledEventID(1)) // First event should have ID=1
 		if err != nil {
 			t.Fatalf("Failed to retrieve event: %v", err)
 		}
@@ -348,7 +349,7 @@ func TestFightSimulateEventWithInvalidFightID(t *testing.T) {
 	t.Logf("Created event with ID: %d and invalid fight_id: 999", eventId)
 
 	// Fetch the event for processing
-	event, err := eventStore.GetByID(ctx, eventId)
+	event, err := eventStore.GetByID(ctx, domain.ScheduledEventID(eventId))
 	if err != nil {
 		t.Fatalf("Failed to retrieve created event: %v", err)
 	}
@@ -376,7 +377,7 @@ func TestFightSimulateEventWithInvalidFightID(t *testing.T) {
 	}
 
 	// Verify event status was updated to failed
-	updatedEvent, err := eventStore.GetByID(ctx, eventId)
+	updatedEvent, err := eventStore.GetByID(ctx, domain.ScheduledEventID(eventId))
 	if err != nil {
 		t.Fatalf("Failed to retrieve event after processing: %v", err)
 	}
@@ -464,11 +465,11 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 		t.Fatalf("Failed to book fight: %v", err)
 	}
 
-	fight, _ := fightStore.GetByID(ctx, 1)
+	fight, _ := fightStore.GetByID(ctx, domain.FightID(1))
 	t.Logf("Created fight with ID: %d", fight.ID)
 
 	// Get the pending event
-	events, _ := eventStore.GetPendingByBoxerIDAndType(ctx, boxer1.ID, model.EventTypeFightSimulate)
+	events, _ := eventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(boxer1.ID), model.EventTypeFightSimulate)
 	if len(events) == 0 {
 		t.Fatal("No pending events found")
 	}
@@ -486,7 +487,7 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 			t.Fatalf("First processing failed: %v", err)
 		}
 
-		fightAfterFirst, _ := fightStore.GetByID(ctx, fight.ID)
+		fightAfterFirst, _ := fightStore.GetByID(ctx, domain.FightID(fight.ID))
 		t.Logf("After first processing - Status: %s, Winner: %v",
 			fightAfterFirst.Status, fightAfterFirst.WinnerID)
 
@@ -496,14 +497,14 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 	})
 
 	// Get the event again (it should now be marked as completed)
-	eventAfterFirst, _ := eventStore.GetByID(ctx, event.ID)
+	eventAfterFirst, _ := eventStore.GetByID(ctx, domain.ScheduledEventID(event.ID))
 	t.Logf("Event status after first processing: %s", eventAfterFirst.Status)
 
 	// Try to process the same event again - this simulates a worker crash and retry scenario
 	// The fight simulation should detect that the fight is already completed and skip it
 	t.Run("SecondProcessingIdempotent", func(t *testing.T) {
 		// Fetch the event fresh (simulating worker querying pending events)
-		eventFresh, _ := eventStore.GetByID(ctx, event.ID)
+		eventFresh, _ := eventStore.GetByID(ctx, domain.ScheduledEventID(event.ID))
 
 		// Note: After first processing, the event status should be "completed"
 		// In a real worker, completed events would not be queried again
@@ -517,7 +518,7 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 		// This is expected behavior - the event processor checks event status before processing
 		t.Logf("Second processing result (expected to skip completed event): %v", err)
 
-		fightAfterSecond, _ := fightStore.GetByID(ctx, fight.ID)
+		fightAfterSecond, _ := fightStore.GetByID(ctx, domain.FightID(fight.ID))
 		t.Logf("After second processing attempt - Status: %s, Winner: %v",
 			fightAfterSecond.Status, fightAfterSecond.WinnerID)
 

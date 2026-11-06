@@ -9,6 +9,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/store"
@@ -77,7 +78,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	}()
 
 	// Step 1: Lock and fetch training session (prevents concurrent completion of same session)
-	session, err := s.trainingSessionStore.GetByIDWithLockTx(ctx, tx, sessionID)
+	session, err := s.trainingSessionStore.GetByIDWithLockTx(ctx, tx, domain.TrainingSessionID(sessionID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%w: ID=%d", ErrTrainingNotFound, sessionID)
@@ -90,7 +91,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	}
 
 	// Step 2: Lock boxer row (prevents concurrent training/fights on same boxer)
-	boxer, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, session.BoxerID)
+	boxer, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, domain.BoxerID(session.BoxerID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("boxer not found: ID=%d", session.BoxerID)
@@ -99,7 +100,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	}
 
 	// Step 3: Fetch training type to calculate energy cost (no lock needed - reference data)
-	trainingType, err := s.trainingTypeStore.GetByID(ctx, session.TrainingTypeID)
+	trainingType, err := s.trainingTypeStore.GetByID(ctx, domain.TrainingTypeID(session.TrainingTypeID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%w: ID=%d", ErrTrainingTypeNotFound, session.TrainingTypeID)
@@ -172,7 +173,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	}
 
 	// Step 7: Mark training session as completed within transaction (atomic with boxer update)
-	if err := s.trainingSessionStore.MarkAsCompletedTx(ctx, tx, sessionID); err != nil {
+	if err := s.trainingSessionStore.MarkAsCompletedTx(ctx, tx, domain.TrainingSessionID(sessionID)); err != nil {
 		return fmt.Errorf("failed to mark training session %d as completed: %w", sessionID, err)
 	}
 
@@ -185,7 +186,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	// This is outside the transaction as it's a separate concern and shouldn't block training completion
 	if s.fatigueService != nil {
 		fatigueIncrease := s.fatigueService.CalculateFatigueIncrease(session.DurationHours)
-		if err := s.fatigueService.ApplyFatigueIncrease(ctx, boxer.ID, fatigueIncrease); err != nil {
+		if err := s.fatigueService.ApplyFatigueIncrease(ctx, domain.BoxerID(boxer.ID), fatigueIncrease); err != nil {
 			s.logger.Error("Failed to apply fatigue after training session %d: %v", sessionID, err)
 			// Note: Training was completed but fatigue not tracked; log and continue
 		}
@@ -195,7 +196,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 	// This is also outside the transaction as it's a side effect that shouldn't block training completion
 	if s.fatigueService != nil && s.scheduledEventStore != nil {
 		// Get updated boxer state after fatigue increase
-		updatedBoxer, err := s.boxerStore.GetByID(ctx, boxer.ID)
+		updatedBoxer, err := s.boxerStore.GetByID(ctx, domain.BoxerID(boxer.ID))
 		if err != nil {
 			s.logger.Error("Failed to fetch boxer for rest scheduling: %v", err)
 			// Don't fail training completion due to rest scheduling
@@ -244,7 +245,7 @@ func (s *TrainingService) CompleteTrainingSession(ctx context.Context, sessionID
 
 					// If forced rest needed, update boxer.ForcedRestUntil
 					if needsForcedRest {
-						if err := s.fatigueService.ScheduleForcedRestHours(ctx, boxer.ID, finalRestHours); err != nil {
+						if err := s.fatigueService.ScheduleForcedRestHours(ctx, domain.BoxerID(boxer.ID), finalRestHours); err != nil {
 							s.logger.Error("Failed to schedule forced rest for boxer ID=%d: %v", boxer.ID, err)
 						}
 					}
@@ -317,7 +318,7 @@ func (s *TrainingService) CompleteAllDueTrainingSessions(ctx context.Context, db
 // This is useful for manual control panel (development/testing).
 func (s *TrainingService) CompleteTrainingForBoxer(ctx context.Context, boxerID int) (int, int, error) {
 	// Fetch pending training sessions for the specific boxer
-	sessions, err := s.trainingSessionStore.GetPendingByBoxerID(ctx, boxerID)
+	sessions, err := s.trainingSessionStore.GetPendingByBoxerID(ctx, domain.BoxerID(boxerID))
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to fetch pending training sessions for boxer %d: %w", boxerID, err)
 	}

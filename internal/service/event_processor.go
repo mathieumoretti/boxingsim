@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/fight"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -58,7 +59,7 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 	p.logger.Info("Event state transition", "event_id", event.ID, "from", event.Status, "to", "processing")
 
 	// Mark event as processing for crash recovery tracking
-	if err := p.eventStore.MarkAsProcessing(ctx, event.ID); err != nil {
+	if err := p.eventStore.MarkAsProcessing(ctx, domain.ScheduledEventID(event.ID)); err != nil {
 		if errors.Is(err, store.ErrAlreadyProcessed) {
 			p.logger.Warn("Event already processed or failed", "event_id", event.ID, "status", event.Status)
 			return nil // Idempotent: event was already handled
@@ -92,7 +93,7 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 			"error", processErr)
 
 		// Mark as failed with error message for visibility
-		if err := p.eventStore.MarkAsFailed(ctx, event.ID, processErr.Error()); err != nil {
+		if err := p.eventStore.MarkAsFailed(ctx, domain.ScheduledEventID(event.ID), processErr.Error()); err != nil {
 			if !errors.Is(err, store.ErrAlreadyProcessed) {
 				p.logger.Error("Failed to mark event as failed", "event_id", event.ID, "error", err)
 			}
@@ -103,7 +104,7 @@ func (p *EventProcessor) ProcessScheduledEvent(ctx context.Context, event *model
 	}
 
 	// Mark event as completed only after successful handling (idempotent)
-	if err := p.eventStore.MarkAsCompleted(ctx, event.ID); err != nil {
+	if err := p.eventStore.MarkAsCompleted(ctx, domain.ScheduledEventID(event.ID)); err != nil {
 		if errors.Is(err, store.ErrAlreadyProcessed) {
 			p.logger.Info("Event already marked as completed", "event_id", event.ID)
 			return nil
@@ -140,7 +141,7 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 	agilityGain := getFloatField(data, "agility_gain", 0.0)
 
 	// Fetch boxer
-	boxer, err := p.boxerStore.GetByID(ctx, event.BoxerID)
+	boxer, err := p.boxerStore.GetByID(ctx, domain.BoxerID(event.BoxerID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%w: ID=%d", ErrBoxerNotFound, event.BoxerID)
@@ -196,7 +197,7 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 		return fmt.Errorf("fatigueService is nil, cannot apply recovery")
 	}
 
-	if err := p.fatigueService.ApplyRecovery(ctx, event.BoxerID, restHours); err != nil {
+	if err := p.fatigueService.ApplyRecovery(ctx, domain.BoxerID(event.BoxerID), restHours); err != nil {
 		return fmt.Errorf("failed to apply recovery for boxer %d: %w", event.BoxerID, err)
 	}
 

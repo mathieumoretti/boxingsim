@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -13,7 +15,23 @@ var (
 	ErrTrainingSessionNotFound   = errors.New("training session not found")
 	ErrTrainingTypeNotFound      = errors.New("training type not found")
 	ErrTrainingSessionNotPending = errors.New("training session is not in pending status")
+	ErrInvalidTrainingSessionID  = errors.New("invalid training session ID")
 )
+
+func validateTrainingSessionID(id domain.TrainingSessionID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidTrainingSessionID, id)
+	}
+	return nil
+}
+
+// storeValidateBoxerID validates a boxer ID for use in training session operations
+func storeValidateBoxerID(id domain.BoxerID) error {
+	if !id.IsValid() {
+		return fmt.Errorf("%w: %d", ErrInvalidBoxerID, id)
+	}
+	return nil
+}
 
 // TrainingSessionStore implements CRUD operations for training sessions
 type TrainingSessionStore struct {
@@ -75,7 +93,7 @@ func (s *TrainingTypeStore) GetAll(ctx context.Context) ([]*model.TrainingType, 
 }
 
 // GetByID retrieves a training type by ID
-func (s *TrainingTypeStore) GetByID(ctx context.Context, id int) (*model.TrainingType, error) {
+func (s *TrainingTypeStore) GetByID(ctx context.Context, id domain.TrainingTypeID) (*model.TrainingType, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
 	}
@@ -86,7 +104,7 @@ func (s *TrainingTypeStore) GetByID(ctx context.Context, id int) (*model.Trainin
 		FROM training_types WHERE id = $1`
 
 	t := &model.TrainingType{}
-	err := s.db.QueryRowContext(ctx, query, id).Scan(
+	err := s.db.QueryRowContext(ctx, query, int(id)).Scan(
 		&t.ID, &t.Name, &t.Description, &t.StrengthGainFactor, &t.DefenseGainFactor,
 		&t.AgilityGainFactor, &t.EnergyCost, &t.CreatedAt, &t.UpdatedAt)
 	if err == sql.ErrNoRows {
@@ -127,9 +145,13 @@ func (s *TrainingTypeStore) GetByName(ctx context.Context, name string) (*model.
 // ==================== TrainingSessionStore Methods ====================
 
 // GetByID retrieves a training session by ID with optional joins
-func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.TrainingSession, error) {
+func (s *TrainingSessionStore) GetByID(ctx context.Context, id domain.TrainingSessionID) (*model.TrainingSession, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := validateTrainingSessionID(id); err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -141,7 +163,7 @@ func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.Trai
 		WHERE ts.id = $1`
 
 	session := &model.TrainingSession{}
-	err := s.db.QueryRowContext(ctx, query, id).Scan(
+	err := s.db.QueryRowContext(ctx, query, int(id)).Scan(
 		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
 		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
@@ -158,9 +180,13 @@ func (s *TrainingSessionStore) GetByID(ctx context.Context, id int) (*model.Trai
 
 // GetByIDWithLock retrieves a training session by ID with an exclusive row lock (SELECT FOR UPDATE).
 // Must be called within a transaction to properly hold the lock.
-func (s *TrainingSessionStore) GetByIDWithLock(ctx context.Context, id int) (*model.TrainingSession, error) {
+func (s *TrainingSessionStore) GetByIDWithLock(ctx context.Context, id domain.TrainingSessionID) (*model.TrainingSession, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := validateTrainingSessionID(id); err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -173,7 +199,7 @@ func (s *TrainingSessionStore) GetByIDWithLock(ctx context.Context, id int) (*mo
 		FOR UPDATE`
 
 	session := &model.TrainingSession{}
-	err := s.db.QueryRowContext(ctx, query, id).Scan(
+	err := s.db.QueryRowContext(ctx, query, int(id)).Scan(
 		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
 		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
@@ -189,9 +215,13 @@ func (s *TrainingSessionStore) GetByIDWithLock(ctx context.Context, id int) (*mo
 }
 
 // GetByIDWithLockTx retrieves a training session by ID with an exclusive row lock within a transaction.
-func (s *TrainingSessionStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id int) (*model.TrainingSession, error) {
+func (s *TrainingSessionStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx, id domain.TrainingSessionID) (*model.TrainingSession, error) {
 	if tx == nil {
 		return nil, errors.New("transaction is nil")
+	}
+
+	if err := validateTrainingSessionID(id); err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -204,7 +234,7 @@ func (s *TrainingSessionStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx
 		FOR UPDATE`
 
 	session := &model.TrainingSession{}
-	err := tx.QueryRowContext(ctx, query, id).Scan(
+	err := tx.QueryRowContext(ctx, query, int(id)).Scan(
 		&session.ID, &session.BoxerID, &session.TrainingTypeID, &session.ScheduledEventID,
 		&session.DurationHours, &session.PlannedStrengthGain, &session.PlannedDefenseGain,
 		&session.PlannedAgilityGain, &session.Status, &session.ScheduledCompletionTime, &session.CompletedAt,
@@ -220,13 +250,13 @@ func (s *TrainingSessionStore) GetByIDWithLockTx(ctx context.Context, tx *sql.Tx
 }
 
 // GetByIDWithType retrieves a training session by ID with joined training type data
-func (s *TrainingSessionStore) GetByIDWithType(ctx context.Context, id int) (*model.TrainingSession, error) {
+func (s *TrainingSessionStore) GetByIDWithType(ctx context.Context, id domain.TrainingSessionID) (*model.TrainingSession, error) {
 	session, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	trainingType, err := (&TrainingTypeStore{db: s.db}).GetByID(ctx, session.TrainingTypeID)
+	trainingType, err := (&TrainingTypeStore{db: s.db}).GetByID(ctx, domain.TrainingTypeID(session.TrainingTypeID))
 	if err != nil {
 		return nil, err
 	}
@@ -236,9 +266,13 @@ func (s *TrainingSessionStore) GetByIDWithType(ctx context.Context, id int) (*mo
 }
 
 // GetPendingByBoxerID retrieves all pending training sessions for a boxer
-func (s *TrainingSessionStore) GetPendingByBoxerID(ctx context.Context, boxerID int) ([]*model.TrainingSession, error) {
+func (s *TrainingSessionStore) GetPendingByBoxerID(ctx context.Context, boxerID domain.BoxerID) ([]*model.TrainingSession, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := storeValidateBoxerID(boxerID); err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -250,7 +284,7 @@ func (s *TrainingSessionStore) GetPendingByBoxerID(ctx context.Context, boxerID 
 		WHERE ts.boxer_id = $1 AND ts.status = 'pending'
 		ORDER BY ts.created_at ASC`
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID))
 	if err != nil {
 		return nil, err
 	}
@@ -356,9 +390,13 @@ func (s *TrainingSessionStore) Create(ctx context.Context, session *model.Traini
 }
 
 // UpdateStatus updates the status of a training session (e.g., to completed or cancelled)
-func (s *TrainingSessionStore) UpdateStatus(ctx context.Context, id int, status model.TrainingSessionStatus) error {
+func (s *TrainingSessionStore) UpdateStatus(ctx context.Context, id domain.TrainingSessionID, status model.TrainingSessionStatus) error {
 	if s.db == nil {
 		return errors.New("database connection is nil")
+	}
+
+	if err := validateTrainingSessionID(id); err != nil {
+		return err
 	}
 
 	// First check if the session exists and is pending (only pending sessions can be updated)
@@ -366,7 +404,7 @@ func (s *TrainingSessionStore) UpdateStatus(ctx context.Context, id int, status 
 		SELECT status FROM training_sessions WHERE id = $1`
 
 	var currentStatus string
-	err := s.db.QueryRowContext(ctx, query, id).Scan(&currentStatus)
+	err := s.db.QueryRowContext(ctx, query, int(id)).Scan(&currentStatus)
 	if err == sql.ErrNoRows {
 		return ErrTrainingSessionNotFound
 	}
@@ -393,18 +431,22 @@ func (s *TrainingSessionStore) UpdateStatus(ctx context.Context, id int, status 
 			SET status = $2, completed_at = $3, updated_at = CURRENT_TIMESTAMP
 			WHERE id = $1 AND status = 'pending'`
 
-		_, err = s.db.ExecContext(ctx, updateQuery, id, status, completedAt)
+		_, err = s.db.ExecContext(ctx, updateQuery, int(id), status, completedAt)
 	} else {
-		_, err = s.db.ExecContext(ctx, updateQuery, id, status)
+		_, err = s.db.ExecContext(ctx, updateQuery, int(id), status)
 	}
 
 	return err
 }
 
 // MarkAsCompletedTx marks a training session as completed within a transaction.
-func (s *TrainingSessionStore) MarkAsCompletedTx(ctx context.Context, tx *sql.Tx, id int) error {
+func (s *TrainingSessionStore) MarkAsCompletedTx(ctx context.Context, tx *sql.Tx, id domain.TrainingSessionID) error {
 	if tx == nil {
 		return errors.New("transaction is nil")
+	}
+
+	if err := validateTrainingSessionID(id); err != nil {
+		return err
 	}
 
 	query := `
@@ -413,7 +455,7 @@ func (s *TrainingSessionStore) MarkAsCompletedTx(ctx context.Context, tx *sql.Tx
 		WHERE id = $1 AND status = 'pending'`
 
 	now := time.Now()
-	result, err := tx.ExecContext(ctx, query, id, model.TrainingSessionCompleted, now)
+	result, err := tx.ExecContext(ctx, query, int(id), model.TrainingSessionCompleted, now)
 	if err != nil {
 		return err
 	}
@@ -475,15 +517,19 @@ func (s *TrainingSessionStore) GetAllPending(ctx context.Context) ([]*model.Trai
 }
 
 // MarkAsCancelled marks a training session as cancelled
-func (s *TrainingSessionStore) MarkAsCancelled(ctx context.Context, id int) error {
+func (s *TrainingSessionStore) MarkAsCancelled(ctx context.Context, id domain.TrainingSessionID) error {
 	return s.UpdateStatus(ctx, id, model.TrainingSessionCancelled)
 }
 
 // GetCompletedHistoryWithTypes retrieves completed training sessions with training type details for a boxer
 // This is used by the MAT-147 Training History feature
-func (s *TrainingSessionStore) GetCompletedHistoryWithTypes(ctx context.Context, boxerID int) ([]model.TrainingHistoryResponse, error) {
+func (s *TrainingSessionStore) GetCompletedHistoryWithTypes(ctx context.Context, boxerID domain.BoxerID) ([]model.TrainingHistoryResponse, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := storeValidateBoxerID(boxerID); err != nil {
+		return nil, err
 	}
 
 	query := `
@@ -504,7 +550,7 @@ func (s *TrainingSessionStore) GetCompletedHistoryWithTypes(ctx context.Context,
 		  AND ts.status = 'completed'
 		ORDER BY ts.completed_at DESC`
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID))
 	if err != nil {
 		return nil, err
 	}
@@ -544,9 +590,13 @@ func (s *TrainingSessionStore) GetCompletedHistoryWithTypes(ctx context.Context,
 
 // GetStatProgression retrieves stat progression data points for a boxer's chart (MAT-147)
 // Returns cumulative stat values over time based on completed training sessions
-func (s *TrainingSessionStore) GetStatProgression(ctx context.Context, boxerID int) (*model.StatProgressionResponse, error) {
+func (s *TrainingSessionStore) GetStatProgression(ctx context.Context, boxerID domain.BoxerID) (*model.StatProgressionResponse, error) {
 	if s.db == nil {
 		return nil, errors.New("database connection is nil")
+	}
+
+	if err := storeValidateBoxerID(boxerID); err != nil {
+		return nil, err
 	}
 
 	// Get boxer's initial stats and creation time
@@ -556,7 +606,7 @@ func (s *TrainingSessionStore) GetStatProgression(ctx context.Context, boxerID i
 
 	var baseStrength, baseDefense, baseAgility float64
 	var createdAt time.Time
-	err := s.db.QueryRowContext(ctx, boxerQuery, boxerID).Scan(
+	err := s.db.QueryRowContext(ctx, boxerQuery, int(boxerID)).Scan(
 		&baseStrength, &baseDefense, &baseAgility, &createdAt)
 	if err == sql.ErrNoRows {
 		return &model.StatProgressionResponse{Points: []model.StatProgressionPoint{}}, nil
@@ -577,7 +627,7 @@ func (s *TrainingSessionStore) GetStatProgression(ctx context.Context, boxerID i
 		  AND ts.status = 'completed'
 		ORDER BY ts.completed_at ASC`
 
-	rows, err := s.db.QueryContext(ctx, query, boxerID)
+	rows, err := s.db.QueryContext(ctx, query, int(boxerID))
 	if err != nil {
 		return nil, err
 	}

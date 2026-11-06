@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -55,14 +56,14 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 	ctx := context.Background()
 
 	// Create the fight using the store
-	id, err := s.fightStore.Create(ctx, boxer1ID, boxer2ID, &scheduledTime, 1)
+	fightID, err := s.fightStore.Create(ctx, domain.BoxerID(boxer1ID), domain.BoxerID(boxer2ID), &scheduledTime, 1)
 	if err != nil {
 		s.logger.Error("Failed to schedule fight", err)
 		return nil, err
 	}
 
 	fight := &Fight{
-		ID:            id,
+		ID:            int(fightID),
 		Boxer1ID:      &boxer1ID,
 		Boxer2ID:      &boxer2ID,
 		Status:        "scheduled",
@@ -79,7 +80,7 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 	// Create a scheduled event for the fight simulation (MAT-99)
 	if s.eventStore != nil {
 		eventData, _ := json.Marshal(map[string]any{
-			"fight_id": id,
+			"fight_id": int(fightID),
 		})
 
 		event := &model.ScheduledEvent{
@@ -92,9 +93,9 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 
 		if err := s.eventStore.Create(ctx, event); err != nil {
 			// Log the error but don't fail the fight scheduling
-			s.logger.Error("Failed to create scheduled event for fight", "fight_id", id, "error", err)
+			s.logger.Error("Failed to create scheduled event for fight", "fight_id", int(fightID), "error", err)
 		} else {
-			s.logger.Info("Created scheduled event for fight", "fight_id", id, "event_time", scheduledTime)
+			s.logger.Info("Created scheduled event for fight", "fight_id", int(fightID), "event_time", scheduledTime)
 		}
 	}
 
@@ -104,7 +105,7 @@ func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time)
 func (s *FightService) GetByID(id int) (*Fight, error) {
 	ctx := context.Background()
 
-	fightModel, err := s.fightStore.GetByID(ctx, id)
+	fightModel, err := s.fightStore.GetByID(ctx, domain.FightID(id))
 	if err != nil {
 		if err == store.ErrFightNotFound {
 			return nil, nil
@@ -162,7 +163,7 @@ func (s *FightService) getFightsByCustomQuery(query string, limit int) ([]*Fight
 
 func (s *FightService) UpdateStatus(id int, status string) error {
 	ctx := context.Background()
-	err := s.fightStore.UpdateStatus(ctx, id, status)
+	err := s.fightStore.UpdateStatus(ctx, domain.FightID(id), status)
 	if err != nil {
 		s.logger.Error("Failed to update fight status", err)
 		return err
@@ -174,7 +175,7 @@ func (s *FightService) UpdateStatus(id int, status string) error {
 
 func (s *FightService) UpdateRound(id int, round int) error {
 	ctx := context.Background()
-	err := s.fightStore.UpdateRound(ctx, id, round)
+	err := s.fightStore.UpdateRound(ctx, domain.FightID(id), round)
 	if err != nil {
 		s.logger.Error("Failed to update fight round", err)
 		return err
@@ -186,7 +187,7 @@ func (s *FightService) UpdateRound(id int, round int) error {
 
 func (s *FightService) SetWinner(id int, winnerID int) error {
 	ctx := context.Background()
-	err := s.fightStore.SetWinner(ctx, id, winnerID)
+	err := s.fightStore.SetWinner(ctx, domain.FightID(id), domain.BoxerID(winnerID))
 	if err != nil {
 		s.logger.Error("Failed to set fight winner", err)
 		return err
@@ -199,7 +200,7 @@ func (s *FightService) SetWinner(id int, winnerID int) error {
 func (s *FightService) GetByBoxer(boxerID int, limit int) ([]*Fight, error) {
 	ctx := context.Background()
 
-	fightsModel, err := s.fightStore.GetByBoxer(ctx, boxerID, limit)
+	fightsModel, err := s.fightStore.GetByBoxer(ctx, domain.BoxerID(boxerID), limit)
 	if err != nil {
 		s.logger.Error("Failed to get fights by boxer", err)
 		return nil, err
@@ -243,7 +244,7 @@ func (s *FightService) GetCompleted(limit int) ([]*Fight, error) {
 
 func (s *FightService) Delete(id int) error {
 	ctx := context.Background()
-	err := s.fightStore.Delete(ctx, id)
+	err := s.fightStore.Delete(ctx, domain.FightID(id))
 	if err != nil {
 		s.logger.Error("Failed to delete fight", err)
 		return err
@@ -304,7 +305,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 	}()
 
 	// Lock the fight row for update (prevents concurrent simulations of same fight)
-	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, fightID)
+	fight, err := s.fightStore.GetByIDWithLockTx(ctx, tx, domain.FightID(fightID))
 	if err != nil {
 		s.logger.Error("Failed to lock fight", "fight_id", fightID, "error", err)
 		return fmt.Errorf("failed to lock fight: %w", err)
@@ -317,13 +318,13 @@ func (s *FightService) SimulateFight(fightID int) error {
 	}
 
 	// Lock both boxer rows for update (prevents concurrent training/fights)
-	boxer1, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer1ID)
+	boxer1, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, domain.BoxerID(fight.Boxer1ID))
 	if err != nil {
 		s.logger.Error("Failed to lock boxer1", "boxer_id", fight.Boxer1ID, "error", err)
 		return fmt.Errorf("failed to lock boxer1: %w", err)
 	}
 
-	boxer2, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, fight.Boxer2ID)
+	boxer2, err := s.boxerStore.GetByIDWithLockTx(ctx, tx, domain.BoxerID(fight.Boxer2ID))
 	if err != nil {
 		s.logger.Error("Failed to lock boxer2", "boxer_id", fight.Boxer2ID, "error", err)
 		return fmt.Errorf("failed to lock boxer2: %w", err)
@@ -332,7 +333,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 	s.logger.Info("Simulating fight", "boxer1", boxer1.Name, "boxer2", boxer2.Name)
 
 	// Update fight status to in_progress within transaction
-	if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "in_progress"); err != nil {
+	if err := s.fightStore.UpdateStatusTx(ctx, tx, domain.FightID(fightID), "in_progress"); err != nil {
 		return fmt.Errorf("failed to update fight status: %w", err)
 	}
 
@@ -379,10 +380,10 @@ func (s *FightService) SimulateFight(fightID int) error {
 			"boxer2_energy": boxer2.Energy,
 		}
 
-		if err := s.fightStore.UpdateRoundTx(ctx, tx, fightID, currentRound); err != nil {
+		if err := s.fightStore.UpdateRoundTx(ctx, tx, domain.FightID(fightID), currentRound); err != nil {
 			return fmt.Errorf("failed to update round: %w", err)
 		}
-		if err := s.fightStore.SetDataTx(ctx, tx, fightID, fightData); err != nil {
+		if err := s.fightStore.SetDataTx(ctx, tx, domain.FightID(fightID), fightData); err != nil {
 			return fmt.Errorf("failed to set fight data: %w", err)
 		}
 
@@ -415,7 +416,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 
 	if winnerID != nil && !isDraw {
 		// Set winner and mark as completed (atomic update)
-		if err := s.fightStore.SetWinnerTx(ctx, tx, fightID, *winnerID); err != nil {
+		if err := s.fightStore.SetWinnerTx(ctx, tx, domain.FightID(fightID), domain.BoxerID(*winnerID)); err != nil {
 			return fmt.Errorf("failed to set winner: %w", err)
 		}
 
@@ -458,7 +459,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 		s.logger.Info("Career stats updated", "winner", boxerToUpdate.Name, "winner_wins", boxerToUpdate.Wins, "loser", loserBoxer.Name, "loser_losses", loserBoxer.Losses)
 	} else {
 		// Draw - just mark as completed
-		if err := s.fightStore.UpdateStatusTx(ctx, tx, fightID, "completed"); err != nil {
+		if err := s.fightStore.UpdateStatusTx(ctx, tx, domain.FightID(fightID), "completed"); err != nil {
 			return fmt.Errorf("failed to mark draw: %w", err)
 		}
 
@@ -477,7 +478,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 	}
 
 	// MAT-114: Record simulation version for replay compatibility
-	if err := s.fightStore.SetSimulationVersionTx(ctx, tx, fightID, simVersion); err != nil {
+	if err := s.fightStore.SetSimulationVersionTx(ctx, tx, domain.FightID(fightID), simVersion); err != nil {
 		s.logger.Error("Failed to record simulation version", "fight_id", fightID, "version", simVersion, "error", err)
 		// Don't fail the entire transaction - just log the error
 	}
@@ -511,7 +512,7 @@ func (s *FightService) SimulateFight(fightID int) error {
 		}
 	}
 
-	if err := s.fightStore.SetDataTx(ctx, tx, fightID, finalData); err != nil {
+	if err := s.fightStore.SetDataTx(ctx, tx, domain.FightID(fightID), finalData); err != nil {
 		s.logger.Error("Failed to store final fight data", "fight_id", fightID, "error", err)
 		// Don't fail the transaction - just log
 	}

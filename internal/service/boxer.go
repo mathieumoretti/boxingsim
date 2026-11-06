@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mormm/boxing/internal/boxer"
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 )
 
@@ -23,20 +24,20 @@ func (s *BoxerService) CreateBoxer(
 	userID int,
 	createReq *model.BoxerCreate,
 ) (*model.Boxer, error) {
-	return s.boxerService.CreateBoxer(ctx, userID, createReq)
+	return s.boxerService.CreateBoxer(ctx, domain.UserID(userID), createReq)
 }
 
 // GetBoxer retrieves a boxer by ID
 func (s *BoxerService) GetBoxer(ctx context.Context, id int) (*model.Boxer, error) {
-	return s.boxerService.GetBoxer(ctx, id)
+	return s.boxerService.GetBoxer(ctx, domain.BoxerID(id))
 }
 
 // UpdateBoxer updates a boxer's information
 func (s *BoxerService) UpdateBoxer(ctx context.Context, id int, updateReq *model.BoxerUpdate) (*model.Boxer, error) {
-	return s.boxerService.UpdateBoxer(ctx, id, updateReq)
+	return s.boxerService.UpdateBoxer(ctx, domain.BoxerID(id), updateReq)
 }
 
 // UpdateStats updates a boxer's stats (experience and level)
 func (s *BoxerService) UpdateStats(ctx context.Context, id int, stats model.BoxerStats) error {
-	return s.boxerService.UpdateStats(ctx, id, stats)
+	return s.boxerService.UpdateStats(ctx, domain.BoxerID(id), stats)
 }

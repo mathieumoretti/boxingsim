@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mormm/boxing/internal/domain"
 	"github.com/mormm/boxing/internal/model"
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/logger"
@@ -153,7 +154,7 @@ func (s *EventCleanupService) cleanupFightEvent(ctx context.Context, event *stor
 
 	// Cancel the fight with auto-cleanup reason
 	reason := fmt.Sprintf("Auto-cleaned: fight_simulate event failed after %.0f hours", event.HoursOld)
-	if err := s.fightStore.CancelZombieFight(ctx, *event.FightID, reason); err != nil {
+	if err := s.fightStore.CancelZombieFight(ctx, domain.FightID(*event.FightID), reason); err != nil {
 		if err == store.ErrFightNotFound {
 			s.logger.Debug("Fight not found during cancellation (already resolved)",
 				"event_id", event.EventID,
