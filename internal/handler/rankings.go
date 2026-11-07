@@ -191,3 +191,35 @@ func (h *RankingsHandler) InvalidateRankings(w http.ResponseWriter, r *http.Requ
 		"message": "Rankings cache invalidated successfully",
 	})
 }
+
+// ForceRecalculate handles force recalculation for rankings (admin endpoint) (MAT-115)
+// POST /rankings/recalculate
+func (h *RankingsHandler) ForceRecalculate(w http.ResponseWriter, r *http.Request) {
+	// Get authenticated user from context (injected by middleware)
+	user := auth.UserFromRequest(r)
+	if user == nil {
+		pkgerrors.WriteError(w, pkgerrors.Unauthorized("Authentication failed"))
+		return
+	}
+
+	// TODO: Add admin check here
+
+	if h.rankingsService == nil {
+		pkgerrors.WriteError(w, pkgerrors.ServiceUnavailable())
+		return
+	}
+
+	results, err := h.rankingsService.ForceRecalculate(r.Context())
+	if err != nil {
+		pkgerrors.WriteError(w, pkgerrors.Internal("Failed to force recalculate rankings"))
+		return
+	}
+
+	response := map[string]interface{}{
+		"message":   "Rankings force recalculated successfully",
+		"results":   results,
+		"criteria_count": len(results),
+	}
+
+	pkgerrors.WriteSuccess(w, http.StatusOK, response)
+}

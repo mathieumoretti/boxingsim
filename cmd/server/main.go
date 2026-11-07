@@ -222,6 +222,7 @@ func main() {
 	protectedRouter.HandleFunc("/rankings/{boxer_id}", rankingsHandler.GetRankingForBoxer).Methods("GET")
 	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", rankingsHandler.GetNearbyRankings).Methods("GET")
 	protectedRouter.HandleFunc("/rankings/invalidate", rankingsHandler.InvalidateRankings).Methods("POST")
+	protectedRouter.HandleFunc("/rankings/recalculate", rankingsHandler.ForceRecalculate).Methods("POST") // MAT-115
 
 	// Serve static files for the UI (React app) with SPA fallback
 	// The SPA handler serves actual static assets and falls back to index.html for React Router paths
