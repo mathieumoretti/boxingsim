@@ -1,0 +1,111 @@
+/**
+ * PageHeader Component Styles
+ *
+ * Consistent header structure for all pages with:
+ * - Responsive layout (stack on mobile)
+ * - Design token-based spacing and typography
+ * - Breadcrumb integration support
+ */
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.page-header-breadcrumbs {
+  /* Flex properties for alignment */
+  flex-shrink: 0;
+}
+
+.page-header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.page-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0; /* Prevents text overflow issues */
+}
+
+.page-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  margin: 0;
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.02em;
+
+  /* Text truncation for long titles */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.page-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+  margin: 0;
+  line-height: var(--line-height-normal);
+  max-width: 60ch; /* Optimal reading length */
+}
+
+.page-header-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+/* Dark mode / navy background support */
+[data-theme="dark"] .page-header,
+.page-header[data-theme="dark"] {
+  .page-title {
+    color: var(--color-text-bright);
+  }
+
+  .page-subtitle {
+    color: var(--color-navy-muted);
+  }
+}
+
+/* Responsive: Tablet and below */
+@media (max-width: var(--breakpoint-tablet)) {
+  .page-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .page-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* Responsive: Mobile portrait */
+@media (max-width: var(--breakpoint-mobile)) {
+  .page-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .page-subtitle {
+    font-size: var(--font-size-xs);
+  }
+
+  .page-header-actions {
+    gap: var(--space-2);
+  }
+}
+
+/* Responsive: Small mobile */
+@media (max-width: var(--breakpoint-mobile-sm)) {
+  .page-header {
+    margin-bottom: var(--space-4);
+  }
+}

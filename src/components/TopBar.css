@@ -1,135 +1,286 @@
-/* ========================================
-   FIXED TOP NAVIGATION BAR
-
-   Uses Design Tokens (MAT-146):
-   - All values reference src/design-tokens.css
-   ======================================== */
+/**
+ * TopBar Component Styles
+ *
+ * Global navigation bar implementing "The Four Corners" structure:
+ * - Sticky positioning at top of viewport
+ * - Navy gradient background (premium feel)
+ * - Responsive 3-section layout (brand | nav+clock | user actions)
+ * - Clean hover states with subtle animations
+ */
 
 .top-bar {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  height: var(--topbar-height);
-  background: linear-gradient(135deg, var(--color-navy-medium) 0%, var(--color-navy-light) 100%);
-  box-shadow: var(--shadow-topbar);
   z-index: var(--z-sticky);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-6);
   gap: var(--space-6);
+
+  padding: var(--space-3) var(--space-6);
+
+  background: linear-gradient(
+    135deg,
+    var(--color-navy-dark) 0%,
+    var(--color-navy-medium) 50%,
+    var(--color-navy-light) 100%
+  );
+
+  box-shadow: var(--shadow-topbar);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
+
+/* === Left Section: Brand === */
 
 .top-bar-left {
-  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.app-title {
-  margin: 0;
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.brand-icon {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.brand-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-white);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.01em;
+
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
+
+/* === Center Section: Navigation + World Clock === */
 
 .top-bar-center {
-  flex: 1 1 auto;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  flex: 1;
+
+  /* Prevent center from shrinking too much */
+  min-width: 0;
 }
 
+.world-clock-wrapper {
+  display: flex;
+  align-items: center;
+  padding-left: var(--space-6);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === Right Section: User Actions === */
+
 .top-bar-right {
-  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.user-actions {
   display: flex;
   align-items: center;
   gap: var(--space-4);
 }
 
-/* Navigation Links */
-.nav-links {
+/* Add Fighter Button */
+.btn-add-fighter {
   display: flex;
-  gap: var(--space-2);
-  margin-right: var(--space-2);
-  padding-right: var(--space-4);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-}
+  align-items: center;
+  gap: var(--space-1);
 
-.nav-link {
-  color: var(--color-navy-muted);
-  text-decoration: none;
+  padding: var(--space-2) var(--space-4);
+
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
+
+  color: var(--color-white);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark) 0%,
+    var(--color-primary) 100%
+  );
+
+  border: none;
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
+  text-decoration: none;
+
   transition: all var(--transition-fast);
-  white-space: nowrap;
+
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+
+  &:hover {
+    background: linear-gradient(
+      135deg,
+      var(--color-primary) 0%,
+      var(--color-primary-light) 100%
+    );
+
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.6);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  span:first-child {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+  }
 }
 
-.nav-link:hover {
-  color: var(--color-white);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.nav-link.active {
-  color: var(--color-white);
-  background: rgba(var(--color-victory-gold), 0.2);
+/* User Menu Section */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .user-welcome {
   font-size: var(--font-size-sm);
-  color: var(--color-navy-muted);
+  color: var(--color-text-muted);
   font-weight: var(--font-weight-medium);
+
+  /* Truncate long usernames */
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.logout-btn {
-  background-color: rgba(var(--color-danger), 0.9);
-  color: var(--color-white);
-  border: none;
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
+.btn-logout {
+  padding: var(--space-2) var(--space-3);
+
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
+
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
   transition: all var(--transition-fast);
+
+  &:hover {
+    color: var(--color-danger-bright);
+    border-color: var(--color-danger);
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
-.logout-btn:hover {
-  background-color: rgba(var(--color-danger-dark), 1);
-  transform: translateY(calc(var(--space-1) * -0.5));
-}
-
-/* ========================================
-   RESPONSIVE DESIGN (Mobile)
-   ======================================== */
+/* === Responsive: Tablet and below (≤1024px) === */
 
 @media (max-width: var(--breakpoint-tablet)) {
   .top-bar {
-    padding: 0 var(--space-3);
-    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    gap: var(--space-4);
   }
 
-  .app-title {
-    font-size: var(--font-size-base);
+  .brand-title {
+    display: none; /* Hide title, show icon only */
   }
 
-  /* Hide navigation links on mobile - use hamburger menu instead (future enhancement) */
-  .nav-links {
-    display: none;
+  .top-bar-center {
+    gap: var(--space-4);
+  }
+
+  .world-clock-wrapper {
+    padding-left: var(--space-4);
+  }
+
+  .btn-add-fighter span:not(first-child) {
+    display: none; /* Hide "Add Fighter" text, show icon */
   }
 
   .user-welcome {
-    display: none; /* Hide welcome text on small screens */
+    display: none; /* Hide username on smaller screens */
+  }
+}
+
+/* === Responsive: Mobile portrait (≤768px) === */
+
+@media (max-width: var(--breakpoint-mobile)) {
+  .top-bar {
+    flex-wrap: wrap;
+    padding: var(--space-2);
+
+    /* Adjust for mobile navigation */
+    gap: var(--space-2);
   }
 
-  .logout-btn {
-    padding: var(--space-1) var(--space-3);
-    font-size: var(--font-size-xs);
+  .top-bar-left {
+    order: 1;
   }
 
-  /* Hide mini clock on mobile - saves space, no horizontal scroll needed */
   .top-bar-center {
-    display: none;
+    order: 2;
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--space-3);
+
+    .world-clock-wrapper {
+      border-left: none;
+      padding-left: 0;
+    }
+  }
+
+  .top-bar-right {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    padding-top: var(--space-2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .user-actions {
+    gap: var(--space-2);
+  }
+}
+
+/* === Responsive: Small mobile (≤480px) === */
+
+@media (max-width: var(--breakpoint-mobile-sm)) {
+  .btn-add-fighter {
+    padding: var(--space-1) var(--space-2);
+
+    span:first-child {
+      font-size: var(--font-size-base);
+    }
+  }
+
+  .btn-logout {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 }
