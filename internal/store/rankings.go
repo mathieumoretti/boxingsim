@@ -111,74 +111,181 @@ func (s *RankingsStore) GetRankings(ctx context.Context, criteria model.RankingC
 	return boxers, nil
 }
 
-// GetRankingByPosition retrieves a boxer's current rank by criteria
+// getOrderByExpression returns just the ORDER BY expression (without "ORDER BY" prefix)
+func (s *RankingsStore) getOrderByExpression(criteria model.RankingCriteria) string {
+	switch criteria {
+	case model.RankingByWinRate:
+		return `(CASE WHEN (wins + losses) > 0 THEN CAST(wins AS FLOAT) / (wins + losses) ELSE 0 END) DESC, wins DESC`
+	case model.RankingByTotalFights:
+		return `(wins + losses + draws) DESC, wins DESC`
+	case model.RankingByLevel:
+		return `level DESC, wins DESC`
+	case model.RankingByStrength:
+		return `strength DESC, wins DESC`
+	case model.RankingByPowerScore:
+		return `((wins * 2) + knockouts + (level * 3)) DESC, wins DESC`
+	default:
+		return `(CASE WHEN (wins + losses) > 0 THEN CAST(wins AS FLOAT) / (wins + losses) ELSE 0 END) DESC, wins DESC`
+	}
+}
+
+// GetRankingByPosition retrieves a boxer's current rank by criteria using efficient window functions.
+// This avoids fetching all boxers just to find one boxer's position (MAT-132 performance fix).
 func (s *RankingsStore) GetRankingByPosition(ctx context.Context, boxerID int, criteria model.RankingCriteria) (*model.RankingPosition, error) {
-	// First, get all rankings to determine position
-	allBoxers, err := s.GetRankings(ctx, criteria, 1000)
+	// Build the ORDER BY expression for this criteria
+	orderBySQL := s.getOrderByExpression(criteria)
+
+	// Use window function to calculate rank directly without fetching all boxers
+	query := `
+		WITH ranked AS (
+			SELECT
+				id, name, nickname, wins, losses, draws, knockouts, level, strength,
+				RANK() OVER (ORDER BY ` + orderBySQL + `) as rank_pos
+			FROM boxers
+			WHERE id = $1
+		),
+		total_count AS (
+			SELECT COUNT(*) as count FROM boxers
+		)
+		SELECT
+			r.rank_pos,
+			t.count,
+			r.id, r.name, r.nickname, r.wins, r.losses, r.draws, r.knockouts, r.level, r.strength
+		FROM ranked r
+		CROSS JOIN total_count t
+	`
+
+	boxer := &model.RankedBoxer{}
+	var rank int
+	var totalBoxers int
+
+	err := s.db.QueryRowContext(ctx, query, boxerID).Scan(
+		&rank,
+		&totalBoxers,
+		&boxer.ID, &boxer.Name, &boxer.Nickname,
+		&boxer.Wins, &boxer.Losses, &boxer.Draws, &boxer.Knockouts,
+		&boxer.Level, &boxer.Strength,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	var boxerRank int
-	var rankedBoxer *model.RankedBoxer
-	totalBoxers := len(allBoxers)
-
-	for i, b := range allBoxers {
-		if b.ID == boxerID {
-			boxerRank = i + 1
-			rankedBoxer = b
-			break
-		}
-	}
-
-	if rankedBoxer == nil {
-		return nil, sql.ErrNoRows
-	}
+	boxer.Rank = rank
+	boxer.RankingScore = s.calculateRankingScore(boxer, criteria)
 
 	return &model.RankingPosition{
-		Rank:        boxerRank,
+		Rank:        rank,
 		TotalBoxers: totalBoxers,
-		RankedBoxer: rankedBoxer,
+		RankedBoxer: boxer,
 	}, nil
 }
 
-// GetNearbyRankings retrieves boxers ranked near a specific boxer
+// calculateRankingScore computes the ranking score based on criteria (extracted for reuse)
+func (s *RankingsStore) calculateRankingScore(boxer *model.RankedBoxer, criteria model.RankingCriteria) float64 {
+	switch criteria {
+	case model.RankingByWinRate:
+		if boxer.Wins+boxer.Losses > 0 {
+			return float64(boxer.Wins) / float64(boxer.Wins+boxer.Losses)
+		}
+		return 0
+	case model.RankingByTotalFights:
+		return float64(boxer.Wins + boxer.Losses + boxer.Draws)
+	case model.RankingByLevel:
+		return float64(boxer.Level)
+	case model.RankingByStrength:
+		return boxer.Strength
+	case model.RankingByPowerScore:
+		return float64((boxer.Wins * 2) + boxer.Knockouts + (boxer.Level * 3))
+	default:
+		return 0
+	}
+}
+
+// GetNearbyRankings retrieves boxers ranked near a specific boxer efficiently.
+// This avoids fetching all boxers just to filter to a radius (MAT-132 performance fix).
 func (s *RankingsStore) GetNearbyRankings(ctx context.Context, boxerID int, criteria model.RankingCriteria, radius int) ([]*model.RankedBoxer, error) {
 	if radius <= 0 {
 		radius = 5 // Default radius
 	}
 
-	// Get all rankings
-	allBoxers, err := s.GetRankings(ctx, criteria, 1000)
+	// Step 1: Get the target boxer's rank efficiently
+	targetRank, err := s.getBoxerRank(ctx, boxerID, criteria)
 	if err != nil {
 		return nil, err
 	}
 
-	var boxerIndex int
-	found := false
-	for i, b := range allBoxers {
-		if b.ID == boxerID {
-			boxerIndex = i
-			found = true
-			break
+	// Step 2: Build ORDER BY expression
+	orderBySQL := s.getOrderByExpression(criteria)
+
+	// Step 3: Fetch boxers within rank range using OFFSET/LIMIT (more efficient than complex window functions)
+	startRank := max(1, targetRank-radius)
+	limit := radius*2 + 1 // target + radius on each side
+
+	query := `
+		WITH ranked AS (
+			SELECT
+				id, name, nickname, wins, losses, draws, knockouts, level, strength,
+				RANK() OVER (ORDER BY ` + orderBySQL + `) as rank_pos
+			FROM boxers
+		)
+		SELECT id, name, nickname, wins, losses, draws, knockouts, level, strength, rank_pos
+		FROM ranked
+		WHERE rank_pos >= $1
+		ORDER BY rank_pos
+		LIMIT $2
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, startRank, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	boxers := make([]*model.RankedBoxer, 0)
+	for rows.Next() {
+		boxer := &model.RankedBoxer{}
+		err := rows.Scan(
+			&boxer.ID, &boxer.Name, &boxer.Nickname,
+			&boxer.Wins, &boxer.Losses, &boxer.Draws, &boxer.Knockouts,
+			&boxer.Level, &boxer.Strength,
+			&boxer.Rank,
+		)
+		if err != nil {
+			return nil, err
 		}
+
+		boxer.RankingScore = s.calculateRankingScore(boxer, criteria)
+		boxers = append(boxers, boxer)
 	}
 
-	if !found {
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(boxers) == 0 {
 		return nil, sql.ErrNoRows
 	}
 
-	// Calculate range
-	start := boxerIndex - radius
-	if start < 0 {
-		start = 0
-	}
-	end := boxerIndex + radius + 1
-	if end > len(allBoxers) {
-		end = len(allBoxers)
+	return boxers, nil
+}
+
+// getBoxerRank retrieves just a boxer's rank position efficiently using window functions.
+func (s *RankingsStore) getBoxerRank(ctx context.Context, boxerID int, criteria model.RankingCriteria) (int, error) {
+	orderBySQL := s.getOrderByExpression(criteria)
+
+	query := `
+		SELECT RANK() OVER (ORDER BY ` + orderBySQL + `)
+		FROM boxers
+		WHERE id = $1
+	`
+
+	var rank int
+	err := s.db.QueryRowContext(ctx, query, boxerID).Scan(&rank)
+	if err != nil {
+		return 0, err
 	}
 
-	return allBoxers[start:end], nil
+	return rank, nil
 }
 
 // GetTotalBoxerCount retrieves the total number of boxers in the system

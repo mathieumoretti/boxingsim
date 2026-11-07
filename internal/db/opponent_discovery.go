@@ -72,7 +72,7 @@ type RankedOpponent struct {
 // FindOpponents retrieves available opponents for a boxer with intelligent filtering.
 // This replaces the naive GetAvailableOpponents which returned all boxers without filtering.
 func FindOpponents(db *sql.DB, boxerID int, filter OpponentFilter) ([]*RankedOpponent, error) {
-	// Get the requesting boxer's level first to apply defaults
+	// Get the requesting boxer's level first to apply defaults and avoid correlated subqueries (MAT-132)
 	boxer, err := GetBoxerByID(db, boxerID)
 	if err != nil {
 		return nil, err
@@ -81,8 +81,8 @@ func FindOpponents(db *sql.DB, boxerID int, filter OpponentFilter) ([]*RankedOpp
 	// Apply defaults based on boxer's level
 	filter.ApplyDefaults(boxer.Level, 30.0)
 
-	// Build query with filters
-	query, params := buildOpponentQuery(filter)
+	// Build query with filters - pass boxerLevel as parameter to avoid correlated subqueries (MAT-132)
+	query, params := buildOpponentQuery(filter, boxer.Level)
 
 	rows, err := db.Query(query, params...)
 	if err != nil {
@@ -140,18 +140,21 @@ func FindOpponents(db *sql.DB, boxerID int, filter OpponentFilter) ([]*RankedOpp
 }
 
 // buildOpponentQuery constructs the SQL query based on filter criteria.
-func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
+// boxerLevel is passed as a parameter to avoid correlated subqueries (MAT-132 performance fix).
+func buildOpponentQuery(filter OpponentFilter, boxerLevel int) (string, []interface{}) {
 	var params []interface{}
 
 	// Add base parameters
-	params = append(params, filter.BoxerID) // $1 - boxerID for exclusion and level lookup
+	params = append(params, filter.BoxerID) // $1 - boxerID for exclusion
+	params = append(params, boxerLevel)     // $2 - boxer's level for level_difference calculation (MAT-132)
 	boxerIDParam := "$1"
+	boxerLevelParam := "$2"
 
-	params = append(params, filter.MinLevel) // $2 - min level
-	minLevelParam := "$2"
+	params = append(params, filter.MinLevel) // $3 - min level
+	minLevelParam := "$3"
 
-	params = append(params, filter.MaxLevel) // $3 - max level
-	maxLevelParam := "$3"
+	params = append(params, filter.MaxLevel) // $4 - max level
+	maxLevelParam := "$4"
 
 	var whereClauses []string
 
@@ -168,7 +171,7 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 
 	// Filter by health
 	if filter.HealthyOnly {
-		params = append(params, filter.MinHealth) // $4 - min health (if needed)
+		params = append(params, filter.MinHealth) // $5 - min health (if needed)
 		minHealthParam := fmt.Sprintf("$%d", len(params))
 		whereClauses = append(whereClauses, "b.health > "+minHealthParam)
 	}
@@ -192,7 +195,7 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 	// Build WHERE clause
 	whereClause := strings.Join(whereClauses, " AND ")
 
-	// Base query - use $1 for boxer level lookup in SELECT
+	// Base query - use passed boxerLevel parameter instead of correlated subquery (MAT-132)
 	query := `
 		SELECT
 			b.id, b.user_id, b.name, b.nickname, b.position_x, b.position_y,
@@ -200,7 +203,7 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 			b.experience, b.level, b.fatigue_score,
 			b.wins, b.losses, b.draws, b.knockouts, b.knockdowns_suffered,
 			b.created_at, b.updated_at,
-			(b.level - (SELECT level FROM boxers WHERE id = ` + boxerIDParam + `)) AS level_difference,
+			(b.level - ` + boxerLevelParam + `) AS level_difference,
 			EXISTS (
 				SELECT 1 FROM scheduled_events se
 				WHERE se.boxer_id = b.id
@@ -211,14 +214,14 @@ func buildOpponentQuery(filter OpponentFilter) (string, []interface{}) {
 		FROM boxers b
 		WHERE ` + whereClause
 
-	// Add ordering
+	// Add ordering - use parameter instead of correlated subquery (MAT-132)
 	if filter.PreferRankings {
 		query += `
-			ORDER BY ABS((b.level - (SELECT level FROM boxers WHERE id = ` + boxerIDParam + `))) ASC,
+			ORDER BY ABS(b.level - ` + boxerLevelParam + `) ASC,
 				CASE WHEN wins + losses + draws > 0 THEN wins::float / (wins + losses + draws)::float ELSE 0 END DESC
 		`
 	} else {
-		query += "ORDER BY ABS((b.level - (SELECT level FROM boxers WHERE id = " + boxerIDParam + "))) ASC, b.level DESC"
+		query += "ORDER BY ABS(b.level - " + boxerLevelParam + ") ASC, b.level DESC"
 	}
 
 	// Add limit
