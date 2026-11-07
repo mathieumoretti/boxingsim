@@ -136,16 +136,16 @@ const BoxersList = ({ user }) => {
     window.location.replace('/login');
   }, []);
 
-  // Calculate quick stats
-  const stats = {
+  // Calculate quick stats (memoized to prevent recalculation on every render - MAT-132)
+  const stats = React.useMemo(() => ({
     totalBoxers: boxers.length,
     inTraining: boxers.filter(b => b.has_active_training).length,
     resting: boxers.filter(b => b.has_active_rest).length,
     fightsScheduled: Object.values(fightData).filter(f => f?.status === 'scheduled').length,
-  };
+  }), [boxers, fightData]);
 
-  // Filter boxers based on search and status (MAT-122)
-  const filterBoxers = useCallback((boxerList) => {
+  // Filter boxers based on search and status (memoized callback - MAT-132)
+  const filterBoxers = React.useCallback((boxerList) => {
     return boxerList.filter(boxer => {
       // Search filter: name or nickname
       if (searchQuery) {

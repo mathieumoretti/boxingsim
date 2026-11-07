@@ -8,8 +8,9 @@ import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
 /**
  * FightEntryCard - Single fight row component (MAT-103)
  * Displays compact fight info with expandable details
+ * Memoized to prevent unnecessary re-renders when currentGameTime updates (MAT-132)
  */
-const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
+const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Convert myBoxerId to integer for proper comparison (URL params are strings)
@@ -159,7 +160,12 @@ const FightEntryCard = ({ fight, myBoxerId, currentGameTime }) => {
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if fight data changes or boxer ID changes
+  // currentGameTime can change frequently but doesn't affect card content for completed fights
+  return prevProps.fight.id === nextProps.fight.id &&
+         prevProps.myBoxerId === nextProps.myBoxerId;
+});
 
 /**
  * TimelineSection - Date-grouped section with header (MAT-103)
