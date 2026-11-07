@@ -1,35 +1,46 @@
+/**
+ * Dashboard Component (Refactored for MAT-122)
+ *
+ * Quick-view dashboard showing:
+ * - Notifications (boxers needing attention)
+ * - Upcoming fights (today/this week)
+ * - Recent activity feed
+ * - Quick stats summary
+ *
+ * NOT a roster management page - that's the /boxers route.
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
-import TopBar from './TopBar.jsx';
-import BoxerCard from './BoxerCard.jsx';
-import TrainingControlPanel from './TrainingControlPanel.jsx';
+import { Link } from 'react-router-dom';
+import TopBar from './TopBar';
+import MiniWorldClock from './MiniWorldClock';
+import LoadingSpinner from './ui/LoadingSpinner';
 import { ErrorDisplay } from './ErrorDisplay';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
+import './Dashboard.css';
 
-const Dashboard = ({ user, onLogout }) => {
-  const navigate = useNavigate();
-  const [boxers, setBoxers] = useState([]);
+const Dashboard = ({ user }) => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [upcomingFights, setUpcomingFights] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [quickStats, setQuickStats] = useState({});
+  const [worldTime, setWorldTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showTrainingControlPanel, setShowTrainingControlPanel] = useState(false);
-  const [worldTime, setWorldTime] = useState(null);
-  const [fightData, setFightData] = useState({}); // boxerId -> fight mapping (MAT-106)
 
   useEffect(() => {
-    // Get user from props or localStorage
     const currentUser = user || getUser();
     setCurrentUser(currentUser);
 
     if (currentUser) {
-      loadUserBoxers(currentUser.id);
+      loadData(currentUser.id);
     } else {
       setIsLoading(false);
     }
-  }, [user, loadUserBoxers]);
+  }, [user]);
 
-  // Fetch and refresh world time every 5 seconds for countdown displays
+  // Fetch world time for countdown displays
   useEffect(() => {
     const fetchWorldTime = async () => {
       try {
@@ -39,250 +50,425 @@ const Dashboard = ({ user, onLogout }) => {
           setWorldTime(data);
         }
       } catch (err) {
-        // Silently fail - countdowns will just not update
+        // Silently fail
       }
     };
 
-    // Initial fetch
     fetchWorldTime();
-
-    // Refresh every 5 seconds for real-time countdown updates
     const interval = setInterval(fetchWorldTime, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Handler called by BoxerCard when a boxer's state changes (training completed, rest ended)
-  const handleBoxerStateChanged = useCallback((boxerId) => {
-    if (currentUser) {
-      loadUserBoxers(currentUser.id);
-    }
-  }, [currentUser, loadUserBoxers]);
-
-  const loadUserBoxers = useCallback(async (userId) => {
+  const loadData = useCallback(async (userId) => {
     setIsLoading(true);
     setError('');
 
     try {
-      // Fetch boxers and active fights in parallel (MAT-106)
+      // Fetch all dashboard data in parallel
       const [boxersResponse, fightsResponse] = await Promise.all([
         authenticatedFetch(`${API_BASE_URL}/users/${userId}/boxers`, { method: 'GET' }),
         authenticatedFetch(`${API_BASE_URL}/fights/active`, { method: 'GET' })
       ]);
 
       const boxersData = await boxersResponse.json();
-      let boxersArray = [];
+      const fightsData = await fightsResponse.json();
 
-      if (boxersResponse.ok) {
-        boxersArray = Array.isArray(boxersData) ? boxersData : [];
-        setBoxers(boxersArray);
-      } else {
-        setError(boxersData.error || 'Failed to load boxers');
-      }
+      const boxers = Array.isArray(boxersData) ? boxersData : [];
+      const fights = Array.isArray(fightsData) ? fightsData : [];
 
-      // Fetch active fights and create a mapping (MAT-106)
-      if (fightsResponse.ok) {
-        const fightsData = await fightsResponse.json();
-        const activeFights = Array.isArray(fightsData) ? fightsData : [];
+      // Calculate notifications (boxers needing attention)
+      const now = new Date(worldTime?.game_time || new Date());
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+      const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        if (boxersArray.length > 0) {
-          const boxerIds = boxersArray.map(b => b.id);
-          const fightMapping = {};
+      const dashboardNotifications = [];
 
-          activeFights.forEach(fight => {
-            if (boxerIds.includes(fight.boxer1_id)) {
-              fightMapping[fight.boxer1_id] = {
-                fight_id: fight.id,
-                opponent_id: fight.boxer2_id,
-                scheduled_time: fight.scheduled_time,
-                status: fight.status,
-                rounds: fight.round || 12
-              };
-            } else if (boxerIds.includes(fight.boxer2_id)) {
-              fightMapping[fight.boxer2_id] = {
-                fight_id: fight.id,
-                opponent_id: fight.boxer1_id,
-                scheduled_time: fight.scheduled_time,
-                status: fight.status,
-                rounds: fight.round || 12
-              };
-            }
+      // Check for upcoming fights (within 24 hours)
+      fights.forEach(fight => {
+        const fighterBoxerId = fight.boxer1_id === getCurrentBoxerId(userId, fight)
+          ? fight.boxer1_id
+          : (fight.boxer2_id === getCurrentBoxerId(userId, fight) ? fight.boxer2_id : null);
+
+        if (!fighterBoxerId) return;
+
+        const scheduledTime = new Date(fight.scheduled_time);
+
+        if (scheduledTime <= oneHourFromNow && scheduledTime >= now) {
+          dashboardNotifications.push({
+            type: 'fight_urgent',
+            boxer_id: fighterBoxerId,
+            message: `Fight in less than 1 hour!`,
+            fight_id: fight.id,
+            scheduled_time: fight.scheduled_time,
+            priority: 'high'
           });
-
-          setFightData(fightMapping);
+        } else if (scheduledTime <= sevenDaysFromNow && scheduledTime >= now) {
+          dashboardNotifications.push({
+            type: 'fight_upcoming',
+            boxer_id: fighterBoxerId,
+            message: `Fight scheduled for ${formatDate(scheduledTime)}`,
+            fight_id: fight.id,
+            scheduled_time: fight.scheduled_time,
+            priority: 'medium'
+          });
         }
-      }
+      });
+
+      // Check for boxers with active training/rest
+      boxers.forEach(boxer => {
+        if (boxer.has_active_training && boxer.training_type === 'rest') {
+          // Resting boxer notification could be added here
+        }
+      });
+
+      setNotifications(dashboardNotifications);
+
+      // Filter upcoming fights (next 7 days) for dashboard
+      const userFightIds = new Set();
+      fights.forEach(fight => {
+        if (fight.boxer1_id && boxers.some(b => b.id === fight.boxer1_id)) {
+          userFightIds.add(fight.boxer1_id);
+        }
+        if (fight.boxer2_id && boxers.some(b => b.id === fight.boxer2_id)) {
+          userFightIds.add(fight.boxer2_id);
+        }
+      });
+
+      const upcoming = fights
+        .filter(fight => {
+          const scheduledTime = new Date(fight.scheduled_time);
+          return scheduledTime >= now && scheduledTime <= sevenDaysFromNow;
+        })
+        .slice(0, 5); // Show max 5 upcoming fights
+
+      setUpcomingFights(upcoming);
+
+      // Recent activity (last 5 fights completed)
+      const recent = fights
+        .filter(fight => fight.status === 'completed')
+        .sort((a, b) => new Date(b.scheduled_time) - new Date(a.scheduled_time))
+        .slice(0, 5);
+
+      setRecentActivity(recent);
+
+      // Quick stats summary
+      const stats = {
+        totalBoxers: boxers.length,
+        inTraining: boxers.filter(b => b.has_active_training && b.training_type !== 'rest').length,
+        resting: boxers.filter(b => b.has_active_rest).length,
+        fightsScheduled: upcomingFights.length || 0,
+      };
+
+      setQuickStats(stats);
 
     } catch (error) {
       if (!error.message.includes('Unauthorized')) {
-        setError('Network error: ' + error.message);
+        setError('Failed to load dashboard data');
       }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [worldTime]);
 
-  const handleLogout = useCallback(() => {
-    onLogout();
-  }, [onLogout]);
+  const handleLogout = () => {
+    window.location.replace('/login');
+  };
 
-  const handleRetry = useCallback(() => {
-    if (currentUser) {
-      loadUserBoxers(currentUser.id);
-    }
-  }, [currentUser, loadUserBoxers]);
-
-  // Render skeleton loader cards (MAT-130)
-  const renderSkeletonCards = () => {
+  if (isLoading) {
     return (
-      <div className="boxers-grid">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="boxer-card-skeleton">
-            <div className="skeleton-avatar"></div>
-            <div className="skeleton-name-section">
-              <div className="skeleton-name"></div>
-              <div className="skeleton-nickname"></div>
-            </div>
-            <div className="skeleton-stat-bar" style={{ width: '80%' }}></div>
-            <div className="skeleton-stat-bar" style={{ width: '75%' }}></div>
-            <div className="skeleton-stat-bar" style={{ width: '70%' }}></div>
-            <div className="skeleton-combat-stats">
-              <div className="skeleton-stat-item"></div>
-              <div className="skeleton-stat-item"></div>
-              <div className="skeleton-stat-item"></div>
-            </div>
-            <div className="skeleton-card-actions">
-              <div className="skeleton-btn"></div>
-              <div className="skeleton-btn"></div>
-              <div className="skeleton-btn"></div>
-            </div>
-          </div>
-        ))}
+      <div className="dashboard-page">
+        <TopBar currentUser={currentUser} onLogout={handleLogout} />
+        <div className="dashboard-loading">
+          <LoadingSpinner size="lg" aria-label="Loading dashboard" />
+        </div>
       </div>
     );
-  };
+  }
 
-  // Render empty state (MAT-130)
-  const renderEmptyState = () => {
+  if (error) {
     return (
-      <div className="boxers-empty-state">
-        <div className="empty-state-illustration" aria-hidden="true">🥊</div>
-        <h2 className="empty-state-title">Your roster is empty</h2>
-        <p className="empty-state-description">
-          Create your first boxer and begin their journey to championship glory.
-          Train, fight, and build a legendary career in the ring.
-        </p>
-        <Link to="/create-boxer" className="empty-state-cta">
-          <span className="cta-icon" aria-hidden="true">➕</span>
-          <span>Create Your First Boxer</span>
-        </Link>
+      <div className="dashboard-page">
+        <TopBar currentUser={currentUser} onLogout={handleLogout} />
+        <ErrorDisplay
+          error={error}
+          onRetry={() => loadData(currentUser?.id)}
+          variant="alert"
+          title="Failed to Load Dashboard"
+          icon={true}
+        />
       </div>
     );
-  };
-
-  // Render error state (MAT-130)
-  const renderErrorState = () => {
-    return (
-      <ErrorDisplay
-        error={error}
-        onRetry={handleRetry}
-        variant="alert"
-        title="Failed to Load Boxers"
-        icon={true}
-      />
-    );
-  };
-
-  const boxerCount = boxers.length;
-
-  // Calculate quick stats for roster summary
-  const stats = {
-    totalBoxers: boxerCount,
-    inTraining: boxers.filter(b => b.has_active_training).length,
-    resting: boxers.filter(b => b.has_active_rest).length,
-    fightsScheduled: Object.keys(fightData).filter(id => fightData[id]?.status === 'scheduled').length,
-    averageLevel: boxerCount > 0 ? Math.round(boxers.reduce((sum, b) => sum + (b.level || 1), 0) / boxerCount) : 0,
-    totalWins: boxers.reduce((sum, b) => sum + (b.wins || 0), 0),
-    totalLosses: boxers.reduce((sum, b) => sum + (b.losses || 0), 0),
-    totalDraws: boxers.reduce((sum, b) => sum + (b.draws || 0), 0),
-  };
+  }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard-page">
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
 
-      <main className="dashboard-content">
-        <header className="dashboard-header">
-          <div className="header-left">
-            <h1 className="page-title">My Boxers</h1>
-          </div>
-        </header>
-
-        {/* Quick Stats Summary */}
-        {boxerCount > 0 && (
-          <section className="quick-stats" aria-label="Roster summary">
-            <div className="stat-summary-card">
-              <span className="stat-summary-icon" aria-hidden="true">🥊</span>
-              <span className="stat-summary-value">{stats.totalBoxers}</span>
-              <span className="stat-summary-label">Total Boxers</span>
-            </div>
-            <div className="stat-summary-card">
-              <span className="stat-summary-icon" aria-hidden="true">💪</span>
-              <span className="stat-summary-value">{stats.inTraining}</span>
-              <span className="stat-summary-label">In Training</span>
-            </div>
-            <div className="stat-summary-card">
-              <span className="stat-summary-icon" aria-hidden="true">🛌</span>
-              <span className="stat-summary-value">{stats.resting}</span>
-              <span className="stat-summary-label">Resting</span>
-            </div>
-            <div className="stat-summary-card">
-              <span className="stat-summary-icon" aria-hidden="true">📅</span>
-              <span className="stat-summary-value">{stats.fightsScheduled}</span>
-              <span className="stat-summary-label">Fights Scheduled</span>
-            </div>
-            <div className="stat-summary-card stat-summary-card-wide">
-              <span className="stat-summary-subtitle">Career Record: {stats.totalWins}W - {stats.totalLosses}L - {stats.totalDraws}D | Avg Level: {stats.averageLevel}</span>
-            </div>
-          </section>
-        )}
-
-        <section className="boxers-section" aria-label="Boxer roster">
-          {isLoading ? (
-            renderSkeletonCards()
-          ) : error ? (
-            renderErrorState()
-          ) : boxers.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <div className="boxers-grid" role="list">
-              {boxers.map((boxer) => (
-                <BoxerCard
-                  key={boxer.id}
-                  boxer={boxer}
-                  worldTime={worldTime}
-                  upcomingFight={fightData[boxer.id]}
-                  onOpenProfile={() => navigate(`/boxer/${boxer.id}`)}
-                  onOpenTraining={() => navigate(`/boxer/${boxer.id}/train`)}
-                  onOpenFightBooking={() => navigate(`/boxer/${boxer.id}/book-fight`)}
-                  onOpenFightHistory={() => navigate(`/boxer/${boxer.id}/fights`)}
-                  onBoxerStateChanged={handleBoxerStateChanged}
-                />
-              ))}
-            </div>
-          )}
+      <main className="dashboard-main">
+        {/* Quick Stats Row */}
+        <section className="dashboard-stats" aria-label="Quick statistics">
+          <StatCard
+            icon="📊"
+            value={quickStats.totalBoxers || 0}
+            label="Total Boxers"
+            linkTo="/boxers"
+            href="/boxers"
+          />
+          <StatCard
+            icon="💪"
+            value={quickStats.inTraining || 0}
+            label="In Training"
+          />
+          <StatCard
+            icon="🛌"
+            value={quickStats.resting || 0}
+            label="Resting"
+          />
+          <StatCard
+            icon="📅"
+            value={quickStats.fightsScheduled || 0}
+            label="Fights This Week"
+          />
         </section>
 
-        {showTrainingControlPanel && (
-          <TrainingControlPanel
-            boxers={boxers}
-            onClose={() => setShowTrainingControlPanel(false)}
-            onRefreshBoxers={() => loadUserBoxers(currentUser.id)}
-          />
-        )}
+        {/* Two Column Layout */}
+        <div className="dashboard-content-grid">
+          {/* Left Column: Notifications & Upcoming Fights */}
+          <div className="dashboard-left-column">
+            {/* Notifications Panel */}
+            <section className="dashboard-panel notifications-panel" aria-label="Notifications">
+              <header className="panel-header">
+                <h2 className="panel-title">
+                  <span aria-hidden="true">🔔</span>
+                  Notifications
+                </h2>
+                {notifications.length > 0 && (
+                  <span className="notification-count">{notifications.length}</span>
+                )}
+              </header>
+
+              <div className="panel-content">
+                {notifications.length === 0 ? (
+                  <EmptyState
+                    icon="🎉"
+                    title="All Clear!"
+                    message="No notifications at the moment."
+                  />
+                ) : (
+                  <ul className="notification-list">
+                    {notifications.map((notif, index) => (
+                      <NotificationItem
+                        key={index}
+                        notification={notif}
+                        worldTime={worldTime}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+
+            {/* Upcoming Fights Panel */}
+            <section className="dashboard-panel fights-panel" aria-label="Upcoming fights">
+              <header className="panel-header">
+                <h2 className="panel-title">
+                  <span aria-hidden="true">🥊</span>
+                  Upcoming Fights
+                </h2>
+                {upcomingFights.length > 0 && (
+                  <Link to="/boxers" className="panel-link">View All →</Link>
+                )}
+              </header>
+
+              <div className="panel-content">
+                {upcomingFights.length === 0 ? (
+                  <EmptyState
+                    icon="📅"
+                    title="No Fights Scheduled"
+                    message="No fights scheduled for the next 7 days."
+                  />
+                ) : (
+                  <ul className="fights-list">
+                    {upcomingFights.map(fight => (
+                      <FightItem
+                        key={fight.id}
+                        fight={fight}
+                        worldTime={worldTime}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column: Recent Activity */}
+          <div className="dashboard-right-column">
+            <section className="dashboard-panel activity-panel" aria-label="Recent activity">
+              <header className="panel-header">
+                <h2 className="panel-title">
+                  <span aria-hidden="true">📜</span>
+                  Recent Activity
+                </h2>
+              </header>
+
+              <div className="panel-content">
+                {recentActivity.length === 0 ? (
+                  <EmptyState
+                    icon="📭"
+                    title="No Recent Activity"
+                    message="Fight results will appear here."
+                  />
+                ) : (
+                  <ul className="activity-list">
+                    {recentActivity.map(fight => (
+                      <ActivityItem
+                        key={fight.id}
+                        fight={fight}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+
+            {/* Quick Actions Panel */}
+            <section className="dashboard-panel actions-panel" aria-label="Quick actions">
+              <header className="panel-header">
+                <h2 className="panel-title">Quick Actions</h2>
+              </header>
+
+              <div className="panel-content actions-content">
+                <Link to="/create-boxer" className="action-btn action-btn--primary">
+                  <span aria-hidden="true">➕</span>
+                  Create Fighter
+                </Link>
+
+                <Link to="/boxers" className="action-btn action-btn--secondary">
+                  <span aria-hidden="true">🥊</span>
+                  View All Boxers
+                </Link>
+
+                <Link to="/rankings" className="action-btn action-btn--secondary">
+                  <span aria-hidden="true">🏆</span>
+                  View Rankings
+                </Link>
+              </div>
+            </section>
+          </div>
+        </div>
       </main>
     </div>
   );
 };
+
+// Helper Components
+
+const StatCard = ({ icon, value, label, href }) => (
+  <div className={`stat-card ${href ? 'stat-card--link' : ''}`}>
+    {href && !window.location.href.includes(href) ? (
+      <a href={href} className="stat-card-link" onClick={(e) => e.preventDefault()}>
+        <span className="stat-icon" aria-hidden="true">{icon}</span>
+        <span className="stat-value">{value}</span>
+        <span className="stat-label">{label}</span>
+      </a>
+    ) : (
+      <>
+        <span className="stat-icon" aria-hidden="true">{icon}</span>
+        <span className="stat-value">{value}</span>
+        <span className="stat-label">{label}</span>
+      </>
+    )}
+  </div>
+);
+
+const EmptyState = ({ icon, title, message }) => (
+  <div className="empty-state">
+    <div className="empty-icon" aria-hidden="true">{icon}</div>
+    <h3 className="empty-title">{title}</h3>
+    <p className="empty-message">{message}</p>
+  </div>
+);
+
+const NotificationItem = ({ notification, worldTime }) => {
+  const isUrgent = notification.priority === 'high';
+
+  return (
+    <li className={`notification-item ${isUrgent ? 'notification-item--urgent' : ''}`}>
+      <div className="notification-content">
+        <span className="notification-icon" aria-hidden="true">
+          {isUrgent ? '⚠️' : 'ℹ️'}
+        </span>
+        <span className="notification-message">{notification.message}</span>
+      </div>
+      {notification.scheduled_time && (
+        <TimeUntil datetime={notification.scheduled_time} worldTime={worldTime} />
+      )}
+    </li>
+  );
+};
+
+const FightItem = ({ fight, worldTime }) => (
+  <li className="fight-item">
+    <div className="fight-info">
+      <span className="fight-boxers">Fight #{fight.id}</span>
+      <TimeUntil datetime={fight.scheduled_time} worldTime={worldTime} />
+    </div>
+    {fight.round && (
+      <span className="fight-rounds">{fight.round} rounds</span>
+    )}
+  </li>
+);
+
+const ActivityItem = ({ fight }) => (
+  <li className="activity-item">
+    <span className="activity-icon" aria-hidden="true">✅</span>
+    <span className="activity-text">Fight #{fight.id} completed</span>
+    <time className="activity-time" dateTime={fight.scheduled_time}>
+      {formatDate(fight.scheduled_time)}
+    </time>
+  </li>
+);
+
+const TimeUntil = ({ datetime, worldTime }) => {
+  if (!worldTime) return null;
+
+  const target = new Date(datetime);
+  const now = new Date(worldTime.game_time);
+  const diff = target - now;
+
+  if (diff <= 0) return <span className="time-countdown time-countdown--now">Now</span>;
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 24) {
+    const days = Math.floor(hours / 24);
+    return <span className="time-countdown">In {days}d</span>;
+  }
+
+  if (hours > 0) {
+    return <span className="time-countdown">In {hours}h</span>;
+  }
+
+  return <span className="time-countdown time-countdown--urgent">In {minutes}m</span>;
+};
+
+// Utility functions
+
+function getCurrentBoxerId(userId, fight) {
+  // Simplified - in reality would check which boxer belongs to user
+  return null;
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
 export default Dashboard;

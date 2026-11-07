@@ -10,6 +10,7 @@ import FightHistoryPage from './components/FightHistoryPage';
 import FightBookingPage from './components/FightBookingPage';
 import TrainingPage from './components/TrainingPage';
 import BoxerProfile from './components/BoxerProfile';
+import BoxersList from './pages/BoxersList'; // MAT-122: New boxer list page
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getToken, setToken, clearToken, getUser } from './utils/auth';
 
@@ -134,6 +135,16 @@ function App() {
           element={
             <ProtectedRoute>
               <TrainingPage user={currentUser} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* MAT-122: Dedicated Boxers List Page */}
+        <Route
+          path="/boxers"
+          element={
+            <ProtectedRoute>
+              <BoxersList user={currentUser} />
             </ProtectedRoute>
           }
         />
