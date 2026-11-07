@@ -114,6 +114,7 @@ func main() {
 	trainingTypeStore := store.NewTrainingTypeStore(db.DB)
 	trainingSessionStore := store.NewTrainingSessionStore(db.DB)
 	fightStore := store.NewFightStore(db.DB)
+	rankingsStore := store.NewRankingsStore(db.DB)
 
 	// Initialize fatigue service
 	fatigueService := service.NewFatigueService(boxerStore, lg)
@@ -124,11 +125,19 @@ func main() {
 	// Initialize boxer service (needed for fight service and training service)
 	boxerSvc := boxer.NewBoxerService(boxerStore)
 
+	// MAT-115: Initialize rankings service for cache invalidation after fights
+	rankingsService := service.NewRankingsService(rankingsStore, r.Client, lg)
+
 	// Initialize training service (for MAT-74)
 	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg, db.DB)
 
 	// Initialize fight service (for MAT-99)
 	fightSvc := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvc, eventStore)
+
+	// MAT-115: Wire up rankings cache invalidation callback for post-fight processing
+	fightSvc.SetOnFightEnd(func(ctx context.Context, boxer1ID, boxer2ID int) error {
+		return rankingsService.InvalidateRankingsCache(ctx)
+	})
 
 	// Initialize event processor (for scheduled events)
 	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, *lg)
