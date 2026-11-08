@@ -3,7 +3,7 @@
 --
 -- This migration adds composite indexes to optimize common query patterns:
 -- 1. Fight history queries filtering by boxer_id AND status
--- 2. Opponent discovery queries with status + level filtering
+-- 2. Opponent discovery availability checks via NOT EXISTS on fights table
 -- 3. Worker event lookups by boxer with pending status
 -- 4. Training session completion hot path
 
@@ -18,12 +18,14 @@ CREATE INDEX idx_fights_boxer1_status ON fights(boxer1_id, status) WHERE status 
 CREATE INDEX idx_fights_boxer2_status ON fights(boxer2_id, status) WHERE status IN ('scheduled', 'completed');
 
 -------------------------------------------
--- 2. Opponent discovery index
+-- 2. Opponent discovery availability index
 -------------------------------------------
--- Composite index for opponent discovery queries (status + level filtering)
--- Helps queries that filter by availability and order by level difference
+-- Index for NOT EXISTS subquery checking if boxer is in scheduled/in_progress fight
+-- Used in opponent_discovery.go line 180-186 for AvailableOnly filter
+-- Composite on (boxer_id, status) with partial WHERE matches the query pattern
 
-CREATE INDEX idx_boxers_status_level ON boxers(status, level) WHERE status = 'available';
+CREATE INDEX idx_fights_availability_check ON fights(boxer1_id, status) WHERE status IN ('scheduled', 'in_progress');
+CREATE INDEX idx_fights_availability_check_boxer2 ON fights(boxer2_id, status) WHERE status IN ('scheduled', 'in_progress');
 
 -------------------------------------------
 -- 3. Worker event processing indexes
@@ -50,6 +52,7 @@ WHERE status = 'in_progress';
 
 DROP INDEX IF EXISTS idx_training_sessions_completion;
 DROP INDEX IF EXISTS idx_scheduled_events_boxer_pending;
-DROP INDEX IF EXISTS idx_boxers_status_level;
+DROP INDEX IF EXISTS idx_fights_availability_check_boxer2;
+DROP INDEX IF EXISTS idx_fights_availability_check;
 DROP INDEX IF EXISTS idx_fights_boxer2_status;
 DROP INDEX IF EXISTS idx_fights_boxer1_status;
