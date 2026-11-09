@@ -16,6 +16,8 @@ import (
 	"github.com/mormm/boxing/internal/store"
 )
 
+var ErrSelfFightNotAllowed = errors.New("self-fight not allowed: boxer cannot fight themselves")
+
 type FightService struct {
 	fightStore      *store.FightStore
 	boxerStore      *store.BoxerStore
@@ -171,7 +173,7 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 		gameTime = gt
 	}
 
-	// Retrieve the fight using a transaction for consistency
+	// Retrieve the fight using a transaction for consistency (prevents race conditions during cancellation)
 	tx, err := s.fightStore.BeginFightTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -199,17 +201,22 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 		}
 	}
 
-	// Cancel the fight (updates status to 'cancelled')
+	// Cancel the fight (updates status to 'cancelled') - use transaction-aware method
 	cancelReason := reason
 	if cancelReason == "" {
 		cancelReason = "User requested cancellation"
 	}
 
-	if err := s.fightStore.CancelFight(ctx, domain.FightID(fightID), cancelReason); err != nil {
+	if err := s.fightStore.CancelFightTx(ctx, tx, domain.FightID(fightID), cancelReason); err != nil {
 		if errors.Is(err, store.ErrFightCannotCancel) {
 			return fmt.Errorf("fight cannot be cancelled: %w", err)
 		}
 		return fmt.Errorf("failed to cancel fight: %w", err)
+	}
+
+	// Commit the transaction before cleaning up events (release the lock)
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// Clean up associated scheduled events (mark as completed to prevent processing)
@@ -226,10 +233,6 @@ func (s *FightService) CancelFight(ctx context.Context, fightID int, reason stri
 				}
 			}
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
