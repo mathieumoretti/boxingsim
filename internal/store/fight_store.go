@@ -817,6 +817,42 @@ func (s *FightStore) CancelFight(ctx context.Context, id domain.FightID, reason 
 	return nil
 }
 
+// CancelFightTx cancels a scheduled fight within an existing transaction.
+// This is used for user-initiated cancellation (MAT-140) when consistency is required.
+// Returns ErrFightCannotCancel if the fight is not in 'scheduled' state.
+func (s *FightStore) CancelFightTx(ctx context.Context, tx *sql.Tx, id domain.FightID, reason string) error {
+	if err := validateFightID(id); err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE fights
+		SET
+			status = 'cancelled',
+			updated_at = CURRENT_TIMESTAMP,
+			data = COALESCE(data, '{}'::jsonb) ||
+				jsonb_build_object(
+					'cancellation_reason', $2::text,
+					'cancelled_at', CURRENT_TIMESTAMP::text
+				)
+		WHERE id = $1 AND status = 'scheduled'`
+
+	result, err := tx.ExecContext(ctx, query, int(id), reason)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrFightCannotCancel
+	}
+
+	return nil
+}
+
 // scanFight scans a single row into a Fight model.
 func (s *FightStore) scanFight(row Scanner) (*model.Fight, error) {
 	var data db.NullJSONB

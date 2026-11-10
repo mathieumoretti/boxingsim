@@ -26,6 +26,12 @@ func NewAuthHandler(db *database.PostgresDB) *AuthHandler {
 		lg.Error("Failed to load configuration", "error", err.Error())
 		panic(err) // In production, handle gracefully; for now panic on startup failure
 	}
+	return NewAuthHandlerWithConfig(db, cfg)
+}
+
+// NewAuthHandlerWithConfig creates a new AuthHandler with the provided config.
+// This is useful for testing where you need to specify a custom JWT secret.
+func NewAuthHandlerWithConfig(db *database.PostgresDB, cfg *config.Config) *AuthHandler {
 	lg := logger.New("auth")
 	dbConnected := db != nil && db.DB != nil
 	lg.Info("Initializing AuthHandler", "db_connected", dbConnected)
