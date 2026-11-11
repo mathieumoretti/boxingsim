@@ -22,6 +22,7 @@
  * @param {string} className - Additional CSS classes
  */
 
+import React from 'react';
 import './Form.css';
 
 export function Form({ children, onSubmit, error, className = '' }) {
@@ -57,10 +58,13 @@ export function Form({ children, onSubmit, error, className = '' }) {
  * @param {string} className - Additional CSS classes
  */
 export function FormGroup({ children, label, error, className = '' }) {
+  // Determine the id to use: prefer existing id, otherwise use name
+  const elementId = children?.props?.id || children?.props?.name || '';
+
   return (
     <div className={`form-group ${error ? 'error' : ''} ${className}`}>
       {label && (
-        <label htmlFor={children?.props?.name}>
+        <label htmlFor={elementId}>
           {label}
           {children?.props?.required && <span style={{ color: 'var(--color-danger)' }}> *</span>}
         </label>
@@ -68,7 +72,7 @@ export function FormGroup({ children, label, error, className = '' }) {
       {React.cloneElement(children, {
         ...children.props,
         name: children.props.name || '',
-        id: children.props.id || children.props.name
+        id: elementId
       })}
       {error && (
         <span className="error-message">
