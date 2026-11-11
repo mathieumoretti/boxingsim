@@ -18,18 +18,22 @@ const originalWarn = console.warn;
 beforeAll(() => {
   // Silence "not wrapped in act" and "not configured to support act" warnings
   console.error = (...args) => {
-    if (args[0]?.includes('An update to') && args[0]?.includes('was not wrapped in act')) {
-      return;
-    }
-    if (args[0]?.includes('not configured to support act')) {
-      return;
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+      if (firstArg.includes('An update to') && firstArg.includes('was not wrapped in act')) {
+        return;
+      }
+      if (firstArg.includes('not configured to support act')) {
+        return;
+      }
     }
     originalError.apply(console, args);
   };
 
   console.warn = (...args) => {
     // Suppress React Router deprecation warnings
-    if (args[0]?.includes('React Router Future Flag Warning')) {
+    const firstArg = args[0];
+    if (typeof firstArg === 'string' && firstArg.includes('React Router Future Flag Warning')) {
       return;
     }
     originalWarn.apply(console, args);
