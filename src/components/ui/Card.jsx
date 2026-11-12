@@ -20,6 +20,7 @@
  * @param {string} className - Additional CSS classes
  */
 
+import React from 'react';
 import './Card.css';
 
 export function Card({ children, variant = 'default', clickable = false, onClick, className = '' }) {
