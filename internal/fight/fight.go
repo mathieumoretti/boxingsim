@@ -454,9 +454,9 @@ func (s *FightService) SimulateFight(fightID int) error {
 		}
 
 		// Update losses counter for loser (MAT-98)
-		loserBoxer := boxer2
+		loserBoxer := boxer1 // Default: if Boxer2 wins, Boxer1 loses
 		if *winnerID == fight.Boxer1ID {
-			loserBoxer = boxer1
+			loserBoxer = boxer2 // If Boxer1 wins, Boxer2 loses
 		}
 		loserBoxer.Losses += 1
 		if err := s.boxerStore.UpdateTx(ctx, tx, loserBoxer); err != nil {
