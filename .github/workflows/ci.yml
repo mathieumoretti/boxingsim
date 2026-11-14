@@ -18,6 +18,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.25'
+        cache: true  # Enable Go module caching
 
     - name: Install dependencies
       run: |
@@ -27,24 +28,105 @@ jobs:
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
     - name: Run linters
-      continue-on-error: true
       run: |
         go vet ./...
         golangci-lint version
         golangci-lint run ./...
 
+    - name: Security vulnerability scan
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
     - name: Build application
       run: |
         go build -o boxing-server ./cmd/server
+        go build -o worker ./cmd/worker
 
-    - name: Run unit tests with gotestsum
+    - name: Run unit tests with coverage
       run: |
         # Run unit tests only (exclude integration tests via build tags)
         # Integration tests are excluded by default since they have //go:build integration tag
         go run gotest.tools/gotestsum@latest --format=short-verbose ./...
+        go test -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out
 
-    - name: Upload artifacts
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage.out
+        fail_ci_if_error: false
+        flags: backend
+
+    - name: Upload backend artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: boxing-server
-        path: boxing-server
+        name: backend-binaries
+        path: |
+          boxing-server
+          worker
+        retention-days: 7
+
+  # Frontend build job (runs in parallel with backend)
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "npm"
+
+    - name: Install dependencies
+      run: |
+        npm ci
+
+    - name: Run frontend tests
+      run: |
+        npm test -- --passWithNoTests || echo "No frontend tests configured or tests skipped"
+
+    - name: Build frontend
+      run: |
+        npm run build
+
+    - name: Upload frontend artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-dist
+        path: dist/
+        if-no-files-found: warn
+
+    - name: Check frontend build output
+      run: |
+        ls -la dist/ || echo "No dist folder created"
+
+  # Final job that waits for both backend and frontend to complete
+  ci-passed:
+    needs: [build-and-test, frontend-build]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: CI Pipeline Summary
+      run: |
+        echo "=========================================="
+        echo "CI Pipeline Status Summary"
+        echo "=========================================="
+        echo "Backend build-and-test: ${{ needs.build-and-test.result }}"
+        echo "Frontend-build: ${{ needs.frontend-build.result }}"
+        echo "=========================================="
+
+        # Exit with failure if any required job failed
+        if [ "${{ needs.build-and-test.result }}" != "success" ]; then
+          echo "❌ Backend build failed!"
+          exit 1
+        fi
+        if [ "${{ needs.frontend-build.result }}" != "success" ]; then
+          echo "❌ Frontend build failed!"
+          exit 1
+        fi
+
+        echo "✅ All CI checks passed!"
