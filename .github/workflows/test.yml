@@ -39,15 +39,16 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '1.25'
+        cache: true  # Enable Go module caching
 
     - name: Install dependencies
       run: |
         go mod download
 
-    - name: Run integration tests
+    - name: Run integration tests with coverage
       env:
         BOXING_ENV: test
         BOXING_DATABASE_HOST: localhost
@@ -59,12 +60,26 @@ jobs:
         BOXING_JWT_SECRET: test-secret-key-change-in-production
       run: |
         # Run integration/functional tests only (with integration build tag)
-        # Note: Only targeting internal/integration package - other packages with integration tests need separate handling
-        go run gotest.tools/gotestsum@latest --format short-verbose --jsonfile test-results.json -- -tags=integration ./internal/integration/...
+        go run gotest.tools/gotestsum@latest --format short-verbose \
+          --jsonfile test-results.json \
+          -tags=integration ./internal/integration/...
+
+        # Generate coverage report for integration tests
+        go test -coverprofile=integration-coverage.out -tags=integration ./internal/integration/... || true
+        go tool cover -func=integration-coverage.out
+
+    - name: Upload integration coverage
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./integration-coverage.out
+        fail_ci_if_error: false
+        flags: backend,integration
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
-        path: test-results.json
+        path: |
+          test-results.json
+          integration-coverage.out
