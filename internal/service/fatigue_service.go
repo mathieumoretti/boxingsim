@@ -17,6 +17,7 @@ var (
 	ErrExhausted        = errors.New("boxer is exhausted and cannot train")
 	ErrForcedRestActive = errors.New("boxer is on mandatory forced rest")
 	ErrFatigueOverflow  = errors.New("fatigue score would exceed maximum (100)")
+	ErrForcedRecovery   = errors.New("boxer is on forced recovery from fight injuries")
 )
 
 const (
@@ -37,6 +38,16 @@ const (
 
 	// Default forced rest duration in days
 	DefaultForcedRestDays = 3
+
+	// Recovery constants (MAT-154)
+	HealthRestorePerRecoveryHour = 5.0  // Health restored per recovery hour
+	MaxHealthRestoreInOneRest    = 30.0 // Cap health restore per rest event
+
+	// Critical health threshold (needs medical attention)
+	CriticalHealthThreshold = 30.0
+
+	// Default forced recovery duration in hours (post-fight)
+	DefaultForcedRecoveryHours = 48
 )
 
 // boxerRepository defines the interface for boxer data access
@@ -97,6 +108,11 @@ func (s *FatigueService) CheckCanTrain(boxer *model.Boxer) (bool, string) {
 	// Check if forced rest is active
 	if boxer.ForcedRestUntil != nil && time.Now().Before(*boxer.ForcedRestUntil) {
 		return false, "Mandatory rest period active"
+	}
+
+	// Check if forced recovery is active (MAT-156: block training during recovery)
+	if boxer.ForcedRecoveryUntil != nil && time.Now().Before(*boxer.ForcedRecoveryUntil) {
+		return false, "Forced recovery from fight injuries - cannot train"
 	}
 
 	return true, ""

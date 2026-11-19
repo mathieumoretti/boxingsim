@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -115,6 +116,7 @@ func main() {
 	trainingSessionStore := store.NewTrainingSessionStore(db.DB)
 	fightStore := store.NewFightStore(db.DB)
 	rankingsStore := store.NewRankingsStore(db.DB)
+	consumableStore := store.NewConsumableStore(db.DB) // MAT-153: Consumables
 
 	// Initialize fatigue service
 	fatigueService := service.NewFatigueService(boxerStore, lg)
@@ -128,6 +130,9 @@ func main() {
 	// MAT-115: Initialize rankings service for cache invalidation after fights
 	rankingsService := service.NewRankingsService(rankingsStore, r.Client, lg)
 
+	// MAT-153: Initialize recovery service for post-fight recovery scheduling
+	recoveryService := service.NewRecoveryService(boxerStore, consumableStore, lg, db.DB)
+
 	// Initialize training service (for MAT-74)
 	trainingService := service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, eventStore, fatigueService, progressionService, worldClock, lg, db.DB)
 
@@ -139,8 +144,39 @@ func main() {
 		return rankingsService.InvalidateRankingsCache(ctx)
 	})
 
+	// MAT-153: Wire up recovery scheduling callback for post-fight health damage
+	fightSvc.SetOnFightSimEnd(func(ctx context.Context, boxer1ID, boxer2ID int, boxer1HealthLost, boxer2HealthLost float64) error {
+		var errs []error
+
+		// Get current game time for recovery scheduling
+		gameTime, err := worldClock.GetCurrentGameTime(ctx, db.DB)
+		if err != nil {
+			lg.Warn("Failed to get game time for recovery scheduling", "error", err.Error())
+			gameTime = time.Now() // Fallback to real time
+		}
+
+		// Schedule recovery for boxer 1 if they took damage
+		if boxer1HealthLost > 0 {
+			if err := recoveryService.ScheduleForcedRecovery(ctx, domain.BoxerID(boxer1ID), boxer1HealthLost, gameTime); err != nil {
+				errs = append(errs, fmt.Errorf("boxer1 recovery: %w", err))
+			}
+		}
+
+		// Schedule recovery for boxer 2 if they took damage
+		if boxer2HealthLost > 0 {
+			if err := recoveryService.ScheduleForcedRecovery(ctx, domain.BoxerID(boxer2ID), boxer2HealthLost, gameTime); err != nil {
+				errs = append(errs, fmt.Errorf("boxer2 recovery: %w", err))
+			}
+		}
+
+		if len(errs) > 0 {
+			return fmt.Errorf("recovery scheduling failed: %v", errs)
+		}
+		return nil
+	})
+
 	// Initialize event processor (for scheduled events)
-	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, *lg)
+	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvc, fatigueService, recoveryService, *lg) // MAT-154: Inject recovery service for health restoration
 
 	// MAT-143: Initialize cleanup service for old failed events
 	cleanupService := service.NewEventCleanupService(eventStore, fightStore, cfg.Events.Cleanup, lg)

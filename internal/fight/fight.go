@@ -33,13 +33,14 @@ type Fight struct {
 }
 
 type FightService struct {
-	fightStore *store.FightStore
-	boxerStore *store.BoxerStore
-	cfg        *config.Config
-	logger     *logger.Logger
-	boxerSvc   *boxer.BoxerService
-	eventStore *store.ScheduledEventStore
-	onFightEnd func(ctx context.Context, boxer1ID, boxer2ID int) error // Callback for post-fight processing (MAT-115)
+	fightStore    *store.FightStore
+	boxerStore    *store.BoxerStore
+	cfg           *config.Config
+	logger        *logger.Logger
+	boxerSvc      *boxer.BoxerService
+	eventStore    *store.ScheduledEventStore
+	onFightEnd    func(ctx context.Context, boxer1ID, boxer2ID int) error                                             // Callback for post-fight processing (MAT-115)
+	onFightSimEnd func(ctx context.Context, boxer1ID, boxer2ID int, boxer1HealthLost, boxer2HealthLost float64) error // MAT-153: Recovery scheduling callback
 }
 
 func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, cfg *config.Config, boxerSvc *boxer.BoxerService, eventStore *store.ScheduledEventStore) *FightService {
@@ -57,6 +58,11 @@ func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore,
 // SetOnFightEnd sets a callback to be executed after fight completion (MAT-115)
 func (s *FightService) SetOnFightEnd(callback func(ctx context.Context, boxer1ID, boxer2ID int) error) {
 	s.onFightEnd = callback
+}
+
+// SetOnFightSimEnd sets a callback to be executed after fight simulation with health data (MAT-153)
+func (s *FightService) SetOnFightSimEnd(callback func(ctx context.Context, boxer1ID, boxer2ID int, boxer1HealthLost, boxer2HealthLost float64) error) {
+	s.onFightSimEnd = callback
 }
 
 func (s *FightService) Schedule(boxer1ID, boxer2ID int, scheduledTime time.Time) (*Fight, error) {
@@ -339,6 +345,10 @@ func (s *FightService) SimulateFight(fightID int) error {
 
 	s.logger.Info("Simulating fight", "boxer1", boxer1.Name, "boxer2", boxer2.Name)
 
+	// MAT-153: Track old health values for recovery calculation
+	oldHealth1 := boxer1.Health
+	oldHealth2 := boxer2.Health
+
 	// Update fight status to in_progress within transaction
 	if err := s.fightStore.UpdateStatusTx(ctx, tx, domain.FightID(fightID), "in_progress"); err != nil {
 		return fmt.Errorf("failed to update fight status: %w", err)
@@ -536,6 +546,24 @@ func (s *FightService) SimulateFight(fightID int) error {
 	if s.onFightEnd != nil {
 		if err := s.onFightEnd(ctx, fight.Boxer1ID, fight.Boxer2ID); err != nil {
 			s.logger.Warn("Post-fight callback failed", "fight_id", fightID, "error", err)
+			// Don't fail the fight - just log the error
+		}
+	}
+
+	// MAT-153: Calculate health lost and call recovery scheduling callback
+	boxer1HealthLost := oldHealth1 - boxer1.Health
+	boxer2HealthLost := oldHealth2 - boxer2.Health
+	if boxer1HealthLost < 0 {
+		boxer1HealthLost = 0
+	}
+	if boxer2HealthLost < 0 {
+		boxer2HealthLost = 0
+	}
+
+	if s.onFightSimEnd != nil && (boxer1HealthLost > 0 || boxer2HealthLost > 0) {
+		// Game time is captured in the callback closure by the caller
+		if err := s.onFightSimEnd(ctx, fight.Boxer1ID, fight.Boxer2ID, boxer1HealthLost, boxer2HealthLost); err != nil {
+			s.logger.Warn("Post-fight recovery scheduling failed", "fight_id", fightID, "error", err)
 			// Don't fail the fight - just log the error
 		}
 	}
