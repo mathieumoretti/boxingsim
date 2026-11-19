@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"context"
@@ -225,7 +225,7 @@ func TestTrainingServiceCompleteTrainingSession(t *testing.T) {
 		}
 	})
 
-		t.Run("TrainingTypeNotFoundReturnsError", func(t *testing.T) {
+	t.Run("TrainingTypeNotFoundReturnsError", func(t *testing.T) {
 		// This test is skipped because PostgreSQL FK constraints prevent creating orphaned records:
 		// 1. Cannot INSERT training_session with non-existent training_type_id (FK violation on INSERT)
 		// 2. Cannot DELETE training_type when dependent sessions exist (FK violation on DELETE)
@@ -235,12 +235,12 @@ func TestTrainingServiceCompleteTrainingSession(t *testing.T) {
 
 	t.Run("BoxerNotFoundReturnsError", func(t *testing.T) {
 		// This test is skipped because PostgreSQL FK constraints prevent creating orphaned records:
-		// 1. Cannot INSERT training_session with non-existent boxer_id (FK violation on INSERT)  
+		// 1. Cannot INSERT training_session with non-existent boxer_id (FK violation on INSERT)
 		// 2. Cannot DELETE boxer when dependent sessions exist (FK violation on DELETE)
 		// The service correctly handles this via the store layer returning appropriate error
 		t.Skip("Skipped: PostgreSQL FK constraints prevent orphaned record scenario - service handles missing references at query time")
 	})
-t.Run("StatProgressionAppliedCorrectly", func(t *testing.T) {
+	t.Run("StatProgressionAppliedCorrectly", func(t *testing.T) {
 		boxer := &model.Boxer{
 			UserID:   userID,
 			Name:     "Progression Boxer",
@@ -371,12 +371,11 @@ func TestTrainingServiceCreateTrainingSession(t *testing.T) {
 			ctx,
 			boxer.ID,
 			trainingTypeID,
-			2.0,        // duration hours
-			5.0,        // strength gain
-			3.0,        // defense gain
-			2.0,        // agility gain
+			2.0, // duration hours
+			5.0, // strength gain
+			3.0, // defense gain
+			2.0, // agility gain
 		)
-
 		if err != nil {
 			t.Fatalf("CreateTrainingSession failed: %v", err)
 		}
@@ -540,9 +539,15 @@ func TestTrainingServiceCompleteAllDueTrainingSessions(t *testing.T) {
 			VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW() - INTERVAL '1 hour', NOW(), NOW())`
 
 		// Create 3 pending sessions
-		testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2)
-		testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2)
-		testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2)
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil {
+			t.Fatalf("Failed to insert session 1: %v", err)
+		}
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil {
+			t.Fatalf("Failed to insert session 2: %v", err)
+		}
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer.ID, batchTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil {
+			t.Fatalf("Failed to insert session 3: %v", err)
+		}
 
 		completed, _, err := trainingSvc.CompleteAllDueTrainingSessions(ctx, testDB)
 		if err != nil {
@@ -662,9 +667,15 @@ func TestTrainingServiceCompleteTrainingForBoxer(t *testing.T) {
 			scheduled_completion_time, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW() - INTERVAL '1 hour', NOW(), NOW())`
 
-		testDB.ExecContext(ctx, sessionQuery, boxer1.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2)
-		testDB.ExecContext(ctx, sessionQuery, boxer1.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2) // Two sessions for boxer1
-		testDB.ExecContext(ctx, sessionQuery, boxer2.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2) // One session for boxer2
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer1.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil {
+			t.Fatalf("Failed to insert session 1: %v", err)
+		}
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer1.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil { // Two sessions for boxer1
+			t.Fatalf("Failed to insert session 2: %v", err)
+		}
+		if _, err := testDB.ExecContext(ctx, sessionQuery, boxer2.ID, boxerTrainingTypeID, 1.0, 0.5, 0.3, 0.2); err != nil { // One session for boxer2
+			t.Fatalf("Failed to insert session 3: %v", err)
+		}
 
 		completed, failed, err := trainingSvc.CompleteTrainingForBoxer(ctx, boxer1.ID)
 		if err != nil {
@@ -685,20 +696,20 @@ func TestTrainingServiceCompleteTrainingForBoxer(t *testing.T) {
 	})
 
 	t.Run("InvalidBoxerIDReturnsEmptySlice", func(t *testing.T) {
-			completed, failed, err := trainingSvc.CompleteTrainingForBoxer(ctx, 9999)
-			if err != nil {
-				t.Logf("Got error: %v", err)
-			}
-			// Note: CompleteTrainingForBoxer returns (0, 0, nil) when no boxer found with that ID
-			// because GetPendingByBoxerID returns empty slice, not an error
-			if completed != 0 {
-				t.Error("Expected zero completions for non-existent boxer")
-			}
-			if failed != 0 {
-				t.Error("Expected zero failures for non-existent boxer")
-			}
-		})
-		t.Run("NoPendingSessionsForBoxer", func(t *testing.T) {
+		completed, failed, err := trainingSvc.CompleteTrainingForBoxer(ctx, 9999)
+		if err != nil {
+			t.Logf("Got error: %v", err)
+		}
+		// Note: CompleteTrainingForBoxer returns (0, 0, nil) when no boxer found with that ID
+		// because GetPendingByBoxerID returns empty slice, not an error
+		if completed != 0 {
+			t.Error("Expected zero completions for non-existent boxer")
+		}
+		if failed != 0 {
+			t.Error("Expected zero failures for non-existent boxer")
+		}
+	})
+	t.Run("NoPendingSessionsForBoxer", func(t *testing.T) {
 		// Create a third boxer with no training sessions
 		boxer3 := &model.Boxer{
 			UserID:   userID,
@@ -724,6 +735,3 @@ func TestTrainingServiceCompleteTrainingForBoxer(t *testing.T) {
 		}
 	})
 }
-
-
-

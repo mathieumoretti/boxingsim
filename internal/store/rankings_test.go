@@ -250,7 +250,7 @@ func TestRankedBoxer_ScoreCalculations(t *testing.T) {
 		knockouts := 3
 		level := 5
 
-		expectedScore := float64((wins*2) + knockouts + (level*3))
+		expectedScore := float64((wins * 2) + knockouts + (level * 3))
 
 		assert.Equal(t, expectedScore, 38.0) // 20 + 3 + 15 = 38
 	})

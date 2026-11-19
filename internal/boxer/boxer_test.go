@@ -1,4 +1,4 @@
-﻿package boxer
+package boxer
 
 import (
 	"context"

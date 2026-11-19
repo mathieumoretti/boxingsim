@@ -216,8 +216,8 @@ func (h *RankingsHandler) ForceRecalculate(w http.ResponseWriter, r *http.Reques
 	}
 
 	response := map[string]interface{}{
-		"message":   "Rankings force recalculated successfully",
-		"results":   results,
+		"message":        "Rankings force recalculated successfully",
+		"results":        results,
 		"criteria_count": len(results),
 	}
 

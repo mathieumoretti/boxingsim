@@ -138,12 +138,12 @@ func TestFightHandler_BookFight(t *testing.T) {
 		handler := NewFightHandler(nil, nil, nil, nil)
 
 		testCases := []struct {
-			name     string
-			body     string
-			minCode  int
+			name    string
+			body    string
+			minCode int
 		}{
 			{"ValidRequest", `{"boxer1_id": 1, "boxer2_id": 2, "scheduled_time": "2024-01-15T20:00:00Z"}`, 400}, // Handler processes but service is nil
-			{"MissingBoxer1ID", `{"boxer2_id": 2, "scheduled_time": "2024-01-15T20:00:00Z"}`, 400}, // Will parse but handler may error
+			{"MissingBoxer1ID", `{"boxer2_id": 2, "scheduled_time": "2024-01-15T20:00:00Z"}`, 400},              // Will parse but handler may error
 			{"InvalidJSON", `{invalid json`, http.StatusBadRequest},
 		}
 
@@ -336,11 +336,11 @@ func TestFightHandler_GetUpcomingFightForBoxer(t *testing.T) {
 	t.Run("ReturnsUpcomingFightResponseStructure", func(t *testing.T) {
 		// Verify expected response structure
 		expected := &boxerdb.UpcomingFightResponse{
-			FightID:       1,
-			OpponentID:    5,
-			OpponentName:  "Test Opponent",
-			Status:        "scheduled",
-			Rounds:        12,
+			FightID:      1,
+			OpponentID:   5,
+			OpponentName: "Test Opponent",
+			Status:       "scheduled",
+			Rounds:       12,
 		}
 
 		jsonData, err := json.Marshal(expected)

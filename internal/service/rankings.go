@@ -216,11 +216,11 @@ func (s *RankingsService) InvalidateBoxerRankingCache(ctx context.Context, boxer
 
 // RecalculationResult holds the result of a force recalculation operation (MAT-115)
 type RecalculationResult struct {
-	Criteria  string   `json:"criteria"`
-	CacheKeys int      `json:"cache_keys_invalidated"`
-	BoxerCount int     `json:"boxer_count"`
+	Criteria       string               `json:"criteria"`
+	CacheKeys      int                  `json:"cache_keys_invalidated"`
+	BoxerCount     int                  `json:"boxer_count"`
 	SampleRankings []*model.RankedBoxer `json:"sample_rankings"`
-	Error     error    `json:"error,omitempty"`
+	Error          error                `json:"error,omitempty"`
 }
 
 // ForceRecalculate invalidates all ranking caches and fetches fresh rankings to verify calculation works (MAT-115)

@@ -68,8 +68,8 @@ func TestRankingsHandler_GetRankings(t *testing.T) {
 			{"ValidLimit10", "10", 10},
 			{"ValidLimit100", "100", 100},
 			{"InvalidLimitNegative", "-5", 100}, // Should default to 100
-			{"InvalidLimitString", "abc", 100},   // Should default to 100
-			{"MissingLimit", "", 100},            // Should use default of 100
+			{"InvalidLimitString", "abc", 100},  // Should default to 100
+			{"MissingLimit", "", 100},           // Should use default of 100
 		}
 
 		for _, tc := range testCases {
