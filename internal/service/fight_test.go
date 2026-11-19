@@ -41,7 +41,7 @@ func TestFightServiceBookFight(t *testing.T) {
 		},
 	}
 
-	fightSvc := NewFightService(fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB)
+	fightSvc := NewFightService(fightStore, boxerStore, eventStore, nil, worldClockModel, cfg, testDB)
 
 	// Create test user and boxers
 	t.Run("SetupTestBoxers", func(t *testing.T) {
@@ -228,7 +228,7 @@ func TestFightServiceGetFightByID(t *testing.T) {
 	boxerStore := store.NewBoxerStore(testDB)
 	fightStore := store.NewFightStore(testDB)
 
-	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, testDB)
+	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, nil, testDB)
 
 	// Create user and boxers for tests
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
@@ -312,7 +312,7 @@ func TestFightServiceCancelFight(t *testing.T) {
 	worldClockModel := &model.WorldClockModel{}
 
 	cfg := &config.Config{Fight: config.FightConfig{MinScheduleHours: 24}}
-	fightSvc := NewFightService(fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB)
+	fightSvc := NewFightService(fightStore, boxerStore, eventStore, nil, worldClockModel, cfg, testDB)
 
 	// Setup: Create user and boxers
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at)
@@ -436,7 +436,7 @@ func TestFightServiceValidateOpponentMatch(t *testing.T) {
 		cfg = &config.Config{}
 	}
 
-	fightSvc := NewFightService(nil, boxerStore, nil, nil, cfg, testDB)
+	fightSvc := NewFightService(nil, boxerStore, nil, nil, nil, cfg, testDB)
 
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at)
 		VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
@@ -549,7 +549,7 @@ func TestFightServiceGetUpcomingFightForBoxer(t *testing.T) {
 	boxerStore := store.NewBoxerStore(testDB)
 	fightStore := store.NewFightStore(testDB)
 
-	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, testDB)
+	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, nil, testDB)
 
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
@@ -623,7 +623,7 @@ func TestFightServiceGetFightHistoryWithOpponents(t *testing.T) {
 	boxerStore := store.NewBoxerStore(testDB)
 	fightStore := store.NewFightStore(testDB)
 
-	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, testDB)
+	fightSvc := NewFightService(fightStore, boxerStore, nil, nil, nil, nil, testDB)
 
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int

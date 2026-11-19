@@ -26,11 +26,12 @@ var (
 // EventProcessor handles the processing of scheduled events for boxers.
 // It follows the same pattern as FightService with proper error wrapping and contextual logging.
 type EventProcessor struct {
-	eventStore     *store.ScheduledEventStore
-	boxerStore     *store.BoxerStore
-	fightService   *fight.FightService
-	fatigueService *FatigueService
-	logger         logger.Logger
+	eventStore      *store.ScheduledEventStore
+	boxerStore      *store.BoxerStore
+	fightService    *fight.FightService
+	fatigueService  *FatigueService
+	recoveryService *RecoveryService // MAT-154: For health restoration during recovery events
+	logger          logger.Logger
 }
 
 // NewEventProcessor creates a new EventProcessor instance.
@@ -39,14 +40,16 @@ func NewEventProcessor(
 	boxerStore *store.BoxerStore,
 	fightService *fight.FightService,
 	fatigueService *FatigueService,
+	recoveryService *RecoveryService, // MAT-154: Inject recovery service for health restoration
 	lg logger.Logger,
 ) *EventProcessor {
 	return &EventProcessor{
-		eventStore:     eventStore,
-		boxerStore:     boxerStore,
-		fightService:   fightService,
-		fatigueService: fatigueService,
-		logger:         lg,
+		eventStore:      eventStore,
+		boxerStore:      boxerStore,
+		fightService:    fightService,
+		fatigueService:  fatigueService,
+		recoveryService: recoveryService, // MAT-154
+		logger:          lg,
 	}
 }
 
@@ -167,8 +170,8 @@ func (p *EventProcessor) processTrainingComplete(ctx context.Context, event *mod
 	return nil
 }
 
-// processRecovery handles rest/recovery events.
-// It delegates to FatigueService.ApplyRecovery for comprehensive recovery handling.
+// processRecovery handles rest/recovery events (MAT-154).
+// It applies health restoration via RecoveryService and delegates to FatigueService for fatigue decay.
 func (p *EventProcessor) processRecovery(ctx context.Context, event *model.ScheduledEvent) error {
 	p.logger.Info("Processing recovery event", "event_id", event.ID, "boxer_id", event.BoxerID)
 
@@ -192,16 +195,26 @@ func (p *EventProcessor) processRecovery(ctx context.Context, event *model.Sched
 	// Extract rest duration from event data (default to 1 hour if not specified)
 	restHours := getIntField(data, "rest_hours", 1)
 
-	// Delegate to FatigueService for comprehensive recovery handling
-	if p.fatigueService == nil {
-		return fmt.Errorf("fatigueService is nil, cannot apply recovery")
+	// MAT-154: Apply health restoration during recovery rest events
+	if p.recoveryService != nil {
+		if err := p.recoveryService.ApplyHealthRestoration(ctx, domain.BoxerID(event.BoxerID), restHours); err != nil {
+			return fmt.Errorf("failed to apply health restoration for boxer %d: %w", event.BoxerID, err)
+		}
+		p.logger.Info("Health restoration applied", "boxer_id", event.BoxerID, "rest_hours", restHours)
+	} else {
+		p.logger.Warn("RecoveryService not initialized, skipping health restoration", "event_id", event.ID)
 	}
 
-	if err := p.fatigueService.ApplyRecovery(ctx, domain.BoxerID(event.BoxerID), restHours); err != nil {
-		return fmt.Errorf("failed to apply recovery for boxer %d: %w", event.BoxerID, err)
+	// Delegate to FatigueService for fatigue decay (existing behavior preserved)
+	if p.fatigueService != nil {
+		if err := p.fatigueService.ApplyRecovery(ctx, domain.BoxerID(event.BoxerID), restHours); err != nil {
+			return fmt.Errorf("failed to apply fatigue recovery for boxer %d: %w", event.BoxerID, err)
+		}
+	} else {
+		p.logger.Warn("FatigueService not initialized, skipping fatigue recovery", "event_id", event.ID)
 	}
 
-	p.logger.Info("Recovery applied", "boxer_id", event.BoxerID, "rest_hours", restHours)
+	p.logger.Info("Recovery processing complete", "boxer_id", event.BoxerID, "rest_hours", restHours)
 	return nil
 }
 

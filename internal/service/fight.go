@@ -22,16 +22,26 @@ type FightService struct {
 	fightStore      *store.FightStore
 	boxerStore      *store.BoxerStore
 	eventStore      *store.ScheduledEventStore
+	recoveryService *RecoveryService
 	worldClockModel *model.WorldClockModel
 	cfg             *config.Config
 	db              *sql.DB
 }
 
-func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, eventStore *store.ScheduledEventStore, worldClockModel *model.WorldClockModel, cfg *config.Config, db *sql.DB) *FightService {
+func NewFightService(
+	fightStore *store.FightStore,
+	boxerStore *store.BoxerStore,
+	eventStore *store.ScheduledEventStore,
+	recoveryService *RecoveryService,
+	worldClockModel *model.WorldClockModel,
+	cfg *config.Config,
+	db *sql.DB,
+) *FightService {
 	return &FightService{
 		fightStore:      fightStore,
 		boxerStore:      boxerStore,
 		eventStore:      eventStore,
+		recoveryService: recoveryService,
 		worldClockModel: worldClockModel,
 		cfg:             cfg,
 		db:              db,
@@ -81,6 +91,21 @@ func (s *FightService) BookFight(ctx context.Context, boxer1ID int,
 	inUse2, _ := s.fightStore.BoxerInFight(ctx, domain.BoxerID(boxer2ID))
 	if inUse2 {
 		return fmt.Errorf("%w: boxer %d is currently involved in another fight", store.ErrBoxerInUse, boxer2ID)
+	}
+
+	// Check if boxers can fight (health and recovery status) - MAT-156
+	if s.recoveryService != nil && s.worldClockModel != nil && s.db != nil {
+		gameTime, _ := s.worldClockModel.GetCurrentGameTime(ctx, s.db)
+
+		canFight1, err1 := s.recoveryService.CheckCanFight(boxer1, gameTime)
+		if !canFight1 {
+			return fmt.Errorf("boxer %d cannot fight: %s", boxer1ID, err1)
+		}
+
+		canFight2, err2 := s.recoveryService.CheckCanFight(boxer2, gameTime)
+		if !canFight2 {
+			return fmt.Errorf("boxer %d cannot fight: %s", boxer2ID, err2)
+		}
 	}
 
 	// Validate opponent match quality (MAT-102)

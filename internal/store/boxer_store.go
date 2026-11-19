@@ -40,10 +40,11 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 			user_id, name, nickname, position_x, position_y,
 			health, energy, strength, defense, agility,
 			experience, level, fatigue_score, forced_rest_until,
+			forced_recovery_until, next_available_at,
 			wins, losses, draws, knockouts, knockdowns_suffered,
 			created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-		           $15, $16, $17, $18, $19, $20, $21)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+		           $17, $18, $19, $20, $21, $22, $23)
 		RETURNING id`
 
 	now := time.Now()
@@ -54,6 +55,7 @@ func (s *BoxerStore) Create(ctx context.Context, boxer *model.Boxer) error {
 		boxer.UserID, boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
 		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.ForcedRecoveryUntil, boxer.NextAvailableAt,
 		boxer.Wins, boxer.Losses, boxer.Draws, boxer.Knockouts, boxer.KnockdownsSuffered,
 		boxer.CreatedAt, boxer.UpdatedAt,
 	).Scan(&boxer.ID)
@@ -71,6 +73,7 @@ func (s *BoxerStore) GetByID(ctx context.Context, id domain.BoxerID) (*model.Box
 		SELECT id, user_id, name, nickname, position_x, position_y,
 		       health, energy, strength, defense, agility,
 		       experience, level, fatigue_score, forced_rest_until,
+		       forced_recovery_until, next_available_at,
 		       wins, losses, draws, knockouts, knockdowns_suffered,
 		       created_at, updated_at
 		FROM boxers WHERE id = $1`
@@ -82,6 +85,7 @@ func (s *BoxerStore) GetByID(ctx context.Context, id domain.BoxerID) (*model.Box
 		&boxer.ID, &boxer.UserID, &boxer.Name, &boxer.Nickname, &boxer.PositionX, &boxer.PositionY,
 		&boxer.Health, &boxer.Energy, &boxer.Strength, &boxer.Defense, &boxer.Agility,
 		&boxer.Experience, &boxer.Level, &boxer.FatigueScore, &boxer.ForcedRestUntil,
+		&boxer.ForcedRecoveryUntil, &boxer.NextAvailableAt,
 		&boxer.Wins, &boxer.Losses, &boxer.Draws, &boxer.Knockouts, &boxer.KnockdownsSuffered,
 		&boxer.CreatedAt, &boxer.UpdatedAt,
 	)
@@ -217,9 +221,10 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 			name = $1, nickname = $2, position_x = $3, position_y = $4,
 			health = $5, energy = $6, strength = $7, defense = $8, agility = $9,
 			experience = $10, level = $11, fatigue_score = $12, forced_rest_until = $13,
-			wins = $14, losses = $15, draws = $16, knockouts = $17, knockdowns_suffered = $18,
-			updated_at = $19
-		WHERE id = $20`
+			forced_recovery_until = $14, next_available_at = $15,
+			wins = $16, losses = $17, draws = $18, knockouts = $19, knockdowns_suffered = $20,
+			updated_at = $21
+		WHERE id = $22`
 
 	now := time.Now()
 	boxer.UpdatedAt = now
@@ -228,6 +233,7 @@ func (s *BoxerStore) Update(ctx context.Context, boxer *model.Boxer) error {
 		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
 		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.ForcedRecoveryUntil, boxer.NextAvailableAt,
 		boxer.Wins, boxer.Losses, boxer.Draws, boxer.Knockouts, boxer.KnockdownsSuffered,
 		boxer.UpdatedAt, boxer.ID,
 	)
@@ -242,9 +248,10 @@ func (s *BoxerStore) UpdateTx(ctx context.Context, tx *sql.Tx, boxer *model.Boxe
 			name = $1, nickname = $2, position_x = $3, position_y = $4,
 			health = $5, energy = $6, strength = $7, defense = $8, agility = $9,
 			experience = $10, level = $11, fatigue_score = $12, forced_rest_until = $13,
-			wins = $14, losses = $15, draws = $16, knockouts = $17, knockdowns_suffered = $18,
-			updated_at = $19
-		WHERE id = $20`
+			forced_recovery_until = $14, next_available_at = $15,
+			wins = $16, losses = $17, draws = $18, knockouts = $19, knockdowns_suffered = $20,
+			updated_at = $21
+		WHERE id = $22`
 
 	now := time.Now()
 	boxer.UpdatedAt = now
@@ -253,6 +260,7 @@ func (s *BoxerStore) UpdateTx(ctx context.Context, tx *sql.Tx, boxer *model.Boxe
 		boxer.Name, boxer.Nickname, boxer.PositionX, boxer.PositionY,
 		boxer.Health, boxer.Energy, boxer.Strength, boxer.Defense, boxer.Agility,
 		boxer.Experience, boxer.Level, boxer.FatigueScore, boxer.ForcedRestUntil,
+		boxer.ForcedRecoveryUntil, boxer.NextAvailableAt,
 		boxer.Wins, boxer.Losses, boxer.Draws, boxer.Knockouts, boxer.KnockdownsSuffered,
 		boxer.UpdatedAt, boxer.ID,
 	)

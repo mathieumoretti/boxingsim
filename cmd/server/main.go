@@ -79,9 +79,11 @@ func main() {
 	var trainingTypeStore *store.TrainingTypeStore
 	var trainingSessionStore *store.TrainingSessionStore
 	var scheduledEventStore *store.ScheduledEventStore
+	var consumableStore *store.ConsumableStore
 	var rankingsStore *store.RankingsStore
 	var fightService *service.FightService
 	var fatigueService *service.FatigueService
+	var recoveryService *service.RecoveryService
 	var progressionService *service.ProgressionService
 	var trainingService *service.TrainingService
 	var rankingsService *service.RankingsService
@@ -92,10 +94,12 @@ func main() {
 		trainingTypeStore = store.NewTrainingTypeStore(dbConn.DB)
 		trainingSessionStore = store.NewTrainingSessionStore(dbConn.DB)
 		scheduledEventStore = store.NewScheduledEventStore(dbConn.DB)
+		consumableStore = store.NewConsumableStore(dbConn.DB)
 		rankingsStore = store.NewRankingsStore(dbConn.DB)
 		fightStore := store.NewFightStore(dbConn.DB)
 		worldClockModel = model.NewWorldClockModel(logger)
-		fightService = service.NewFightService(fightStore, boxerStore, scheduledEventStore, worldClockModel, cfg, dbConn.DB)
+		recoveryService = service.NewRecoveryService(boxerStore, consumableStore, logger, dbConn.DB)
+		fightService = service.NewFightService(fightStore, boxerStore, scheduledEventStore, recoveryService, worldClockModel, cfg, dbConn.DB)
 		fatigueService = service.NewFatigueService(boxerStore, logger)
 		progressionService = service.NewProgressionService(logger)
 		trainingService = service.NewTrainingService(boxerStore, trainingTypeStore, trainingSessionStore, scheduledEventStore, fatigueService, progressionService, worldClockModel, logger, dbConn.DB)
@@ -115,6 +119,7 @@ func main() {
 	var authHandler *handler.AuthHandler
 	var dashboardHandler *handler.DashboardHandler
 	var worldClockHandler *handler.WorldClockHandler
+	var consumableHandler *handler.ConsumableHandler
 
 	if dbConn != nil {
 		boxerHandler = handler.NewBoxerHandler(boxerStore, scheduledEventStore)
@@ -133,6 +138,7 @@ func main() {
 		authHandler = handler.NewAuthHandler(dbConn)
 		dashboardHandler = handler.NewDashboardHandler()
 		worldClockHandler = handler.NewWorldClockHandler(dbConn.DB)
+		consumableHandler = handler.NewConsumableHandler(boxerStore, consumableStore, recoveryService)
 	}
 
 	// Setup router
@@ -223,6 +229,13 @@ func main() {
 	protectedRouter.HandleFunc("/rankings/nearby/{boxer_id}", rankingsHandler.GetNearbyRankings).Methods("GET")
 	protectedRouter.HandleFunc("/rankings/invalidate", rankingsHandler.InvalidateRankings).Methods("POST")
 	protectedRouter.HandleFunc("/rankings/recalculate", rankingsHandler.ForceRecalculate).Methods("POST") // MAT-115
+
+	// Consumables endpoints (MAT-153 Phase 6) - must be before /boxers/{id} catch-all
+	protectedRouter.HandleFunc("/boxers/{id}/use-consumable", consumableHandler.UseConsumable).Methods("POST")
+	protectedRouter.HandleFunc("/boxers/{id}/consumables", consumableHandler.GetBoxerInventory).Methods("GET")
+
+	// Consumables catalog - public (reference data, not protected)
+	router.HandleFunc("/consumables", consumableHandler.GetAllConsumables).Methods("GET")
 
 	// Serve static files for the UI (React app) with SPA fallback
 	// The SPA handler serves actual static assets and falls back to index.html for React Router paths
