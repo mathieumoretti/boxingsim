@@ -48,7 +48,7 @@ func TestTrainingHandler_ScheduleTraining(t *testing.T) {
 			boxerID  string
 			wantCode int
 		}{
-			{"ValidBoxerID1", "1", http.StatusUnauthorized}, // Auth checked first
+			{"ValidBoxerID1", "1", http.StatusUnauthorized},          // Auth checked first
 			{"InvalidBoxerIDString", "abc", http.StatusUnauthorized}, // Auth checked before path param parsing
 		}
 
@@ -469,22 +469,22 @@ func TestTrainingHandler_GetAllTrainingTypes(t *testing.T) {
 	t.Run("ReturnsJSONResponseStructure", func(t *testing.T) {
 		expectedTypes := []map[string]any{
 			{
-				"id":                 1,
-				"name":               "Strength Training",
-				"description":        "Build muscle strength",
+				"id":                   1,
+				"name":                 "Strength Training",
+				"description":          "Build muscle strength",
 				"strength_gain_factor": 0.75,
 				"defense_gain_factor":  0.25,
 				"agility_gain_factor":  0.10,
-				"energy_cost":         10,
+				"energy_cost":          10,
 			},
 			{
-				"id":                 2,
-				"name":               "Speed Training",
-				"description":        "Improve agility and speed",
+				"id":                   2,
+				"name":                 "Speed Training",
+				"description":          "Improve agility and speed",
 				"strength_gain_factor": 0.10,
 				"defense_gain_factor":  0.15,
 				"agility_gain_factor":  0.75,
-				"energy_cost":         8,
+				"energy_cost":          8,
 			},
 		}
 
@@ -508,7 +508,7 @@ func TestTrainingHandler_GetTrainingHistory(t *testing.T) {
 			boxerID  string
 			wantCode int
 		}{
-			{"ValidBoxerID1", "1", http.StatusUnauthorized}, // Requires auth (checked before path parsing)
+			{"ValidBoxerID1", "1", http.StatusUnauthorized},          // Requires auth (checked before path parsing)
 			{"InvalidBoxerIDString", "abc", http.StatusUnauthorized}, // Auth checked first, returns 401
 		}
 
@@ -559,7 +559,7 @@ func TestTrainingHandler_GetStatProgression(t *testing.T) {
 			boxerID  string
 			wantCode int
 		}{
-			{"ValidBoxerID1", "1", http.StatusUnauthorized}, // Requires auth (checked before path parsing)
+			{"ValidBoxerID1", "1", http.StatusUnauthorized},          // Requires auth (checked before path parsing)
 			{"InvalidBoxerIDString", "abc", http.StatusUnauthorized}, // Auth checked first, returns 401
 		}
 

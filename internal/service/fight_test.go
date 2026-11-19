@@ -176,8 +176,8 @@ func TestFightServiceBookFight(t *testing.T) {
 			Agility:  75.0,
 			Level:    5,
 		}
-		boxerStore.Create(ctx, boxer3)
-		boxerStore.Create(ctx, boxer4)
+		_ = boxerStore.Create(ctx, boxer3)
+		_ = boxerStore.Create(ctx, boxer4)
 
 		err := fightSvc.BookFight(ctx, 3, 4, scheduledTime, 10)
 		if err == nil {
@@ -233,10 +233,16 @@ func TestFightServiceGetFightByID(t *testing.T) {
 	// Create user and boxers for tests
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
-	testDB.QueryRowContext(ctx, query, "testuser", "test@example.com", "hashed").Scan(&userID)
+	if err := testDB.QueryRowContext(ctx, query, "testuser", "test@example.com", "hashed").Scan(&userID); err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
 
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Test Boxer 1"})
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Test Boxer 2"})
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Test Boxer 1"}); err != nil {
+		t.Fatalf("Failed to create boxer 1: %v", err)
+	}
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Test Boxer 2"}); err != nil {
+		t.Fatalf("Failed to create boxer 2: %v", err)
+	}
 
 	t.Run("FightFound", func(t *testing.T) {
 		// Create a fight directly in DB (boxers 1 and 2 already exist)
@@ -312,10 +318,16 @@ func TestFightServiceCancelFight(t *testing.T) {
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at)
 		VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
-	testDB.QueryRowContext(ctx, query, "canceltest", "cancel@example.com", "hashed").Scan(&userID)
+	if err := testDB.QueryRowContext(ctx, query, "canceltest", "cancel@example.com", "hashed").Scan(&userID); err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
 
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Cancel Boxer1", Health: 100, Level: 5})
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Cancel Boxer2", Health: 100, Level: 5})
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Cancel Boxer1", Health: 100, Level: 5}); err != nil {
+		t.Fatalf("Failed to create boxer 1: %v", err)
+	}
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Cancel Boxer2", Health: 100, Level: 5}); err != nil {
+		t.Fatalf("Failed to create boxer 2: %v", err)
+	}
 
 	gameTime, _ := worldClockModel.GetCurrentGameTime(ctx, testDB)
 
@@ -429,11 +441,17 @@ func TestFightServiceValidateOpponentMatch(t *testing.T) {
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at)
 		VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
-	testDB.QueryRowContext(ctx, query, "valtest", "val@example.com", "hashed").Scan(&userID)
+	if err := testDB.QueryRowContext(ctx, query, "valtest", "val@example.com", "hashed").Scan(&userID); err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
 
 	t.Run("PerfectMatch", func(t *testing.T) {
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Perfect 1", Health: 100, Level: 5, Strength: 70, Defense: 60, Agility: 80})
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Perfect 2", Health: 100, Level: 5, Strength: 68, Defense: 62, Agility: 78})
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Perfect 1", Health: 100, Level: 5, Strength: 70, Defense: 60, Agility: 80}); err != nil {
+			t.Fatalf("Failed to create boxer 1: %v", err)
+		}
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Perfect 2", Health: 100, Level: 5, Strength: 68, Defense: 62, Agility: 78}); err != nil {
+			t.Fatalf("Failed to create boxer 2: %v", err)
+		}
 
 		val := fightSvc.ValidateOpponentMatch(1, 2)
 		if !val.Valid {
@@ -442,8 +460,12 @@ func TestFightServiceValidateOpponentMatch(t *testing.T) {
 	})
 
 	t.Run("LevelMismatchExceedsMax", func(t *testing.T) {
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Low Level", Health: 100, Level: 2})
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "High Level", Health: 100, Level: 20}) // Diff = 18 > MaxLevelDifference(10)
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Low Level", Health: 100, Level: 2}); err != nil {
+			t.Fatalf("Failed to create boxer 3: %v", err)
+		}
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "High Level", Health: 100, Level: 20}); err != nil { // Diff = 18 > MaxLevelDifference(10)
+			t.Fatalf("Failed to create boxer 4: %v", err)
+		}
 
 		val := fightSvc.ValidateOpponentMatch(3, 4)
 		if val.Valid {
@@ -455,8 +477,12 @@ func TestFightServiceValidateOpponentMatch(t *testing.T) {
 	})
 
 	t.Run("LowHealthWarning", func(t *testing.T) {
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Healthy", Health: 100, Level: 5})
-		boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Injured", Health: 20, Level: 5}) // Below MinHealthThreshold(30)
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Healthy", Health: 100, Level: 5}); err != nil {
+			t.Fatalf("Failed to create boxer 5: %v", err)
+		}
+		if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Injured", Health: 20, Level: 5}); err != nil { // Below MinHealthThreshold(30)
+			t.Fatalf("Failed to create boxer 6: %v", err)
+		}
 
 		val := fightSvc.ValidateOpponentMatch(5, 6)
 		if len(val.Warnings) == 0 {
@@ -527,15 +553,23 @@ func TestFightServiceGetUpcomingFightForBoxer(t *testing.T) {
 
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
-	testDB.QueryRowContext(ctx, query, "upcomingtest", "up@example.com", "hashed").Scan(&userID)
+	if err := testDB.QueryRowContext(ctx, query, "upcomingtest", "up@example.com", "hashed").Scan(&userID); err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
 
 	// Create boxers for the upcoming fight test
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Upcoming Boxer 1"})
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent Boxer"})
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Upcoming Boxer 1"}); err != nil {
+		t.Fatalf("Failed to create boxer 1: %v", err)
+	}
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent Boxer"}); err != nil {
+		t.Fatalf("Failed to create boxer 2: %v", err)
+	}
 
 	futureTime := time.Now().Add(24 * time.Hour)
 	query = `INSERT INTO fights (boxer1_id, boxer2_id, status, scheduled_time, round, created_at, updated_at) VALUES ($1, $2, 'scheduled', $3, 10, NOW(), NOW())`
-	testDB.ExecContext(ctx, query, 1, 2, futureTime)
+	if _, err := testDB.ExecContext(ctx, query, 1, 2, futureTime); err != nil {
+		t.Fatalf("Failed to create fight: %v", err)
+	}
 
 	t.Run("ReturnsUpcomingFight", func(t *testing.T) {
 		result, err := fightSvc.GetUpcomingFightForBoxer(ctx, 1)
@@ -593,15 +627,27 @@ func TestFightServiceGetFightHistoryWithOpponents(t *testing.T) {
 
 	query := `INSERT INTO users (username, email, hashed_password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 	var userID int
-	testDB.QueryRowContext(ctx, query, "historytest", "hist@example.com", "hashed").Scan(&userID)
+	if err := testDB.QueryRowContext(ctx, query, "historytest", "hist@example.com", "hashed").Scan(&userID); err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
 
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "History Boxer 1"})
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent A"})
-	boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent B"})
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "History Boxer 1"}); err != nil {
+		t.Fatalf("Failed to create boxer 1: %v", err)
+	}
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent A"}); err != nil {
+		t.Fatalf("Failed to create opponent A: %v", err)
+	}
+	if err := boxerStore.Create(ctx, &model.Boxer{UserID: userID, Name: "Opponent B"}); err != nil {
+		t.Fatalf("Failed to create opponent B: %v", err)
+	}
 
 	query = `INSERT INTO fights (boxer1_id, boxer2_id, status, round, winner_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`
-	testDB.ExecContext(ctx, query, 1, 2, string(model.FightStatusCompleted), 10, 1) // Boxer1 won
-	testDB.ExecContext(ctx, query, 3, 1, string(model.FightStatusCompleted), 8, 3)  // Boxer1 lost
+	if _, err := testDB.ExecContext(ctx, query, 1, 2, string(model.FightStatusCompleted), 10, 1); err != nil {
+		t.Fatalf("Failed to insert fight 1: %v", err)
+	}
+	if _, err := testDB.ExecContext(ctx, query, 3, 1, string(model.FightStatusCompleted), 8, 3); err != nil {
+		t.Fatalf("Failed to insert fight 2: %v", err)
+	}
 
 	t.Run("ReturnsFightHistoryWithOpponents", func(t *testing.T) {
 		history, err := fightSvc.GetFightHistoryWithOpponents(ctx, 1)

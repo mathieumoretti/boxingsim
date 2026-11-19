@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestRankingsService_GetTopRanked(t *testing.T) {
 	t.Run("ValidatesInvalidCriteria", func(t *testing.T) {
 		svc := createTestRankingsService(t)
 
-		result, err := svc.GetTopRanked(nil, "invalid_criteria", 10)
+		result, err := svc.GetTopRanked(context.TODO(), "invalid_criteria", 10)
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -37,7 +38,7 @@ func TestRankingsService_GetTopRanked(t *testing.T) {
 		// This tests that negative limit is normalized (validation passes), then hits redis
 		// We use recover() because nil redis client will panic
 		assert.Panics(t, func() {
-			_, _ = svc.GetTopRanked(nil, "win_rate", -5)
+			_, _ = svc.GetTopRanked(context.TODO(), "win_rate", -5)
 		})
 	})
 
@@ -46,7 +47,7 @@ func TestRankingsService_GetTopRanked(t *testing.T) {
 
 		// Tests that limit > 1000 is capped (validation passes), then hits redis
 		assert.Panics(t, func() {
-			_, _ = svc.GetTopRanked(nil, "win_rate", 5000)
+			_, _ = svc.GetTopRanked(context.TODO(), "win_rate", 5000)
 		})
 	})
 
@@ -55,7 +56,7 @@ func TestRankingsService_GetTopRanked(t *testing.T) {
 
 		// Tests that zero limit defaults to 100 (validation passes), then hits redis
 		assert.Panics(t, func() {
-			_, _ = svc.GetTopRanked(nil, "win_rate", 0)
+			_, _ = svc.GetTopRanked(context.TODO(), "win_rate", 0)
 		})
 	})
 }
@@ -92,7 +93,7 @@ func TestRankingsService_GetRankingForBoxer(t *testing.T) {
 	t.Run("ValidatesCriteria", func(t *testing.T) {
 		svc := createTestRankingsService(t)
 
-		result, err := svc.GetRankingForBoxer(nil, 1, "invalid_criteria")
+		result, err := svc.GetRankingForBoxer(context.TODO(), 1, "invalid_criteria")
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -104,7 +105,7 @@ func TestRankingsService_GetRankingForBoxer(t *testing.T) {
 
 		// Valid criteria passes validation but nil redis will panic
 		assert.Panics(t, func() {
-			_, _ = svc.GetRankingForBoxer(nil, 1, "win_rate")
+			_, _ = svc.GetRankingForBoxer(context.TODO(), 1, "win_rate")
 		})
 	})
 }
@@ -113,7 +114,7 @@ func TestRankingsService_GetNearbyRankings(t *testing.T) {
 	t.Run("ValidatesCriteria", func(t *testing.T) {
 		svc := createTestRankingsService(t)
 
-		result, err := svc.GetNearbyRankings(nil, 1, "invalid_criteria", 5)
+		result, err := svc.GetNearbyRankings(context.TODO(), 1, "invalid_criteria", 5)
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -125,7 +126,7 @@ func TestRankingsService_GetNearbyRankings(t *testing.T) {
 
 		// Radius normalization passes but nil redis will panic
 		assert.Panics(t, func() {
-			_, _ = svc.GetNearbyRankings(nil, 1, "win_rate", 100)
+			_, _ = svc.GetNearbyRankings(context.TODO(), 1, "win_rate", 100)
 		})
 	})
 
@@ -134,7 +135,7 @@ func TestRankingsService_GetNearbyRankings(t *testing.T) {
 
 		// Radius defaults to 5 but nil redis will panic
 		assert.Panics(t, func() {
-			_, _ = svc.GetNearbyRankings(nil, 1, "win_rate", 0)
+			_, _ = svc.GetNearbyRankings(context.TODO(), 1, "win_rate", 0)
 		})
 	})
 }
@@ -149,7 +150,7 @@ func TestRankingsService_InvalidateRankingsCache(t *testing.T) {
 		}
 
 		assert.Panics(t, func() {
-			svc.InvalidateRankingsCache(nil)
+			_ = svc.InvalidateRankingsCache(context.TODO())
 		})
 	})
 }
@@ -164,7 +165,7 @@ func TestRankingsService_InvalidateBoxerRankingCache(t *testing.T) {
 		}
 
 		assert.Panics(t, func() {
-			svc.InvalidateBoxerRankingCache(nil, 123)
+			_ = svc.InvalidateBoxerRankingCache(context.TODO(), 123)
 		})
 	})
 }
@@ -179,7 +180,7 @@ func TestRankingsService_ForceRecalculate(t *testing.T) {
 		}
 
 		assert.Panics(t, func() {
-			svc.ForceRecalculate(nil)
+			_, _ = svc.ForceRecalculate(context.TODO())
 		})
 	})
 }

@@ -1,4 +1,4 @@
-﻿package store
+package store
 
 import (
 	"context"
@@ -254,10 +254,11 @@ func TestFightStore_StatusTransition_ScheduledToCancelled(t *testing.T) {
 		fightID2, _ := store.Create(ctx, boxerIDs[1], boxerIDs[2], &scheduledTime2, 10)
 
 		// Cancel once
-		store.CancelFight(ctx, fightID2, "First cancellation")
+		err := store.CancelFight(ctx, fightID2, "First cancellation")
+		assert.NoError(t, err)
 
 		// Try to cancel again
-		err := store.CancelFight(ctx, fightID2, "Second cancellation attempt")
+		err = store.CancelFight(ctx, fightID2, "Second cancellation attempt")
 
 		assert.ErrorIs(t, err, ErrFightCannotCancel)
 	})
@@ -267,9 +268,10 @@ func TestFightStore_StatusTransition_ScheduledToCancelled(t *testing.T) {
 		fightID3, _ := store.Create(ctx, boxerIDs[0], boxerIDs[1], &scheduledTime3, 10)
 
 		// Mark as completed
-		store.UpdateStatus(ctx, fightID3, "completed")
+		err := store.UpdateStatus(ctx, fightID3, "completed")
+		assert.NoError(t, err)
 
-		err := store.CancelFight(ctx, fightID3, "Attempt to cancel completed fight")
+		err = store.CancelFight(ctx, fightID3, "Attempt to cancel completed fight")
 
 		assert.ErrorIs(t, err, ErrFightCannotCancel)
 	})
@@ -279,9 +281,10 @@ func TestFightStore_StatusTransition_ScheduledToCancelled(t *testing.T) {
 		fightID4, _ := store.Create(ctx, boxerIDs[1], boxerIDs[2], &scheduledTime4, 10)
 
 		// Mark as in progress
-		store.UpdateStatus(ctx, fightID4, "in_progress")
+		err := store.UpdateStatus(ctx, fightID4, "in_progress")
+		assert.NoError(t, err)
 
-		err := store.CancelFight(ctx, fightID4, "Attempt to cancel in progress fight")
+		err = store.CancelFight(ctx, fightID4, "Attempt to cancel in progress fight")
 
 		assert.ErrorIs(t, err, ErrFightCannotCancel)
 	})
@@ -313,9 +316,10 @@ func TestFightStore_StatusTransition_ScheduledToInProgressToCompleted(t *testing
 		fightID, _ := store.Create(ctx, boxerIDs[0], boxerIDs[1], &scheduledTime, 10)
 
 		// First move to in_progress
-		store.UpdateStatus(ctx, fightID, "in_progress")
+		err := store.UpdateStatus(ctx, fightID, "in_progress")
+		assert.NoError(t, err)
 
-		err := store.SetWinner(ctx, fightID, boxerIDs[0])
+		err = store.SetWinner(ctx, fightID, boxerIDs[0])
 
 		assert.NoError(t, err)
 
@@ -328,7 +332,8 @@ func TestFightStore_StatusTransition_ScheduledToInProgressToCompleted(t *testing
 		scheduledTime := time.Now().Add(48 * time.Hour)
 		fightID, _ := store.Create(ctx, boxerIDs[0], boxerIDs[1], &scheduledTime, 10)
 
-		store.UpdateStatus(ctx, fightID, "completed")
+		err := store.UpdateStatus(ctx, fightID, "completed")
+		assert.NoError(t, err)
 
 		fight, _ := store.GetByID(ctx, fightID)
 		assert.NotNil(t, fight.EndTime)
@@ -349,7 +354,7 @@ func TestFightStore_TransactionOperations(t *testing.T) {
 
 		tx, err := testDB.BeginTx(ctx, nil)
 		assert.NoError(t, err)
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		fight, err := store.GetByIDWithLockTx(ctx, tx, fightID)
 		assert.NoError(t, err)
@@ -363,7 +368,7 @@ func TestFightStore_TransactionOperations(t *testing.T) {
 
 		tx, err := testDB.BeginTx(ctx, nil)
 		assert.NoError(t, err)
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		err = store.UpdateStatusTx(ctx, tx, fightID, "in_progress")
 		assert.NoError(t, err)
@@ -378,7 +383,7 @@ func TestFightStore_TransactionOperations(t *testing.T) {
 
 		tx, err := testDB.BeginTx(ctx, nil)
 		assert.NoError(t, err)
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		err = store.SetWinnerTx(ctx, tx, fightID, boxerIDs[0])
 		assert.NoError(t, err)
@@ -391,7 +396,7 @@ func TestFightStore_TransactionOperations(t *testing.T) {
 	t.Run("BeginFightTx uses serializable isolation", func(t *testing.T) {
 		tx, err := store.BeginFightTx(ctx)
 		assert.NoError(t, err)
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		// Verify transaction is created (serializable isolation tested in integration tests)
 		assert.NotNil(t, tx)
@@ -434,7 +439,8 @@ func TestFightStore_BoxerInFight(t *testing.T) {
 	})
 
 	t.Run("completed fights do not count", func(t *testing.T) {
-		store.SetWinner(ctx, fightID, boxerIDs[0])
+		err := store.SetWinner(ctx, fightID, boxerIDs[0])
+		assert.NoError(t, err)
 
 		inFight, err := store.BoxerInFight(ctx, boxerIDs[0])
 
@@ -446,7 +452,8 @@ func TestFightStore_BoxerInFight(t *testing.T) {
 		scheduledTime2 := time.Now().Add(48 * time.Hour)
 		fightID2, _ := store.Create(ctx, boxerIDs[1], boxerIDs[2], &scheduledTime2, 10)
 
-		store.CancelFight(ctx, fightID2, "Test cancellation")
+		err := store.CancelFight(ctx, fightID2, "Test cancellation")
+		assert.NoError(t, err)
 
 		inFight, err := store.BoxerInFight(ctx, boxerIDs[1])
 
@@ -497,11 +504,11 @@ func TestFightStore_ConcurrentStatusUpdates(t *testing.T) {
 		// Start two transactions
 		tx1, err := testDB.BeginTx(ctx, nil)
 		assert.NoError(t, err)
-		defer tx1.Rollback()
+		defer func() { _ = tx1.Rollback() }()
 
 		tx2, err := testDB.BeginTx(ctx, nil)
 		assert.NoError(t, err)
-		defer tx2.Rollback()
+		defer func() { _ = tx2.Rollback() }()
 
 		// TX1 acquires lock on fight
 		fight1, err := store.GetByIDWithLockTx(ctx, tx1, fightID)
@@ -606,9 +613,9 @@ func TestFightStore_SetData(t *testing.T) {
 
 	t.Run("sets data JSONB field", func(t *testing.T) {
 		data := map[string]any{
-			"winner":  "boxer1",
-			"rounds":  8,
-			"scored":  true,
+			"winner": "boxer1",
+			"rounds": 8,
+			"scored": true,
 		}
 
 		err := store.SetData(ctx, fightID, data)

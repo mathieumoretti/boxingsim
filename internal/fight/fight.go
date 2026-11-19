@@ -33,13 +33,13 @@ type Fight struct {
 }
 
 type FightService struct {
-	fightStore  *store.FightStore
-	boxerStore  *store.BoxerStore
-	cfg         *config.Config
-	logger      *logger.Logger
-	boxerSvc    *boxer.BoxerService
-	eventStore  *store.ScheduledEventStore
-	onFightEnd  func(ctx context.Context, boxer1ID, boxer2ID int) error // Callback for post-fight processing (MAT-115)
+	fightStore *store.FightStore
+	boxerStore *store.BoxerStore
+	cfg        *config.Config
+	logger     *logger.Logger
+	boxerSvc   *boxer.BoxerService
+	eventStore *store.ScheduledEventStore
+	onFightEnd func(ctx context.Context, boxer1ID, boxer2ID int) error // Callback for post-fight processing (MAT-115)
 }
 
 func NewFightService(fightStore *store.FightStore, boxerStore *store.BoxerStore, cfg *config.Config, boxerSvc *boxer.BoxerService, eventStore *store.ScheduledEventStore) *FightService {

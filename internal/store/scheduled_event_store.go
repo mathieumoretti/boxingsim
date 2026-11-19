@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	ErrEventNotFound      = errors.New("scheduled event not found")
-	ErrAlreadyProcessed   = errors.New("event already marked as processed")
-	ErrFailedToInsert     = errors.New("failed to insert scheduled event")
-	ErrInvalidEventID     = errors.New("invalid scheduled event ID")
+	ErrEventNotFound    = errors.New("scheduled event not found")
+	ErrAlreadyProcessed = errors.New("event already marked as processed")
+	ErrFailedToInsert   = errors.New("failed to insert scheduled event")
+	ErrInvalidEventID   = errors.New("invalid scheduled event ID")
 )
 
 // validateScheduledEventID validates a scheduled event ID.
