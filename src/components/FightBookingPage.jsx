@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './FightBookingPage.css';
 import TopBar from './TopBar';
+import { SkipLink } from './SkipLink';
 import OpponentList from './OpponentList.jsx';
 import PageLayout from './PageLayout';
 import { Badge } from './ui';
@@ -152,15 +153,18 @@ const FightBookingPage = ({ user, onLogout }) => {
   if (isLoadingBoxer) {
     return (
       <>
+        <SkipLink targetId="booking-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
           backButtonLabel="← Back to Dashboard"
         >
-          <div className="loading-boxer">
-            <div className="loading-spinner"></div>
-            <p>Loading boxer details...</p>
-          </div>
+          <main id="booking-content" className="booking-container" tabIndex="-1">
+            <div className="loading-boxer">
+              <div className="loading-spinner"></div>
+              <p>Loading boxer details...</p>
+            </div>
+          </main>
         </PageLayout>
       </>
     );
@@ -170,17 +174,20 @@ const FightBookingPage = ({ user, onLogout }) => {
   if (boxerError || !boxer) {
     return (
       <>
+        <SkipLink targetId="booking-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
           backButtonLabel="← Back to Dashboard"
         >
-          <ErrorDisplay
-            error={boxerError || 'Boxer not found'}
-            onRetry={loadBoxer}
-            title="Failed to Load Boxer"
-            icon={true}
-          />
+          <main id="booking-content" className="booking-container" tabIndex="-1">
+            <ErrorDisplay
+              error={boxerError || 'Boxer not found'}
+              onRetry={loadBoxer}
+              title="Failed to Load Boxer"
+              icon={true}
+            />
+          </main>
         </PageLayout>
       </>
     );
@@ -188,6 +195,7 @@ const FightBookingPage = ({ user, onLogout }) => {
 
   return (
     <>
+      <SkipLink targetId="booking-content" />
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         variant="fight-booking-page"
@@ -195,9 +203,9 @@ const FightBookingPage = ({ user, onLogout }) => {
         backButtonLabel="← Back to Dashboard"
       >
         {/* Main Content */}
-        <div className="booking-container">
+        <main id="booking-content" className="booking-container" tabIndex="-1">
           {/* Boxer Summary (Header Info) */}
-          <div className="boxer-summary">
+          <header className="boxer-summary" aria-label="Fighter information">
             <div className="boxer-info">
               <span className="label">BOOK A FIGHT FOR</span>
               <span className="value">{boxer.name}</span>
@@ -211,31 +219,29 @@ const FightBookingPage = ({ user, onLogout }) => {
                 <span title="Agility">AGI {boxer.stats?.agility || 0}</span>
               </div>
             </div>
-          </div>
+          </header>
 
         {/* Filter Controls */}
-        <div className="filter-controls">
-          <div className="filter-group">
-            <label htmlFor="level-range-slider">
-              Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}
-            </label>
+        <section aria-label="Opponent filters" className="filter-controls">
+          <fieldset className="filter-group">
+            <legend>Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}</legend>
             <input
-              id="level-range-slider"
               type="range"
               min="0"
               max="10"
               value={filters.levelRange}
               onChange={(e) => handleFilterChange('levelRange', parseInt(e.target.value))}
               className="level-range-slider"
+              aria-label="Set level range for opponent matching"
             />
             <div className="slider-markers">
               <span>0</span>
               <span>5</span>
               <span>10+</span>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="filter-toggles">
+          <div className="filter-toggles" role="group" aria-label="Filter options">
             <label className="toggle-checkbox">
               <input
                 type="checkbox"
@@ -254,21 +260,21 @@ const FightBookingPage = ({ user, onLogout }) => {
               <span className="toggle-label">Excellent Health Only</span>
             </label>
           </div>
-        </div>
+        </section>
 
         {/* Opponent Selection */}
-        <div className="opponent-section">
+        <section aria-label="Opponent selection" className="opponent-section">
           <OpponentList
             boxerId={boxer.id}
             boxer={boxer}
             filters={filters}
             onSelectOpponent={handleSelectOpponent}
           />
-        </div>
+        </section>
 
         {/* Match Validation Warnings */}
         {hasWarnings && matchValidation && (
-          <div className="match-validation-warnings">
+          <div role="alert" className="match-validation-warnings">
             <h4>⚠️ Match Concerns:</h4>
             <ul>
               {matchValidation.warnings.map((warning, idx) => (
@@ -279,7 +285,7 @@ const FightBookingPage = ({ user, onLogout }) => {
         )}
 
         {/* Booking Actions */}
-        <div className="booking-actions">
+        <footer className="booking-actions">
           {selectedOpponent && (
             <div className="selection-summary">
               <span>Selected: <strong>{selectedOpponent.opponent.boxer.name}</strong></span>
@@ -298,8 +304,8 @@ const FightBookingPage = ({ user, onLogout }) => {
           >
             {isBooking ? 'Booking...' : `Book Fight vs ${selectedOpponent?.opponent?.boxer?.name || 'Select Opponent'}`}
           </button>
-        </div>
-      </div>
+        </footer>
+      </main>
       </PageLayout>
     </>
   );

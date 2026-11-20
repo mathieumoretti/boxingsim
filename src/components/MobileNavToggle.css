@@ -1,0 +1,75 @@
+/**
+ * MobileNavToggle Component Styles (MAT-131 Phase 1)
+ *
+ * Accessible hamburger menu button with focus states.
+ */
+
+.mobile-nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px; /* WCAG minimum touch target */
+  height: 48px; /* WCAG minimum touch target */
+
+  padding: var(--space-2);
+
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
+
+  transition: background-color var(--transition-fast);
+}
+
+.mobile-nav-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Focus visible - for keyboard navigation */
+.mobile-nav-toggle:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Hamburger icon container */
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 24px;
+  height: 18px;
+
+  position: relative;
+}
+
+/* Hamburger bars */
+.hamburger-icon .bar {
+  display: block;
+
+  width: 100%;
+  height: 2px;
+
+  background-color: var(--color-text-bright);
+
+  border-radius: 1px;
+
+  transition: all var(--transition-fast) ease;
+}
+
+/* Animated hamburger when open */
+.mobile-nav-toggle[aria-expanded="true"] .bar-top {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .bar-middle {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .bar-bottom {
+  transform: rotate(-45deg) translate(5px, -5px);
+}

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/components/RankCard.css"
+        ],
+        "createdAt": "2026-11-06T03:25:06.620Z",
+        "reason": "User confirmed skeleton loader animation pattern for loading states"
+      }
+    ]
+  }
+}

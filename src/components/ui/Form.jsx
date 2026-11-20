@@ -58,8 +58,8 @@ export function Form({ children, onSubmit, error, className = '' }) {
  * @param {string} className - Additional CSS classes
  */
 export function FormGroup({ children, label, error, className = '' }) {
-  // Determine the id to use: prefer existing id, otherwise use name
-  const elementId = children?.props?.id || children?.props?.name || '';
+  // Determine the id to use: prefer existing id, then name, then generate unique ID
+  const elementId = children?.props?.id || children?.props?.name || `form-field-${Math.random().toString(36).substring(2, 9)}`;
 
   return (
     <div className={`form-group ${error ? 'error' : ''} ${className}`}>
@@ -75,7 +75,7 @@ export function FormGroup({ children, label, error, className = '' }) {
         id: elementId
       })}
       {error && (
-        <span className="error-message">
+        <span className="error-message" role="alert">
           {error}
         </span>
       )}

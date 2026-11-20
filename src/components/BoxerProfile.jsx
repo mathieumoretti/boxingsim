@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import TopBar from './TopBar';
 import PageLayout from './PageLayout';
+import { SkipLink } from './SkipLink';
 import BoxerHeader from './BoxerHeader';
 import CareerRecord from './CareerRecord';
 import StatsOverview from './StatsOverview';
@@ -112,14 +113,15 @@ const BoxerProfile = ({ user, onLogout }) => {
   if (isLoading) {
     return (
       <div className="boxer-profile">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout>
-          <div className="boxer-profile-content">
+          <main id="profile-content" className="boxer-profile-content" tabIndex="-1">
             <div className="profile-loading">
               <div className="loading-spinner"></div>
               <p>Loading boxer profile...</p>
             </div>
-          </div>
+          </main>
         </PageLayout>
       </div>
     );
@@ -128,16 +130,19 @@ const BoxerProfile = ({ user, onLogout }) => {
   if (error && !boxer) {
     return (
       <div className="boxer-profile">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <ErrorDisplay
-            error={error}
-            variant="alert"
-            title="Failed to Load Profile"
-            icon={true}
-          />
+          <main id="profile-content" className="boxer-profile-content" tabIndex="-1">
+            <ErrorDisplay
+              error={error}
+              variant="alert"
+              title="Failed to Load Profile"
+              icon={true}
+            />
+          </main>
         </PageLayout>
       </div>
     );
@@ -146,16 +151,17 @@ const BoxerProfile = ({ user, onLogout }) => {
   if (!boxer) {
     return (
       <div className="boxer-profile">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <div className="boxer-profile-content">
+          <main id="profile-content" className="boxer-profile-content" tabIndex="-1">
             <div className="profile-not-found">
               <h2>Boxer Not Found</h2>
               <p>The boxer you're looking for doesn't exist.</p>
             </div>
-          </div>
+          </main>
         </PageLayout>
       </div>
     );
@@ -163,31 +169,46 @@ const BoxerProfile = ({ user, onLogout }) => {
 
   return (
     <div className="boxer-profile">
+      <SkipLink targetId="profile-content" />
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         onBack={() => navigate('/dashboard')}
       >
-        <div className="boxer-profile-content">
+        <main id="profile-content" className="boxer-profile-content" tabIndex="-1">
           {/* Boxer Header - Avatar, Name, Level, XP */}
-          <BoxerHeader boxer={boxer} />
+          <article aria-label="Boxer header">
+            <BoxerHeader boxer={boxer} />
+          </article>
 
           {/* Career Record - W/L/D/KO */}
-          <CareerRecord boxer={boxer} />
+          <section aria-label="Career record">
+            <CareerRecord boxer={boxer} />
+          </section>
 
           {/* Next Fight Card (only shows when there's an upcoming fight) */}
-          <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
+          {upcomingFight && (
+            <article aria-label="Next scheduled fight">
+              <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
+            </article>
+          )}
 
           {/* Stats Overview - STR/DEF/AGI */}
-          <StatsOverview boxer={boxer} />
+          <section aria-label="Stats overview">
+            <StatsOverview boxer={boxer} />
+          </section>
 
           {/* Current Status - Health/Energy/Fatigue */}
-          <CurrentStatus boxer={boxer} worldTime={worldTime} />
+          <section aria-label="Current status">
+            <CurrentStatus boxer={boxer} worldTime={worldTime} />
+          </section>
 
           {/* Recent Activity Timeline */}
-          <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+          <section aria-label="Recent activity timeline">
+            <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+          </section>
 
           {/* Action Buttons */}
-          <div className="profile-actions">
+          <nav className="profile-actions" aria-label="Boxer actions">
             <Link to={`/boxer/${boxer.id}/fights`} className="action-btn action-primary">
               📜 View Fight History
             </Link>
@@ -197,8 +218,8 @@ const BoxerProfile = ({ user, onLogout }) => {
             <Link to={`/boxer/${boxer.id}/book-fight`} className="action-btn action-accent">
               🥊 Book Fight
             </Link>
-          </div>
-        </div>
+          </nav>
+        </main>
       </PageLayout>
     </div>
   );

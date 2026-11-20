@@ -16,6 +16,8 @@ import TopBar from './TopBar';
 import MiniWorldClock from './MiniWorldClock';
 import LoadingSpinner from './ui/LoadingSpinner';
 import { ErrorDisplay } from './ErrorDisplay';
+import { SkipLink } from './SkipLink';
+import { MobileNavigationDrawer } from './MobileNavigationDrawer';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import './Dashboard.css';
 
@@ -177,6 +179,7 @@ const Dashboard = ({ user }) => {
   if (isLoading) {
     return (
       <div className="dashboard-page">
+        <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
         <div className="dashboard-loading">
           <LoadingSpinner size="lg" aria-label="Loading dashboard" />
@@ -188,6 +191,7 @@ const Dashboard = ({ user }) => {
   if (error) {
     return (
       <div className="dashboard-page">
+        <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
         <ErrorDisplay
           error={error}
@@ -202,9 +206,10 @@ const Dashboard = ({ user }) => {
 
   return (
     <div className="dashboard-page">
+      <SkipLink targetId="main-content" />
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
 
-      <main className="dashboard-main">
+      <main id="main-content" className="dashboard-main" tabIndex="-1">
         {/* Quick Stats Row */}
         <section className="dashboard-stats" aria-label="Quick statistics">
           <StatCard

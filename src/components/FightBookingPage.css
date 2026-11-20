@@ -55,6 +55,11 @@
   box-shadow: var(--shadow-dramatic);
   border: 1px solid var(--border-gray);
   position: relative;
+
+  /* Allow focus for skip-link navigation (no outline needed) */
+  &:focus {
+    outline: none;
+  }
 }
 
 .booking-container > * {

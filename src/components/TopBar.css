@@ -54,6 +54,13 @@
   &:active {
     transform: scale(0.98);
   }
+
+  /* Keyboard focus for accessibility */
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-light);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
 }
 
 .brand-icon {
@@ -148,6 +155,13 @@
     transform: translateY(0);
   }
 
+  /* Keyboard focus for accessibility */
+  &:focus-visible {
+    outline: 2px solid var(--color-white);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  }
+
   span:first-child {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
@@ -197,6 +211,12 @@
   &:active {
     transform: scale(0.98);
   }
+
+  /* Keyboard focus for accessibility */
+  &:focus-visible {
+    outline: 2px solid var(--color-danger);
+    outline-offset: 2px;
+  }
 }
 
 /* === Responsive: Tablet and below (≤1024px) === */
@@ -232,39 +252,66 @@
 
 @media (max-width: var(--breakpoint-mobile)) {
   .top-bar {
-    flex-wrap: wrap;
-    padding: var(--space-2);
-
-    /* Adjust for mobile navigation */
+    flex-wrap: nowrap; /* Don't wrap - keep single row */
+    padding: var(--space-2) var(--space-3);
     gap: var(--space-2);
   }
 
-  .top-bar-left {
-    order: 1;
-  }
-
+  /* Hide center navigation - use mobile drawer instead */
   .top-bar-center {
-    order: 2;
-    width: 100%;
-    justify-content: space-between;
-    gap: var(--space-3);
-
-    .world-clock-wrapper {
-      border-left: none;
-      padding-left: 0;
-    }
+    display: none;
   }
 
+  /* Left section: brand + hamburger */
+  .top-bar-left {
+    flex: 0 0 auto;
+    gap: var(--space-2);
+  }
+
+  /* Right section: user actions */
   .top-bar-right {
-    order: 3;
-    width: 100%;
-    justify-content: space-between;
-    padding-top: var(--space-2);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1 1 auto;
+    margin-left: auto; /* Push to right */
   }
 
   .user-actions {
     gap: var(--space-2);
+  }
+
+  /* Add fighter button - icon only on mobile */
+  .btn-add-fighter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px; /* WCAG touch target */
+    padding: var(--space-2);
+
+    font-size: var(--font-size-xl);
+  }
+
+  .btn-add-fighter span {
+    display: none;
+  }
+
+  .btn-add-fighter span:first-child {
+    display: block; /* Show + icon */
+  }
+
+  /* User menu - simplify on mobile */
+  .user-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .user-welcome {
+    display: none; /* Hide username on small mobile */
+  }
+
+  .btn-logout {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 }
 

@@ -197,10 +197,10 @@
   --color-scrollbar-track: #151520;
   --color-scrollbar-thumb-hover: #991b1b;
 
-  /* Text colors */
-  --color-text-muted: #9ca3af;
+  /* Text colors - WCAG 4.5:1 contrast on navy background */
+  --color-text-muted: #d1d5db;      /* Light gray for better contrast (~7:1 on navy) */
   --color-text-bright: #e5e7eb;
-  --color-navy-muted: #a0aec0;
+  --color-navy-muted: #c4b5fd;      /* Lavender for muted text (~6:1 on navy) */
 
   /* Card content background */
   --color-card-content-dark: #2a2a40;

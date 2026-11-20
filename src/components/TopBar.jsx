@@ -12,54 +12,76 @@
  * @param {function} props.onLogout - Logout handler callback
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from './Navigation';
 import MiniWorldClock from './MiniWorldClock';
+import { MobileNavToggle } from './MobileNavToggle';
+import { MobileNavigationDrawer } from './MobileNavigationDrawer';
 import './TopBar.css';
 
 const TopBar = ({ currentUser, onLogout }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const handleLogout = () => {
     onLogout();
   };
 
+  const handleMobileNavToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
-    <nav className="top-bar" role="navigation" aria-label="Global navigation">
-      {/* Left: Brand */}
-      <div className="top-bar-left">
-        <Link to="/dashboard" className="brand-logo" aria-label="Boxing Simulator Home">
-          <span className="brand-icon" aria-hidden="true">🥊</span>
-          <span className="brand-title">Boxing Sim</span>
-        </Link>
-      </div>
-
-      {/* Center: Primary Navigation + World Clock */}
-      <div className="top-bar-center">
-        <Navigation activeView={getCurrentView()} />
-        <div className="world-clock-wrapper">
-          <MiniWorldClock />
-        </div>
-      </div>
-
-      {/* Right: User Actions */}
-      <div className="top-bar-right">
-        <div className="user-actions">
-          <Link to="/create-boxer" className="btn-add-fighter">
-            <span aria-hidden="true">+</span>
-            <span>Add Fighter</span>
+    <>
+      <nav className="top-bar" role="navigation" aria-label="Global navigation">
+        {/* Left: Brand + Mobile Toggle */}
+        <div className="top-bar-left">
+          <Link to="/dashboard" className="brand-logo" aria-label="Boxing Simulator Home">
+            <span className="brand-icon" aria-hidden="true">🥊</span>
+            <span className="brand-title">Boxing Sim</span>
           </Link>
 
-          {currentUser && (
-            <div className="user-menu">
-              <span className="user-welcome">{currentUser.username}</span>
-              <button onClick={handleLogout} className="btn-logout" aria-label="Logout">
-                Logout
-              </button>
-            </div>
-          )}
+          {/* Mobile navigation toggle - visible on mobile only */}
+          <MobileNavToggle
+            isOpen={isMobileMenuOpen}
+            onToggle={handleMobileNavToggle}
+          />
         </div>
-      </div>
-    </nav>
+
+        {/* Center: Primary Navigation + World Clock (hidden on mobile) */}
+        <div className="top-bar-center">
+          <Navigation activeView={getCurrentView()} />
+          <div className="world-clock-wrapper">
+            <MiniWorldClock />
+          </div>
+        </div>
+
+        {/* Right: User Actions */}
+        <div className="top-bar-right">
+          <div className="user-actions">
+            <Link to="/create-boxer" className="btn-add-fighter">
+              <span aria-hidden="true">+</span>
+              <span>Add Fighter</span>
+            </Link>
+
+            {currentUser && (
+              <div className="user-menu">
+                <span className="user-welcome">{currentUser.username}</span>
+                <button onClick={handleLogout} className="btn-logout" aria-label="Logout">
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile navigation drawer */}
+      <MobileNavigationDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
+    </>
   );
 };
 
