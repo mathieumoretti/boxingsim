@@ -22,6 +22,7 @@ import (
 	"github.com/mormm/boxing/internal/platform/config"
 	"github.com/mormm/boxing/internal/platform/cors"
 	"github.com/mormm/boxing/internal/platform/database"
+	"github.com/mormm/boxing/internal/platform/logger"
 	"github.com/mormm/boxing/internal/service"
 	"github.com/mormm/boxing/internal/store"
 )
@@ -796,8 +797,11 @@ func setupE2ERouter(cfg *config.Config, testDB *sql.DB) *mux.Router {
 	// Create world clock model
 	worldClockModel := &model.WorldClockModel{}
 
-	// Create services
-	fightSvc := service.NewFightService(fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB)
+	// Create services (passing nil for consumable store and new logger as they're not tested here)
+	testLogger := logger.New("e2e_auth")
+	consumableStore := store.NewConsumableStore(testDB)
+	recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
+	fightSvc := service.NewFightService(fightStore, boxerStore, eventStore, recoverySvc, worldClockModel, cfg, testDB)
 
 	// Create handlers (BoxerHandler now only takes boxerStore and scheduledEventStore per refactoring)
 	boxerHandler := handler.NewBoxerHandler(boxerStore, eventStore)

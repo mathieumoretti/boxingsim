@@ -61,8 +61,10 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 	fightSvcLowLevel := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvcForFight, eventStore)
 
 	// Create high-level FightService for booking fights (includes validation and event creation)
+	consumableStore := store.NewConsumableStore(testDB)
+	recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
 	fightSvcHighLevel := service.NewFightService(
-		fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB,
+		fightStore, boxerStore, eventStore, recoverySvc, worldClockModel, cfg, testDB,
 	)
 
 	// Create test user
@@ -187,7 +189,9 @@ func TestFightSimulateEventProcessing(t *testing.T) {
 
 		// Create event processor (this is what the worker uses internally)
 		// Use the low-level fight service for processing (not the high-level one with validation)
-		eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, *testLogger)
+		consumableStore := store.NewConsumableStore(testDB)
+		recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
+		eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, recoverySvc, *testLogger)
 
 		// Process the event
 		if err := eventProcessor.ProcessScheduledEvent(ctx, event); err != nil {
@@ -313,8 +317,10 @@ func TestFightSimulateEventWithInvalidFightID(t *testing.T) {
 	boxerSvcForFight := boxer.NewBoxerService(boxerStore)
 	fightSvcLowLevel := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvcForFight, eventStore)
 	fatigueSvc := service.NewFatigueService(boxerStore, testLogger)
+	consumableStore := store.NewConsumableStore(testDB)
+	recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
 
-	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, *testLogger)
+	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, recoverySvc, *testLogger)
 
 	// Create a test user and boxer for the event
 	userID := createTestUserInDB(t, testDB)
@@ -417,8 +423,10 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 
 	boxerSvcForFight := boxer.NewBoxerService(boxerStore)
 	fightSvcLowLevel := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvcForFight, eventStore)
+	consumableStore := store.NewConsumableStore(testDB)
+	recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
 	fightSvcHighLevel := service.NewFightService(
-		fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB,
+		fightStore, boxerStore, eventStore, recoverySvc, worldClockModel, cfg, testDB,
 	)
 
 	userID := createTestUserInDB(t, testDB)
@@ -479,7 +487,9 @@ func TestFightSimulateEventIdempotentProcessing(t *testing.T) {
 
 	// Create event processor using low-level fight service
 	fatigueSvc := service.NewFatigueService(boxerStore, testLogger)
-	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, *testLogger)
+	consumableStore = store.NewConsumableStore(testDB)
+	recoverySvc = service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
+	eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, recoverySvc, *testLogger)
 
 	// Process the event first time
 	t.Run("FirstProcessing", func(t *testing.T) {

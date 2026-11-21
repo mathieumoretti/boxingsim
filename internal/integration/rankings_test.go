@@ -118,7 +118,10 @@ func TestRankings_E2E_FightCompletionUpdates(t *testing.T) {
 
 		scheduledTime := gameTime.Add(1 * time.Hour)
 
-		fightSvc := service.NewFightService(fightStore, boxerStore, eventStore, worldClockModel, cfg, testDB)
+		consumableStore := store.NewConsumableStore(testDB)
+		testLogger := logger.New("rankings_test")
+		recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
+		fightSvc := service.NewFightService(fightStore, boxerStore, eventStore, recoverySvc, worldClockModel, cfg, testDB)
 		err = fightSvc.BookFight(ctx, boxer1.ID, boxer2.ID, scheduledTime, 10)
 		assert.NoError(t, err, "BookFight should succeed")
 
@@ -176,7 +179,9 @@ func TestRankings_E2E_FightCompletionUpdates(t *testing.T) {
 		boxerSvc := boxer.NewBoxerService(boxerStore)
 		fightSvcLowLevel := fight.NewFightService(fightStore, boxerStore, cfg, boxerSvc, eventStore)
 		fatigueSvc := service.NewFatigueService(boxerStore, testLogger)
-		eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, *testLogger)
+		consumableStore := store.NewConsumableStore(testDB)
+		recoverySvc := service.NewRecoveryService(boxerStore, consumableStore, testLogger, testDB)
+		eventProcessor := service.NewEventProcessor(eventStore, boxerStore, fightSvcLowLevel, fatigueSvc, recoverySvc, *testLogger)
 
 		err = eventProcessor.ProcessScheduledEvent(ctx, event)
 		assert.NoError(t, err, "Event processing should succeed")
