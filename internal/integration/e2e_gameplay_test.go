@@ -216,6 +216,186 @@ func TestE2E_FullGameplayLoop(t *testing.T) {
 			t.Fatalf("event data fight_id = %v, want %d", eventData["fight_id"], env.fightID)
 		}
 	})
+
+	// 4. Worker processing: advance the clock past the fight event and run a worker pass
+	t.Run("FightProcessedByWorker", func(t *testing.T) {
+		fightEvents, err := env.eventStore.GetPendingByBoxerIDAndType(ctx, domain.BoxerID(env.boxerID), model.EventTypeFightSimulate)
+		if err != nil {
+			t.Fatalf("GetPendingByBoxerIDAndType(fight_simulate): %v", err)
+		}
+		if len(fightEvents) != 1 {
+			t.Fatalf("expected exactly 1 pending fight_simulate event, got %d", len(fightEvents))
+		}
+
+		// Pre-fight snapshots (W/L deltas must be exact — Review Focus #2)
+		beforeA, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.boxerID))
+		if err != nil {
+			t.Fatalf("GetByID boxer %d: %v", env.boxerID, err)
+		}
+		beforeB, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.opponentID))
+		if err != nil {
+			t.Fatalf("GetByID opponent %d: %v", env.opponentID, err)
+		}
+
+		advanceGameTime(t, env, fightEvents[0].EventTime.Add(time.Hour))
+		if n := processDueEvents(t, env); n < 1 {
+			t.Fatalf("processDueEvents processed %d events, want >= 1", n)
+		}
+
+		f, err := env.fightStore.GetByID(ctx, domain.FightID(env.fightID))
+		if err != nil {
+			t.Fatalf("fightStore.GetByID(%d): %v", env.fightID, err)
+		}
+		if f.Status != model.FightStatusCompleted {
+			t.Fatalf("fight status = %q, want %q", f.Status, model.FightStatusCompleted)
+		}
+		if f.WinnerID == nil {
+			t.Fatal("completed fight has no winner")
+		}
+		winnerID := *f.WinnerID
+		if winnerID != env.boxerID && winnerID != env.opponentID {
+			t.Fatalf("winner %d is not one of the booked boxers (%d, %d)", winnerID, env.boxerID, env.opponentID)
+		}
+		loserID := env.opponentID
+		if winnerID == env.opponentID {
+			loserID = env.boxerID
+		}
+
+		afterA, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.boxerID))
+		if err != nil {
+			t.Fatalf("GetByID boxer %d after fight: %v", env.boxerID, err)
+		}
+		afterB, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.opponentID))
+		if err != nil {
+			t.Fatalf("GetByID opponent %d after fight: %v", env.opponentID, err)
+		}
+		if afterA.Health >= 100 || afterB.Health >= 100 {
+			t.Errorf("expected both boxers to take damage: boxer A health=%.2f, opponent B health=%.2f", afterA.Health, afterB.Health)
+		}
+
+		if winnerID == env.boxerID {
+			if afterA.Wins != beforeA.Wins+1 {
+				t.Errorf("winner wins = %d, want %d (exactly +1)", afterA.Wins, beforeA.Wins+1)
+			}
+			if afterB.Losses != beforeB.Losses+1 {
+				t.Errorf("loser losses = %d, want %d (exactly +1)", afterB.Losses, beforeB.Losses+1)
+			}
+			if afterB.ForcedRecoveryUntil == nil {
+				t.Errorf("loser %d has nil ForcedRecoveryUntil (worker-parity callback not fired)", loserID)
+			}
+		} else {
+			if afterB.Wins != beforeB.Wins+1 {
+				t.Errorf("winner wins = %d, want %d (exactly +1)", afterB.Wins, beforeB.Wins+1)
+			}
+			if afterA.Losses != beforeA.Losses+1 {
+				t.Errorf("loser losses = %d, want %d (exactly +1)", afterA.Losses, beforeA.Losses+1)
+			}
+			if afterA.ForcedRecoveryUntil == nil {
+				t.Errorf("loser %d has nil ForcedRecoveryUntil (worker-parity callback not fired)", loserID)
+			}
+		}
+	})
+
+	// 5. Rankings: live view over boxers; both fighters must appear (Review Focus #4: 0-0 and 1-0 win rates)
+	t.Run("RankingsUpdated", func(t *testing.T) {
+		ranked, err := env.rankingsStore.GetRankings(ctx, model.RankingByWinRate, 10)
+		if err != nil {
+			t.Fatalf("GetRankings(win_rate): %v", err)
+		}
+		found := map[int]bool{}
+		for _, rb := range ranked {
+			found[rb.ID] = true
+		}
+		if !found[env.boxerID] {
+			t.Errorf("win-rate rankings missing player boxer %d (got %d rows)", env.boxerID, len(ranked))
+		}
+		if !found[env.opponentID] {
+			t.Errorf("win-rate rankings missing opponent boxer %d (got %d rows)", env.opponentID, len(ranked))
+		}
+	})
+
+	// 6. Recovery: a rest event restores the loser's health; NULL-data rest events still complete (Review Focus #1)
+	t.Run("RecoveryRestoresHealth", func(t *testing.T) {
+		f, err := env.fightStore.GetByID(ctx, domain.FightID(env.fightID))
+		if err != nil {
+			t.Fatalf("fightStore.GetByID(%d): %v", env.fightID, err)
+		}
+		if f.WinnerID == nil {
+			t.Fatalf("no winner recorded for fight %d (FightProcessedByWorker should have set one)", env.fightID)
+		}
+		winnerID := *f.WinnerID
+		loserID := env.opponentID
+		if winnerID == env.opponentID {
+			loserID = env.boxerID
+		}
+
+		loserBefore, err := env.boxerStore.GetByID(ctx, domain.BoxerID(loserID))
+		if err != nil {
+			t.Fatalf("GetByID loser %d: %v", loserID, err)
+		}
+
+		gameTime, err := worldClockModel.GetCurrentGameTime(ctx, env.testDB)
+		if err != nil {
+			t.Fatalf("GetCurrentGameTime: %v", err)
+		}
+		restID := injectRestEvent(t, env, loserID, 8, gameTime.Add(time.Hour))
+		advanceGameTime(t, env, gameTime.Add(2*time.Hour))
+		if n := processDueEvents(t, env); n < 1 {
+			t.Fatalf("processDueEvents processed %d events, want >= 1", n)
+		}
+
+		ev, err := env.eventStore.GetByID(ctx, domain.ScheduledEventID(restID))
+		if err != nil {
+			t.Fatalf("eventStore.GetByID(%d): %v", restID, err)
+		}
+		if ev.Status != model.EventStatusCompleted {
+			t.Fatalf("rest event %d status = %q, want %q (error: %v)", restID, ev.Status, model.EventStatusCompleted, ev.ErrorMessage)
+		}
+		if ev.ProcessedAt == nil {
+			t.Errorf("rest event %d processed_at is nil, want NOT NULL", restID)
+		}
+
+		loserAfter, err := env.boxerStore.GetByID(ctx, domain.BoxerID(loserID))
+		if err != nil {
+			t.Fatalf("GetByID loser %d after rest: %v", loserID, err)
+		}
+		if loserAfter.Health <= loserBefore.Health {
+			t.Errorf("loser %d health after rest = %.2f, want > %.2f (pre-rest)", loserID, loserAfter.Health, loserBefore.Health)
+		}
+
+		// Review Focus #1: a rest event with NULL event_data (foreign/legacy row)
+		// must process with the default rest_hours=1 and end completed, not failed.
+		gameTime2, err := worldClockModel.GetCurrentGameTime(ctx, env.testDB)
+		if err != nil {
+			t.Fatalf("GetCurrentGameTime: %v", err)
+		}
+		orphanID := injectRestEventNULL(t, env, winnerID, gameTime2.Add(time.Hour))
+		advanceGameTime(t, env, gameTime2.Add(2*time.Hour))
+		processDueEvents(t, env)
+		orphan, err := env.eventStore.GetByID(ctx, domain.ScheduledEventID(orphanID))
+		if err != nil {
+			t.Fatalf("eventStore.GetByID(%d): %v", orphanID, err)
+		}
+		if orphan.Status != model.EventStatusCompleted {
+			t.Errorf("NULL-data rest event %d status = %q, want %q (error: %v)", orphanID, orphan.Status, model.EventStatusCompleted, orphan.ErrorMessage)
+		}
+	})
+
+	// 7. Cleanup invariants: no pending events, no failed events, no completed events missing processed_at
+	t.Run("EventCleanup", func(t *testing.T) {
+		checkCount := func(desc, query string) {
+			var got int
+			if err := env.testDB.QueryRow(query).Scan(&got); err != nil {
+				t.Fatalf("EventCleanup (%s): %v", desc, err)
+			}
+			if got != 0 {
+				t.Errorf("EventCleanup (%s): got %d rows, want 0", desc, got)
+			}
+		}
+		checkCount("pending events", "SELECT count(*) FROM scheduled_events WHERE processed = FALSE")
+		checkCount("failed events", "SELECT count(*) FROM scheduled_events WHERE status = 'failed'")
+		checkCount("completed without processed_at", "SELECT count(*) FROM scheduled_events WHERE status = 'completed' AND processed_at IS NULL")
+	})
 }
 
 // gameplayEnv holds the shared wiring for the full gameplay loop test:
@@ -251,6 +431,16 @@ func setupGameplayEnv(t *testing.T) *gameplayEnv {
 	}
 
 	cfg := loadE2ETestConfig()
+	// Production applies these simulation defaults in config.Load (internal\platform\config\config.go:166-184);
+	// the bare test config has a zero-valued Fight.Simulation (MaxRounds=0 → 0-round degenerate draw).
+	cfg.Fight.Simulation = config.FightSimulationConfig{
+		Version:          "1.0.0",
+		MaxRounds:        12,
+		DamageMultiplier: 0.1,
+		EvasionThreshold: 0.4,
+		EnergyDrain:      10.0,
+		ExperienceGain:   50.0,
+	}
 
 	boxerStore := store.NewBoxerStore(testDB)
 	fightStore := store.NewFightStore(testDB)
@@ -335,6 +525,63 @@ func setupGameplayEnv(t *testing.T) *gameplayEnv {
 		recoverySvc:   recoverySvc,
 		processor:     processor,
 	}
+}
+
+// processDueEvents runs one worker-style poll-and-process pass: it fetches all pending
+// events due at the current game time and processes each through the worker-parity
+// EventProcessor, exactly like one iteration of the worker's event loop.
+// It returns the number of due events processed.
+func processDueEvents(t *testing.T, env *gameplayEnv) int {
+	t.Helper()
+	ctx := context.Background()
+	gt, err := worldClockModel.GetCurrentGameTime(ctx, env.testDB)
+	if err != nil {
+		t.Fatalf("processDueEvents: GetCurrentGameTime: %v", err)
+	}
+	due, err := env.eventStore.GetPendingEventsBeforeGameTime(ctx, gt, 50)
+	if err != nil {
+		t.Fatalf("processDueEvents: GetPendingEventsBeforeGameTime: %v", err)
+	}
+	for _, ev := range due {
+		if err := env.processor.ProcessScheduledEvent(ctx, ev); err != nil {
+			t.Fatalf("processDueEvents: event %d (%s) failed: %v", ev.ID, ev.EventType, err)
+		}
+	}
+	return len(due)
+}
+
+// injectRestEvent inserts a pending rest event directly with the same event_data shape the
+// training flow writes ({"rest_hours": N, "forced_rest": true, "training_id": 0}).
+// Returns the new event's id.
+func injectRestEvent(t *testing.T, env *gameplayEnv, boxerID int, restHours int, at time.Time) int {
+	t.Helper()
+	data, _ := json.Marshal(map[string]any{"rest_hours": restHours, "forced_rest": true, "training_id": 0})
+	var id int
+	err := env.testDB.QueryRow(
+		`INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, status, event_data, created_at)
+		 VALUES ($1, $2, $3, FALSE, 'pending', $4::jsonb, CURRENT_TIMESTAMP) RETURNING id`,
+		boxerID, model.EventTypeRest, at, data,
+	).Scan(&id)
+	if err != nil {
+		t.Fatalf("injectRestEvent: %v", err)
+	}
+	return id
+}
+
+// injectRestEventNULL inserts a pending rest event with a NULL event_data payload
+// (foreign/legacy row) to pin the processor's rest_hours=1 fallback (Review Focus #1).
+func injectRestEventNULL(t *testing.T, env *gameplayEnv, boxerID int, at time.Time) int {
+	t.Helper()
+	var id int
+	err := env.testDB.QueryRow(
+		`INSERT INTO scheduled_events (boxer_id, event_type, event_time, processed, status, event_data, created_at)
+		 VALUES ($1, $2, $3, FALSE, 'pending', NULL, CURRENT_TIMESTAMP) RETURNING id`,
+		boxerID, model.EventTypeRest, at,
+	).Scan(&id)
+	if err != nil {
+		t.Fatalf("injectRestEventNULL: %v", err)
+	}
+	return id
 }
 
 // advanceGameTime deterministically jumps the world clock to target by rewriting the
