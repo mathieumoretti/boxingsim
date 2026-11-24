@@ -1,98 +1,195 @@
 /**
- * Form Component System (MAT-154 Phase 2)
+ * Form Component Suite
  *
- * Shared form structure with FormGroup and FormRow components.
- * Replaces duplicated form implementations in TrainingScheduler.
+ * Reusable form components with consistent styling and structure.
+ * Includes Form wrapper, FormGroup for field grouping, and FormRow for side-by-side layouts.
  *
- * Usage:
- *   <Form onSubmit={handleSubmit} error={formError}>
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
+ *
+ * @example
+ * // Complete form with all components
+ * <Form onSubmit={handleSubmit}>
+ *   <FormGroup label="Personal Information">
  *     <FormRow>
- *       <FormGroup label="Select Training Type" error={errors.type}>
- *         <select name="type">...</select>
- *       </FormGroup>
- *       <FormGroup label="Duration (hours)">
- *         <input type="number" name="duration" min="1" max="8" />
- *       </FormGroup>
+ *       <Input name="firstName" label="First Name" />
+ *       <Input name="lastName" label="Last Name" />
  *     </FormRow>
- *   </Form>
- *
- * @param {Object} children - Form content
- * @param {Function} onSubmit - Form submit handler
- * @param {string|null} error - Form-level error message
- * @param {string} className - Additional CSS classes
+ *   </FormGroup>
+ *   <Button type="submit" variant="primary">Submit</Button>
+ * </Form>
  */
 
 import React from 'react';
-import './Form.css';
 
-export function Form({ children, onSubmit, error, className = '' }) {
+// ===== FORM WRAPPER =====
+
+/**
+ * Form wrapper component props
+ *
+ * @typedef {Object} FormProps
+ * @property {function} onSubmit - Form submit handler
+ * @property {'horizontal' | 'vertical'} [layout='vertical'] - Form layout direction
+ * @property {'default' | 'elevated'} [variant='default'] - Form visual style
+ * @property {React.ReactNode} children - Form content
+ * @property {string} [className] - Additional CSS classes
+ * @property {string} [id] - Form ID
+ * @property {boolean} [noValidate=false] - Disable HTML5 validation
+ */
+
+const formVariantStyles = {
+  default: '',
+  elevated: 'bg-white p-6 rounded-lg shadow-card border border-navy-border',
+};
+
+export function Form({
+  onSubmit,
+  layout = 'vertical',
+  variant = 'default',
+  children,
+  className = '',
+  id,
+  noValidate = false,
+  ...rest
+}) {
   return (
     <form
-      className={`form-container ${className}`}
+      id={id}
       onSubmit={onSubmit}
+      noValidate={noValidate}
+      className={`
+        ${layout === 'horizontal' ? 'space-y-6' : 'space-y-4'}
+        ${formVariantStyles[variant]}
+        ${className}
+      `.trim()}
+      {...rest}
     >
-      {error && (
-        <div className="form-error" style={{
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid var(--color-danger)',
-          borderRadius: 'var(--radius-md)',
-          padding: 'var(--space-3)',
-          marginBottom: 'var(--space-4)',
-          color: 'var(--color-danger-bright)',
-          fontSize: 'var(--font-size-sm)'
-        }}>
-          {error}
-        </div>
-      )}
       {children}
     </form>
   );
 }
 
+// ===== FORM GROUP =====
+
 /**
- * FormGroup - Individual form field with label and optional error
+ * FormGroup component for grouping related form fields with optional section header
  *
- * @param {Object} children - Input/select/textarea element
- * @param {string} label - Field label text
- * @param {string|null} error - Field error message
- * @param {string} className - Additional CSS classes
+ * @typedef {Object} FormGroupProps
+ * @property {string} [title] - Group title/header text
+ * @property {'default' | 'elevated'} [variant='default'] - Group visual style
+ * @property {React.ReactNode} [icon] - Optional icon before title
+ * @property {React.ReactNode} children - Form fields in group
+ * @property {string} [className] - Additional CSS classes
  */
-export function FormGroup({ children, label, error, className = '' }) {
-  // Determine the id to use: prefer existing id, otherwise use name
-  const elementId = children?.props?.id || children?.props?.name || '';
+
+const groupVariantStyles = {
+  default: '',
+  elevated: 'bg-gray-50 p-5 rounded-lg border border-gray-200',
+};
+
+export function FormGroup({
+  title,
+  variant = 'default',
+  icon,
+  children,
+  className = ''
+}) {
+  if (!title) {
+    return (
+      <div className={`space-y-3 ${className}`}>
+        {children}
+      </div>
+    );
+  }
 
   return (
-    <div className={`form-group ${error ? 'error' : ''} ${className}`}>
-      {label && (
-        <label htmlFor={elementId}>
-          {label}
-          {children?.props?.required && <span style={{ color: 'var(--color-danger)' }}> *</span>}
-        </label>
-      )}
-      {React.cloneElement(children, {
-        ...children.props,
-        name: children.props.name || '',
-        id: elementId
-      })}
-      {error && (
-        <span className="error-message">
-          {error}
-        </span>
-      )}
+    <fieldset className={`rounded-lg overflow-hidden ${groupVariantStyles[variant]} ${className}`}>
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-3 mb-3 border-b border-gray-200">
+        {icon && (
+          <span className="text-xl select-none">{icon}</span>
+        )}
+        <legend className="font-semibold text-gray-800 text-base">
+          {title}
+        </legend>
+      </div>
+
+      {/* Fields */}
+      <div className="space-y-3 pt-1">
+        {children}
+      </div>
+    </fieldset>
+  );
+}
+
+// ===== FORM ROW =====
+
+/**
+ * FormRow component for side-by-side field layout
+ *
+ * @typedef {Object} FormRowProps
+ * @property {number} [gap=4] - Gap between columns (Tailwind spacing scale)
+ * @property {'sm' | 'md' | 'lg'} [columns='md'] - Number of columns to split
+ * @property {React.ReactNode} children - Form fields in row
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const columnStyles = {
+  sm: 'grid-cols-1 sm:grid-cols-2',
+  md: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+  lg: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+};
+
+export function FormRow({
+  gap = 4,
+  columns = 'md',
+  children,
+  className = ''
+}) {
+  const gapClass = `gap-${gap}`;
+
+  return (
+    <div
+      className={`grid ${columnStyles[columns]} ${gapClass} ${className}`}
+    >
+      {React.Children.map(children, (child) => (
+        <div className="w-full">
+          {child}
+        </div>
+      ))}
     </div>
   );
 }
 
+// ===== FORM ACTIONS =====
+
 /**
- * FormRow - Horizontal row container for multiple form groups
+ * FormActions component for form footer buttons
  *
- * @param {Object} children - FormGroup components
- * @param {string} className - Additional CSS classes
+ * @typedef {Object} FormActionsProps
+ * @property {'default' | 'right' | 'center'} [align='right'] - Button alignment
+ * @property {React.ReactNode} children - Action buttons
+ * @property {string} [className] - Additional CSS classes
  */
-export function FormRow({ children, className = '' }) {
+
+const alignStyles = {
+  default: 'flex gap-3',
+  right: 'flex justify-end gap-3',
+  center: 'flex justify-center gap-3',
+};
+
+export function FormActions({
+  align = 'right',
+  children,
+  className = ''
+}) {
   return (
-    <div className={`form-row ${className}`}>
+    <div
+      className={`mt-6 pt-4 border-t border-gray-200 ${alignStyles[align]} ${className}`}
+    >
       {children}
     </div>
   );
 }
+
+export default Form;

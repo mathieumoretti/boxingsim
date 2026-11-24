@@ -12,7 +12,7 @@
  *   title="My Boxers"
  *   subtitle="Manage your fighter roster"
  *   actions={<Button onClick={handleCreate}>+ Add Fighter</Button>}
- />
+ * />
  *
  * @param {Object} props
  * @param {string} props.title - Page title (H1)
@@ -23,7 +23,6 @@
 
 import React from 'react';
 import Breadcrumbs from './Breadcrumbs';
-import './PageHeader.css';
 
 const PageHeader = ({
   title,
@@ -32,27 +31,27 @@ const PageHeader = ({
   breadcrumbs
 }) => {
   return (
-    <header className="page-header">
+    <header className="space-y-4 mb-6">
       {/* Optional Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="page-header-breadcrumbs">
+        <div>
           <Breadcrumbs items={breadcrumbs} />
         </div>
       )}
 
       {/* Title Section */}
-      <div className="page-header-content">
-        <div className="page-header-text">
-          <h1 className="page-title">{title}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-gray-900 m-0">{title}</h1>
 
           {subtitle && (
-            <p className="page-subtitle">{subtitle}</p>
+            <p className="text-base text-gray-600 m-0">{subtitle}</p>
           )}
         </div>
 
         {/* Actions Slot */}
         {actions && (
-          <div className="page-header-actions">
+          <div className="flex items-center gap-3">
             {actions}
           </div>
         )}

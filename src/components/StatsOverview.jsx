@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { StatDisplay } from './ui';
-import './BoxerProfile.css';
 
 const StatsOverview = ({ boxer }) => {
   if (!boxer) return null;
@@ -21,10 +20,13 @@ const StatsOverview = ({ boxer }) => {
   const maxPossibleStat = averageStatForLevel * 2; // Estimated max
 
   return (
-    <div className="stats-overview-section">
-      <h3 className="section-title">Combat Stats</h3>
+    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+      <h3 className="text-lg font-bold text-gray-800 m-0 mb-5 flex items-center gap-2">
+        <span className="text-xl" aria-hidden="true">💪</span>
+        Combat Stats
+      </h3>
 
-      <div className="stats-grid">
+      <div className="space-y-4">
         <StatDisplay
           label="Strength"
           value={strength}
@@ -53,8 +55,8 @@ const StatsOverview = ({ boxer }) => {
         />
       </div>
 
-      <div className="stats-description">
-        <p>Stats determine combat performance. Higher values mean better in-ring capabilities.</p>
+      <div className="mt-5 pt-4 border-t border-gray-200">
+        <p className="text-sm text-gray-600 m-0 italic">Stats determine combat performance. Higher values mean better in-ring capabilities.</p>
       </div>
     </div>
   );

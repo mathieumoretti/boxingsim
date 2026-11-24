@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './TrainingControlPanel.css';
 import { API_BASE_URL, authenticatedFetch } from '../utils/auth';
 
 const TrainingControlPanel = ({ boxers, onClose, onRefreshBoxers }) => {
@@ -71,34 +70,57 @@ const TrainingControlPanel = ({ boxers, onClose, onRefreshBoxers }) => {
     }
   };
 
+  const getResultClasses = (success) => {
+    if (success) {
+      return 'bg-green-500/20 border-green-500/50 text-green-300';
+    } else {
+      return 'bg-red-500/20 border-red-500/50 text-red-300';
+    }
+  };
+
   return (
-    <div className="training-control-panel-overlay" onClick={onClose}>
-      <div className="training-control-panel" onClick={e => e.stopPropagation()}>
-        <button className="panel-close" onClick={onClose} aria-label="Close panel">
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[2000] p-8 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gradient-to-br from-navy-medium to-navy-light rounded-xl p-6 max-w-[600px] w-full max-h-[80vh] overflow-y-auto shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative text-white"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          className="absolute top-3 right-3 bg-white/10 border-none text-white text-xl w-9 h-9 rounded-md cursor-pointer flex items-center justify-center transition-all duration-150 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-2"
+          onClick={onClose}
+          aria-label="Close panel"
+        >
           ×
         </button>
 
-        <h2>Training Control Panel</h2>
-        <p className="panel-description">
+        <h2 className="m-0 mb-2 text-xl font-bold text-white">Training Control Panel</h2>
+        <p className="m-0 mb-5 text-sm text-white/80 leading-relaxed">
           Development-only feature to manually complete training sessions.
           This bypasses the normal world clock waiting period for testing purposes.
         </p>
 
+        {/* Result Messages */}
         {result && (
-          <div className={`result-message ${result.success ? 'success' : 'error'}`}>
+          <div
+            className={`p-3 rounded-md mb-5 text-sm font-medium border ${getResultClasses(result.success)}`}
+          >
             {result.message}
             {result.completed !== undefined && (
-              <span className="result-details">
+              <span className="block text-xs opacity-90 mt-1">
                 ({result.completed} completed{result.failed > 0 && `, ${result.failed} failed`})
               </span>
             )}
           </div>
         )}
 
-        <div className="control-section">
-          <h3>Global Control</h3>
+        {/* Global Control Section */}
+        <div className="bg-white/5 rounded-md p-4 mb-4">
+          <h3 className="m-0 mb-3 text-base font-semibold text-white">Global Control</h3>
           <button
-            className="complete-all-btn"
+            className="w-full bg-yellow-400 text-navy-dark border-none p-3 rounded-md cursor-pointer text-sm font-semibold transition-all duration-150 hover:bg-yellow-500 hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(250,204,21,0.3)] disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-2"
             onClick={completeAllTraining}
             disabled={isCompletingAll}
           >
@@ -106,21 +128,31 @@ const TrainingControlPanel = ({ boxers, onClose, onRefreshBoxers }) => {
           </button>
         </div>
 
-        <div className="control-section">
-          <h3>Per-Boxer Control</h3>
-          <p className="section-description">Complete training for a specific boxer:</p>
+        {/* Per-Boxer Control Section */}
+        <div className="bg-white/5 rounded-md p-4 mb-2">
+          <h3 className="m-0 mb-3 text-base font-semibold text-white">Per-Boxer Control</h3>
+          <p className="m-0 mb-3 text-xs text-white/70">Complete training for a specific boxer:</p>
 
-          <div className="boxer-controls-list">
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
             {boxers.length === 0 ? (
-              <p className="no-boxers">No boxers found</p>
+              <p className="text-sm text-white/50 text-center p-5">No boxers found</p>
             ) : (
               boxers.map(boxer => {
                 const hasPendingTraining = boxer.pending_training_sessions && boxer.pending_training_sessions.length > 0;
                 return (
-                  <div key={boxer.id} className="boxer-control-item">
-                    <span className="boxer-name">{boxer.name}</span>
+                  <div
+                    key={boxer.id}
+                    className="flex items-center justify-between p-3 bg-white/8 rounded-md gap-3"
+                  >
+                    <span className="text-sm font-medium text-white flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                      {boxer.name}
+                    </span>
                     <button
-                      className={`complete-boxer-btn ${hasPendingTraining ? '' : 'disabled'}`}
+                      className={`border-none p-2 rounded-md cursor-pointer text-xs font-semibold transition-all duration-150 hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                        hasPendingTraining
+                          ? 'bg-primary text-white hover:bg-primary-dark'
+                          : 'bg-white/20 text-white/50 cursor-not-allowed'
+                      }`}
                       onClick={() => completeBoxerTraining(boxer.id, boxer.name)}
                       disabled={!hasPendingTraining || isCompletingSpecific[boxer.id]}
                       title={!hasPendingTraining ? 'No pending training sessions' : undefined}
@@ -139,7 +171,11 @@ const TrainingControlPanel = ({ boxers, onClose, onRefreshBoxers }) => {
           </div>
         </div>
 
-        <button className="close-panel-btn" onClick={onClose}>
+        {/* Close Panel Button */}
+        <button
+          className="w-full bg-transparent text-white/70 border border-white/30 p-3 rounded-md cursor-pointer text-sm font-medium transition-all duration-150 mt-2 hover:bg-white/10 hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-2"
+          onClick={onClose}
+        >
           Close Panel
         </button>
       </div>

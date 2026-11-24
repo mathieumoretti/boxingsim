@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './OpponentList.css';
 import { fetchOpponents, getMatchQuality } from '../api/opponents';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
@@ -77,24 +76,45 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
     return (opportunity.score?.overall_score || 0) === bestScore;
   };
 
+  // Tailwind class builders for match quality colors
+  const getCardBorderClass = (quality) => {
+    switch (quality) {
+      case 'excellent': return 'border-success';
+      case 'good': return 'border-green-400';
+      case 'fair': return 'border-warning';
+      default: return 'border-gray-300';
+    }
+  };
+
+  const getBarColorClass = (quality) => {
+    switch (quality) {
+      case 'excellent': return 'bg-gradient-to-r from-success to-emerald-500';
+      case 'good': return 'bg-gradient-to-r from-green-400 to-emerald-400';
+      case 'fair': return 'bg-gradient-to-r from-warning to-yellow-400';
+      default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
+    }
+  };
+
+  const getButtonClass = (quality) => {
+    const base = 'w-full py-2.5 px-4 text-sm font-semibold rounded-md border-none transition-all duration-150 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2';
+    switch (quality) {
+      case 'excellent': return `${base} bg-gradient-to-br from-success to-emerald-600 text-white hover:bg-gradient-to-br hover:from-success hover:to-emerald-500 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(34,197,94,0.3)] focus-visible:outline-success`;
+      case 'good': return `${base} bg-gradient-to-br from-green-400 to-emerald-500 text-white hover:bg-gradient-to-br hover:from-green-300 hover:to-emerald-400 hover:-translate-y-0.5 focus-visible:outline-green-400`;
+      case 'fair': return `${base} bg-gradient-to-br from-warning to-yellow-500 text-text-on-gold hover:bg-gradient-to-br hover:from-warning hover:to-yellow-400 hover:-translate-y-0.5 focus-visible:outline-warning`;
+      default: return `${base} bg-gradient-to-br from-gray-400 to-gray-500 text-white hover:bg-gradient-to-br hover:from-gray-300 hover:to-gray-400 hover:-translate-y-0.5 focus-visible:outline-gray-400`;
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="opponent-list-loading">
-        <div className="opponent-skeleton">
-          <div className="skeleton-card-header"></div>
-          <div className="skeleton-card-stats"></div>
-          <div className="skeleton-card-button"></div>
-        </div>
-        <div className="opponent-skeleton">
-          <div className="skeleton-card-header"></div>
-          <div className="skeleton-card-stats"></div>
-          <div className="skeleton-card-button"></div>
-        </div>
-        <div className="opponent-skeleton">
-          <div className="skeleton-card-header"></div>
-          <div className="skeleton-card-stats"></div>
-          <div className="skeleton-card-button"></div>
-        </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white rounded-lg border border-gray-200 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] animate-pulse">
+            <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -112,95 +132,105 @@ const OpponentList = ({ boxerId, boxer, onSelectOpponent, filters = {} }) => {
 
   if (opponents.length === 0) {
     return (
-      <div className="opponent-list-empty">
-        <p>No opponents found matching your criteria.</p>
-        <p className="empty-hint">Try adjusting the level range or health filters.</p>
+      <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+        <p className="m-0 text-base text-gray-600 mb-2">No opponents found matching your criteria.</p>
+        <p className="m-0 text-sm text-gray-500 italic">Try adjusting the level range or health filters.</p>
       </div>
     );
   }
 
   return (
-    <div className="opponent-list">
-      <div className="opponent-list-header">
-        <h4>Available Opponents ({opponents.length})</h4>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="m-0 text-lg font-semibold text-gray-800">Available Opponents ({opponents.length})</h4>
       </div>
 
-      <div className="opponent-list-content">
+      <div className="space-y-3">
         {opponents.map((opportunity, index) => {
           const boxerData = opportunity.opponent?.boxer || {};
           const scoreData = opportunity.score || {};
           const overallScore = scoreData.overall_score || 0;
+          const quality = getMatchQualityColor(overallScore);
 
           return (
             <div
               key={boxerData.id || index}
-              className={`opponent-card ${getMatchQualityColor(overallScore)}`}
+              className={`bg-white rounded-lg border-2 ${getCardBorderClass(quality)} p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-150 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]`}
               data-match-quality={overallScore}
               title={opportunity.reasoning || ''}
             >
               {isBestMatch(opportunity) && (
-                <div className="best-match-badge">⭐ Best Match</div>
+                <div className="absolute -top-2 -right-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-victory-gold to-warning text-text-on-gold shadow-[0_2px_8px_rgba(214,158,46,0.3)]">
+                  <span>⭐</span> Best Match
+                </div>
               )}
 
-              <div className="opponent-card-header">
-                <div className="opponent-name">{boxerData.name || 'Unknown'}</div>
-                <div className="opponent-level">Level {boxerData.level || '?'}</div>
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h5 className="m-0 text-base font-bold text-gray-900">{boxerData.name || 'Unknown'}</h5>
+                  <span className="text-sm text-gray-600">Level {boxerData.level || '?'}</span>
+                </div>
               </div>
 
-              <div className="opponent-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Rank:</span>
-                  <span className="stat-value">
+              <div className="flex flex-wrap gap-3 mb-4 text-sm">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500 font-semibold">Rank:</span>
+                  <span className="font-bold text-gray-700">
                     {opportunity.opponent?.rank || opportunity.opponent?.ranking_position
                       ? `#${opportunity.opponent.rank || opportunity.opponent.ranking_position}`
                       : 'Unranked'}
                   </span>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">Level Diff:</span>
-                  <span className={`stat-value ${levelDiff(opportunity) === 0 ? 'same-level' : ''}`}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500 font-semibold">Level Diff:</span>
+                  <span className={`font-bold ${levelDiff(opportunity) === 0 ? 'text-success' : 'text-gray-700'}`}>
                     {levelDiff(opportunity)}
                   </span>
                 </div>
 
                 {opportunity.opponent?.is_ai && (
-                  <div className="stat-item ai-badge">
-                    <span className="ai-indicator">AI</span>
-                  </div>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-cyan-100 text-cyan-700">
+                    AI
+                  </span>
                 )}
               </div>
 
               {/* Match Quality Score */}
-              <div className="match-quality-section">
-                <div className="match-quality-label">Match Quality</div>
-                <div className="match-quality-bar-container">
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-gray-600">Match Quality</span>
+                  <span className="text-sm font-bold text-gray-800">{Math.round(overallScore * 100)}%</span>
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`match-quality-bar ${getMatchQualityColor(overallScore)}`}
+                    className={`h-full ${getBarColorClass(quality)} transition-all duration-300`}
                     style={{ width: `${overallScore * 100}%` }}
                   ></div>
                 </div>
-                <div className="match-quality-score">{Math.round(overallScore * 100)}%</div>
               </div>
 
               {/* Score Breakdown (optional detail) */}
-              <div className="score-breakdown">
-                <span className="breakdown-item">Level: {Math.round((scoreData.level_proximity || scoreData.level_score || 0) * 100)}%</span>
-                <span className="breakdown-item">Rank: {Math.round((scoreData.ranking_diff || scoreData.ranking_score || 0) * 100)}%</span>
-                <span className="breakdown-item">Power: {Math.round((scoreData.win_rate_match || scoreData.power_score || 0) * 100)}%</span>
+              <div className="flex flex-wrap gap-2 mb-4 text-xs">
+                <span className="px-2 py-1 bg-gray-50 rounded text-gray-600 font-semibold">Level: {Math.round((scoreData.level_proximity || scoreData.level_score || 0) * 100)}%</span>
+                <span className="px-2 py-1 bg-gray-50 rounded text-gray-600 font-semibold">Rank: {Math.round((scoreData.ranking_diff || scoreData.ranking_score || 0) * 100)}%</span>
+                <span className="px-2 py-1 bg-gray-50 rounded text-gray-600 font-semibold">Power: {Math.round((scoreData.win_rate_match || scoreData.power_score || 0) * 100)}%</span>
               </div>
 
               {/* Select Button */}
               <button
-                className={`select-opponent-btn ${getMatchQualityColor(overallScore)}`}
+                className={getButtonClass(quality)}
                 onClick={() => onSelectOpponent(opportunity)}
+                aria-label={`Book fight against ${boxerData.name}`}
               >
                 Book Fight
               </button>
 
               {/* Reasoning Tooltip (visible on card) */}
               {opportunity.reasoning && (
-                <div className="match-reasoning">{opportunity.reasoning}</div>
+                <div className="mt-3 pt-3 border-t border-gray-100 text-xs italic text-gray-500">
+                  {opportunity.reasoning}
+                </div>
               )}
             </div>
           );

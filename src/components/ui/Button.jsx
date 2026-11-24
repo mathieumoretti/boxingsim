@@ -21,7 +21,6 @@
  */
 
 import React from 'react';
-import './Button.css';
 
 /**
  * Button component props interface
@@ -36,6 +35,21 @@ import './Button.css';
  * @property {'button' | 'submit' | 'reset'} [type='button'] - HTML button type
  */
 
+// Variant base styles with Tailwind utilities
+const variantStyles = {
+  primary: 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-card hover:-translate-y-0.5 hover:shadow-elevated active:translate-y-0 active:shadow-subtle',
+  secondary: 'bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-subtle hover:bg-gradient-to-br hover:from-gray-600 hover:to-gray-700 hover:-translate-y-0.5 hover:shadow-card active:translate-y-0 active:shadow-subtle',
+  danger: 'bg-gradient-to-br from-danger-bright to-danger text-white shadow-card hover:-translate-y-0.5 hover:shadow-elevated active:translate-y-0 active:shadow-subtle',
+  ghost: 'bg-transparent text-gray-700 border border-gray-300 shadow-none hover:bg-gray-100 hover:border-gray-600 hover:text-gray-800 hover:-translate-y-0.5 hover:shadow-subtle active:translate-y-0 active:bg-gray-200',
+};
+
+// Size padding styles
+const sizeStyles = {
+  sm: 'px-3 py-2 text-sm',
+  md: 'px-5 py-3 text-base',
+  lg: 'px-6 py-4 text-lg',
+};
+
 export function Button({
   variant = 'secondary',
   size = 'md',
@@ -45,12 +59,20 @@ export function Button({
   className = '',
   type = 'button',
 }) {
-  const buttonClass = `btn btn-${variant} btn-${size} ${className}`.trim();
+  // Base button styles
+  const baseStyles = `
+    inline-flex items-center justify-center gap-2
+    border-none rounded-md
+    font-semibold cursor-pointer transition-all duration-150
+    text-decoration-none whitespace-nowrap
+    focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none
+  `;
 
   return (
     <button
       type={type}
-      className={buttonClass}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`.trim()}
       onClick={onClick}
       disabled={disabled}
     >

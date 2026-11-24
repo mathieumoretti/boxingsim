@@ -1,41 +1,122 @@
 /* ========================================
-   DESIGN TOKENS IMPORT
+   TAILWIND CSS INTEGRATION
 
-   All design system values are centralized in design-tokens.css.
-   Import this first to ensure tokens are available throughout the app.
+   Full Tailwind integration with custom design tokens.
 
-   MAT-146: Design Tokens Foundation
+   MAT-124: Tailwind Migration
    ======================================== */
+
+/* Tailwind Directives - Enables all utilities + preflight reset */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Design Tokens - Extended beyond Tailwind defaults */
 @import './design-tokens.css';
 
-/* Global styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ========================================
+   CUSTOM KEYFRAMES
+
+   Animations not covered by Tailwind's built-in set.
+   These extend Tailwind's animation utilities.
+   ======================================== */
+
+/* Champion Glow Effect (Level 5 Badges) */
+@keyframes championGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
 }
 
-body {
-  font-family: var(--font-family-base);
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-800);
-  line-height: var(--line-height-normal);
+/* Training Badge Pulse */
+@keyframes trainingPulse {
+  0%, 100% {
+    box-shadow: 0 3px 8px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 3px 16px rgba(99, 102, 241, 0.5), 0 2px 6px rgba(99, 102, 241, 0.3);
+  }
 }
 
-.app {
-  min-height: 100vh;
+/* Stat Bar Shimmer */
+@keyframes barShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+/* Health Critical Pulse */
+@keyframes healthCritical {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 1.5rem;
+/* Fatigue Critical Pulse */
+@keyframes fatigueCritical {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+/* ========================================
+   CUSTOM UTILITY CLASSES
+
+   Reusable classes that don't fit standard Tailwind patterns.
+   Phase out these as we migrate to inline utilities.
+   ======================================== */
+
+/* Card hover glow effect wrapper */
+.card-glow-effect {
+  position: relative;
+}
+
+.card-glow-effect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.15) 0%,
+    transparent 50%,
+    rgba(99, 102, 241, 0.15) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0, #fff 0) content-box, linear-gradient(#fff 0, #fff 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal) ease;
+}
+
+.card-glow-effect:hover::before {
+  opacity: 1;
+}
+
+/* ========================================
+   GLOBAL RESETS
+
+   Tailwind preflight handles most resets.
+   Only custom overrides below.
+   ======================================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar Styling for Dark Mode Pages */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
 }

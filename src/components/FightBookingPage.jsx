@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './FightBookingPage.css';
 import TopBar from './TopBar';
+import { SkipLink } from './SkipLink';
 import OpponentList from './OpponentList.jsx';
 import PageLayout from './PageLayout';
 import { Badge } from './ui';
@@ -152,15 +152,18 @@ const FightBookingPage = ({ user, onLogout }) => {
   if (isLoadingBoxer) {
     return (
       <>
+        <SkipLink targetId="booking-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
           backButtonLabel="← Back to Dashboard"
         >
-          <div className="loading-boxer">
-            <div className="loading-spinner"></div>
-            <p>Loading boxer details...</p>
-          </div>
+          <main id="booking-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+              <p className="text-base text-gray-600">Loading boxer details...</p>
+            </div>
+          </main>
         </PageLayout>
       </>
     );
@@ -170,17 +173,20 @@ const FightBookingPage = ({ user, onLogout }) => {
   if (boxerError || !boxer) {
     return (
       <>
+        <SkipLink targetId="booking-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
           backButtonLabel="← Back to Dashboard"
         >
-          <ErrorDisplay
-            error={boxerError || 'Boxer not found'}
-            onRetry={loadBoxer}
-            title="Failed to Load Boxer"
-            icon={true}
-          />
+          <main id="booking-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
+            <ErrorDisplay
+              error={boxerError || 'Boxer not found'}
+              onRetry={loadBoxer}
+              title="Failed to Load Boxer"
+              icon={true}
+            />
+          </main>
         </PageLayout>
       </>
     );
@@ -188,6 +194,7 @@ const FightBookingPage = ({ user, onLogout }) => {
 
   return (
     <>
+      <SkipLink targetId="booking-content" />
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         variant="fight-booking-page"
@@ -195,82 +202,82 @@ const FightBookingPage = ({ user, onLogout }) => {
         backButtonLabel="← Back to Dashboard"
       >
         {/* Main Content */}
-        <div className="booking-container">
+        <main id="booking-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
           {/* Boxer Summary (Header Info) */}
-          <div className="boxer-summary">
-            <div className="boxer-info">
-              <span className="label">BOOK A FIGHT FOR</span>
-              <span className="value">{boxer.name}</span>
+          <header className="bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light p-6 rounded-xl mb-6 text-white shadow-[0_4px_16px_rgba(31,40,51,0.2)]" aria-label="Fighter information">
+            <div className="mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">BOOK A FIGHT FOR</span>
+              <h1 className="text-3xl font-bold m-0">{boxer.name}</h1>
             </div>
-            <div className="boxer-meta">
+            <div className="flex flex-wrap items-center gap-4">
               {/* Migrated to Badge component (MAT-154) */}
               <Badge variant="level" size="md">Level {boxer.level}</Badge>
-              <div className="stats-mini">
-                <span title="Strength">STR {boxer.stats?.strength || 0}</span>
-                <span title="Defense">DEF {boxer.stats?.defense || 0}</span>
-                <span title="Agility">AGI {boxer.stats?.agility || 0}</span>
+              <div className="flex items-center gap-3 text-sm font-semibold">
+                <span className="text-[#FF6B6B]" title="Strength">STR {boxer.stats?.strength || 0}</span>
+                <span className="text-[#4ECDC4]" title="Defense">DEF {boxer.stats?.defense || 0}</span>
+                <span className="text-[#95E1D3]" title="Agility">AGI {boxer.stats?.agility || 0}</span>
               </div>
             </div>
-          </div>
+          </header>
 
         {/* Filter Controls */}
-        <div className="filter-controls">
-          <div className="filter-group">
-            <label htmlFor="level-range-slider">
-              Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}
-            </label>
+        <section aria-label="Opponent filters" className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+          <fieldset className="mb-5 pb-5 border-b border-gray-200">
+            <legend className="text-sm font-semibold text-gray-700 mb-3">Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}</legend>
             <input
-              id="level-range-slider"
               type="range"
               min="0"
               max="10"
               value={filters.levelRange}
               onChange={(e) => handleFilterChange('levelRange', parseInt(e.target.value))}
-              className="level-range-slider"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+              aria-label="Set level range for opponent matching"
             />
-            <div className="slider-markers">
+            <div className="flex justify-between mt-2 text-xs font-semibold text-gray-500">
               <span>0</span>
               <span>5</span>
               <span>10+</span>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="filter-toggles">
-            <label className="toggle-checkbox">
+          <div className="flex flex-wrap gap-4" role="group" aria-label="Filter options">
+            <label className="inline-flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={filters.aiOnly}
                 onChange={(e) => handleFilterChange('aiOnly', e.target.checked)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
               />
-              <span className="toggle-label">AI Fighters Only</span>
+              <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">AI Fighters Only</span>
             </label>
 
-            <label className="toggle-checkbox">
+            <label className="inline-flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={filters.minHealth >= 80}
                 onChange={(e) => handleFilterChange('minHealth', e.target.checked ? 80 : 30)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
               />
-              <span className="toggle-label">Excellent Health Only</span>
+              <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">Excellent Health Only</span>
             </label>
           </div>
-        </div>
+        </section>
 
         {/* Opponent Selection */}
-        <div className="opponent-section">
+        <section aria-label="Opponent selection" className="mb-6">
           <OpponentList
             boxerId={boxer.id}
             boxer={boxer}
             filters={filters}
             onSelectOpponent={handleSelectOpponent}
           />
-        </div>
+        </section>
 
         {/* Match Validation Warnings */}
         {hasWarnings && matchValidation && (
-          <div className="match-validation-warnings">
-            <h4>⚠️ Match Concerns:</h4>
-            <ul>
+          <div role="alert" className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-6 shadow-[0_2px_8px_rgba(251,191,36,0.1)]">
+            <h4 className="m-0 mb-2 text-base font-semibold text-amber-900">⚠️ Match Concerns:</h4>
+            <ul className="m-0 space-y-1 list-disc list-inside text-sm text-amber-800">
               {matchValidation.warnings.map((warning, idx) => (
                 <li key={idx}>{warning}</li>
               ))}
@@ -279,27 +286,44 @@ const FightBookingPage = ({ user, onLogout }) => {
         )}
 
         {/* Booking Actions */}
-        <div className="booking-actions">
+        <footer className="bg-gray-50 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
           {selectedOpponent && (
-            <div className="selection-summary">
-              <span>Selected: <strong>{selectedOpponent.opponent.boxer.name}</strong></span>
-              <span>Match Quality: <strong>{Math.round(selectedOpponent.score.overall_score * 100)}%</strong></span>
+            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+              <p className="m-0 text-sm font-semibold text-gray-700">
+                Selected: <strong>{selectedOpponent.opponent.boxer.name}</strong>
+              </p>
+              <p className="m-0 mt-1 text-sm font-semibold text-gray-600">
+                Match Quality: <strong>{Math.round(selectedOpponent.score.overall_score * 100)}%</strong>
+              </p>
             </div>
           )}
 
           {bookingError && (
-            <ErrorDisplay error={bookingError} variant="compact" icon={true} />
+            <div className="mb-4">
+              <ErrorDisplay error={bookingError} variant="compact" icon={true} />
+            </div>
           )}
 
           <button
-            className="book-fight-btn"
+            className={`w-full py-3 px-4 text-base font-semibold rounded-lg border-none transition-all duration-150 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+              !selectedOpponent || isBooking
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-br from-success to-emerald-600 text-white hover:bg-gradient-to-br hover:from-emerald-400 hover:to-success hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(34,197,94,0.3)]'
+            }`}
             onClick={handleBookFight}
             disabled={!selectedOpponent || isBooking}
           >
-            {isBooking ? 'Booking...' : `Book Fight vs ${selectedOpponent?.opponent?.boxer?.name || 'Select Opponent'}`}
+            {isBooking ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                Booking...
+              </span>
+            ) : (
+              `Book Fight vs ${selectedOpponent?.opponent?.boxer?.name || 'Select Opponent'}`
+            )}
           </button>
-        </div>
-      </div>
+        </footer>
+      </main>
       </PageLayout>
     </>
   );

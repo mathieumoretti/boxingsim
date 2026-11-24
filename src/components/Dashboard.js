@@ -16,8 +16,9 @@ import TopBar from './TopBar';
 import MiniWorldClock from './MiniWorldClock';
 import LoadingSpinner from './ui/LoadingSpinner';
 import { ErrorDisplay } from './ErrorDisplay';
+import { SkipLink } from './SkipLink';
+import { MobileNavigationDrawer } from './MobileNavigationDrawer';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
-import './Dashboard.css';
 
 const Dashboard = ({ user }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -176,9 +177,10 @@ const Dashboard = ({ user }) => {
 
   if (isLoading) {
     return (
-      <div className="dashboard-page">
+      <div className="min-h-screen bg-gray-50">
+        <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
-        <div className="dashboard-loading">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <LoadingSpinner size="lg" aria-label="Loading dashboard" />
         </div>
       </div>
@@ -187,7 +189,8 @@ const Dashboard = ({ user }) => {
 
   if (error) {
     return (
-      <div className="dashboard-page">
+      <div className="min-h-screen bg-gray-50">
+        <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
         <ErrorDisplay
           error={error}
@@ -201,12 +204,13 @@ const Dashboard = ({ user }) => {
   }
 
   return (
-    <div className="dashboard-page">
+    <div className="min-h-screen bg-gray-50">
+      <SkipLink targetId="main-content" />
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
 
-      <main className="dashboard-main">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
         {/* Quick Stats Row */}
-        <section className="dashboard-stats" aria-label="Quick statistics">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" aria-label="Quick statistics">
           <StatCard
             icon="📊"
             value={quickStats.totalBoxers || 0}
@@ -232,22 +236,24 @@ const Dashboard = ({ user }) => {
         </section>
 
         {/* Two Column Layout */}
-        <div className="dashboard-content-grid">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Notifications & Upcoming Fights */}
-          <div className="dashboard-left-column">
+          <div className="lg:col-span-2 space-y-6">
             {/* Notifications Panel */}
-            <section className="dashboard-panel notifications-panel" aria-label="Notifications">
-              <header className="panel-header">
-                <h2 className="panel-title">
+            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Notifications">
+              <header className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
                   <span aria-hidden="true">🔔</span>
                   Notifications
                 </h2>
                 {notifications.length > 0 && (
-                  <span className="notification-count">{notifications.length}</span>
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold bg-danger text-white">
+                    {notifications.length}
+                  </span>
                 )}
               </header>
 
-              <div className="panel-content">
+              <div className="p-5">
                 {notifications.length === 0 ? (
                   <EmptyState
                     icon="🎉"
@@ -255,7 +261,7 @@ const Dashboard = ({ user }) => {
                     message="No notifications at the moment."
                   />
                 ) : (
-                  <ul className="notification-list">
+                  <ul className="space-y-3">
                     {notifications.map((notif, index) => (
                       <NotificationItem
                         key={index}
@@ -269,18 +275,18 @@ const Dashboard = ({ user }) => {
             </section>
 
             {/* Upcoming Fights Panel */}
-            <section className="dashboard-panel fights-panel" aria-label="Upcoming fights">
-              <header className="panel-header">
-                <h2 className="panel-title">
+            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Upcoming fights">
+              <header className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
                   <span aria-hidden="true">🥊</span>
                   Upcoming Fights
                 </h2>
                 {upcomingFights.length > 0 && (
-                  <Link to="/boxers" className="panel-link">View All →</Link>
+                  <Link to="/boxers" className="text-sm font-semibold text-primary hover:text-primary-light transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">View All →</Link>
                 )}
               </header>
 
-              <div className="panel-content">
+              <div className="p-5">
                 {upcomingFights.length === 0 ? (
                   <EmptyState
                     icon="📅"
@@ -288,7 +294,7 @@ const Dashboard = ({ user }) => {
                     message="No fights scheduled for the next 7 days."
                   />
                 ) : (
-                  <ul className="fights-list">
+                  <ul className="space-y-3">
                     {upcomingFights.map(fight => (
                       <FightItem
                         key={fight.id}
@@ -303,16 +309,16 @@ const Dashboard = ({ user }) => {
           </div>
 
           {/* Right Column: Recent Activity */}
-          <div className="dashboard-right-column">
-            <section className="dashboard-panel activity-panel" aria-label="Recent activity">
-              <header className="panel-header">
-                <h2 className="panel-title">
+          <div className="space-y-6">
+            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Recent activity">
+              <header className="p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
                   <span aria-hidden="true">📜</span>
                   Recent Activity
                 </h2>
               </header>
 
-              <div className="panel-content">
+              <div className="p-5">
                 {recentActivity.length === 0 ? (
                   <EmptyState
                     icon="📭"
@@ -320,7 +326,7 @@ const Dashboard = ({ user }) => {
                     message="Fight results will appear here."
                   />
                 ) : (
-                  <ul className="activity-list">
+                  <ul className="space-y-3">
                     {recentActivity.map(fight => (
                       <ActivityItem
                         key={fight.id}
@@ -333,23 +339,23 @@ const Dashboard = ({ user }) => {
             </section>
 
             {/* Quick Actions Panel */}
-            <section className="dashboard-panel actions-panel" aria-label="Quick actions">
-              <header className="panel-header">
-                <h2 className="panel-title">Quick Actions</h2>
+            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Quick actions">
+              <header className="p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800 m-0">Quick Actions</h2>
               </header>
 
-              <div className="panel-content actions-content">
-                <Link to="/create-boxer" className="action-btn action-btn--primary">
+              <div className="p-5 space-y-3">
+                <Link to="/create-boxer" className="flex items-center gap-2 w-full py-2.5 px-4 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg font-semibold transition-all duration-150 hover:bg-gradient-to-br hover:from-primary-light hover:to-primary hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(124,58,237,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">
                   <span aria-hidden="true">➕</span>
                   Create Fighter
                 </Link>
 
-                <Link to="/boxers" className="action-btn action-btn--secondary">
+                <Link to="/boxers" className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-100 text-gray-700 rounded-lg font-semibold transition-all duration-150 hover:bg-gray-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-400 focus-visible:outline-offset-2">
                   <span aria-hidden="true">🥊</span>
                   View All Boxers
                 </Link>
 
-                <Link to="/rankings" className="action-btn action-btn--secondary">
+                <Link to="/rankings" className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-100 text-gray-700 rounded-lg font-semibold transition-all duration-150 hover:bg-gray-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-400 focus-visible:outline-offset-2">
                   <span aria-hidden="true">🏆</span>
                   View Rankings
                 </Link>
@@ -364,29 +370,33 @@ const Dashboard = ({ user }) => {
 
 // Helper Components
 
-const StatCard = ({ icon, value, label, href }) => (
-  <div className={`stat-card ${href ? 'stat-card--link' : ''}`}>
-    {href && !window.location.href.includes(href) ? (
-      <a href={href} className="stat-card-link" onClick={(e) => e.preventDefault()}>
-        <span className="stat-icon" aria-hidden="true">{icon}</span>
-        <span className="stat-value">{value}</span>
-        <span className="stat-label">{label}</span>
-      </a>
-    ) : (
-      <>
-        <span className="stat-icon" aria-hidden="true">{icon}</span>
-        <span className="stat-value">{value}</span>
-        <span className="stat-label">{label}</span>
-      </>
-    )}
-  </div>
-);
+const StatCard = ({ icon, value, label, href }) => {
+  const isCurrentPage = href && window.location.href.includes(href);
+
+  return (
+    <div className={`bg-white rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 ${href && !isCurrentPage ? 'cursor-pointer hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-150' : ''}`}>
+      {href && !isCurrentPage ? (
+        <a href={href} className="block" onClick={(e) => e.preventDefault()}>
+          <span className="text-2xl mb-1 block" aria-hidden="true">{icon}</span>
+          <span className="text-2xl font-bold text-gray-900 block mb-0.5">{value}</span>
+          <span className="text-sm text-gray-600">{label}</span>
+        </a>
+      ) : (
+        <>
+          <span className="text-2xl mb-1 block" aria-hidden="true">{icon}</span>
+          <span className="text-2xl font-bold text-gray-900 block mb-0.5">{value}</span>
+          <span className="text-sm text-gray-600">{label}</span>
+        </>
+      )}
+    </div>
+  );
+};
 
 const EmptyState = ({ icon, title, message }) => (
-  <div className="empty-state">
-    <div className="empty-icon" aria-hidden="true">{icon}</div>
-    <h3 className="empty-title">{title}</h3>
-    <p className="empty-message">{message}</p>
+  <div className="text-center py-8">
+    <div className="text-4xl mb-2" aria-hidden="true">{icon}</div>
+    <h3 className="m-0 mb-1 text-sm font-semibold text-gray-700">{title}</h3>
+    <p className="m-0 text-xs text-gray-500">{message}</p>
   </div>
 );
 
@@ -394,39 +404,41 @@ const NotificationItem = ({ notification, worldTime }) => {
   const isUrgent = notification.priority === 'high';
 
   return (
-    <li className={`notification-item ${isUrgent ? 'notification-item--urgent' : ''}`}>
-      <div className="notification-content">
-        <span className="notification-icon" aria-hidden="true">
+    <li className={`p-3 rounded-lg border ${isUrgent ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+      <div className="flex items-start gap-2">
+        <span className="text-sm flex-shrink-0" aria-hidden="true">
           {isUrgent ? '⚠️' : 'ℹ️'}
         </span>
-        <span className="notification-message">{notification.message}</span>
+        <span className={`flex-1 text-sm ${isUrgent ? 'text-red-900' : 'text-blue-900'}`}>{notification.message}</span>
+        {notification.scheduled_time && (
+          <TimeUntil datetime={notification.scheduled_time} worldTime={worldTime} />
+        )}
       </div>
-      {notification.scheduled_time && (
-        <TimeUntil datetime={notification.scheduled_time} worldTime={worldTime} />
-      )}
     </li>
   );
 };
 
 const FightItem = ({ fight, worldTime }) => (
-  <li className="fight-item">
-    <div className="fight-info">
-      <span className="fight-boxers">Fight #{fight.id}</span>
+  <li className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-semibold text-gray-700">Fight #{fight.id}</span>
       <TimeUntil datetime={fight.scheduled_time} worldTime={worldTime} />
     </div>
     {fight.round && (
-      <span className="fight-rounds">{fight.round} rounds</span>
+      <span className="mt-1 inline-block text-xs text-gray-500">{fight.round} rounds</span>
     )}
   </li>
 );
 
 const ActivityItem = ({ fight }) => (
-  <li className="activity-item">
-    <span className="activity-icon" aria-hidden="true">✅</span>
-    <span className="activity-text">Fight #{fight.id} completed</span>
-    <time className="activity-time" dateTime={fight.scheduled_time}>
-      {formatDate(fight.scheduled_time)}
-    </time>
+  <li className="p-3 rounded-lg bg-green-50 border border-green-200">
+    <div className="flex items-center gap-2">
+      <span className="text-sm flex-shrink-0" aria-hidden="true">✅</span>
+      <span className="flex-1 text-sm font-semibold text-green-900">Fight #{fight.id} completed</span>
+      <time className="text-xs text-green-700" dateTime={fight.scheduled_time}>
+        {formatDate(fight.scheduled_time)}
+      </time>
+    </div>
   </li>
 );
 
@@ -437,21 +449,21 @@ const TimeUntil = ({ datetime, worldTime }) => {
   const now = new Date(worldTime.game_time);
   const diff = target - now;
 
-  if (diff <= 0) return <span className="time-countdown time-countdown--now">Now</span>;
+  if (diff <= 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-danger text-white">Now</span>;
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
   if (hours > 24) {
     const days = Math.floor(hours / 24);
-    return <span className="time-countdown">In {days}d</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-700">In {days}d</span>;
   }
 
   if (hours > 0) {
-    return <span className="time-countdown">In {hours}h</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-800">In {hours}h</span>;
   }
 
-  return <span className="time-countdown time-countdown--urgent">In {minutes}m</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">In {minutes}m</span>;
 };
 
 // Utility functions

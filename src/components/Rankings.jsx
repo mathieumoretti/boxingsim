@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import RankCard from './RankCard';
-import './Rankings.css';
-import { fetchRankings, RANKING_CRITERIA, getCriteriaDisplayValue } from '../api/rankings';
-import { ErrorDisplay } from './ErrorDisplay';
-import { getUserErrorMessage } from '../utils/errorMessages';
-
-const DEFAULT_LIMIT = 25;
-
 /**
  * Rankings Component (MAT-105)
  *
  * Displays boxer rankings sorted by various criteria with search, filtering,
  * and pagination. Uses the MAT-100 backend API for data retrieval.
  */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import RankCard from './RankCard';
+import { fetchRankings, RANKING_CRITERIA, getCriteriaDisplayValue } from '../api/rankings';
+import { ErrorDisplay } from './ErrorDisplay';
+import { getUserErrorMessage } from '../utils/errorMessages';
+
+const DEFAULT_LIMIT = 25;
+
 function Rankings() {
   // State management as specified in MAT-105
   const [criteria, setCriteria] = useState('win_rate');
@@ -145,38 +145,47 @@ function Rankings() {
   // Criteria label for header
   const criteriaLabel = RANKING_CRITERIA.find(c => c.value === criteria)?.label || 'Rankings';
 
+  // Filter group styles
+  const filterGroupBase = 'flex items-center gap-2';
+  const filterGroupLarge = `${filterGroupBase} flex-1 min-w-[200px] max-w-[350px]`;
+
+  // Label styles for filters
+  const filterLabel = 'text-xs font-semibold text-navy-muted uppercase tracking-wider whitespace-nowrap';
+
   return (
-    <div className="rankings-page">
+    <div className="max-w-[1400px] mx-auto px-6 py-6 bg-gradient-to-b from-navy-deep to-navy-dark min-h-screen">
       {/* Header Section */}
-      <div className="rankings-header">
-        <div className="header-title">
-          <span className="rankings-icon">🏆</span>
-          <h1>{criteriaLabel} Rankings</h1>
+      <div className="flex flex-wrap items-center justify-between gap-6 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-[36px] leading-none drop-shadow-[0_2px_4px_rgba(214,158,46,0.4)]" aria-hidden="true">🏆</span>
+          <h1 className="text-xl font-extrabold text-white tracking-tight m-0">{criteriaLabel} Rankings</h1>
         </div>
 
         {/* Search Box */}
-        <div className="search-box">
+        <div className="relative w-[300px] flex-shrink-0">
           <input
             type="text"
             placeholder="Search boxers..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="search-input"
+            className="w-full px-5 py-3 border-2 border-navy-border rounded-md text-sm transition-all duration-150 bg-navy-deep text-white placeholder:text-navy-muted focus:outline-none focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)]"
+            aria-label="Search boxers by name or nickname"
           />
-          <span className="search-icon">🔍</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base opacity-60" aria-hidden="true">🔍</span>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="rankings-filters">
+      <div className="flex flex-wrap items-center gap-6 px-5 py-4 bg-navy-deep rounded-lg shadow-[0_2px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] border border-navy-border mb-4">
         {/* Criteria Selector */}
-        <div className="filter-group">
-          <label htmlFor="criteria-select">Sort by:</label>
+        <div className={filterGroupBase}>
+          <label htmlFor="criteria-select" className={filterLabel}>Sort by:</label>
           <select
             id="criteria-select"
             value={criteria}
             onChange={handleCriteriaChange}
-            className="criteria-select"
+            className="px-6 py-2 border-2 border-navy-border rounded-md text-sm font-medium text-white bg-navy-dark cursor-pointer transition-all duration-150 min-w-[140px] focus:outline-none focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)] hover:border-navy-border hover:bg-navy-medium"
+            aria-label="Select ranking criteria"
           >
             {RANKING_CRITERIA.map(option => (
               <option key={option.value} value={option.value}>
@@ -187,9 +196,9 @@ function Rankings() {
         </div>
 
         {/* Level Range Slider */}
-        <div className="filter-group filter-group-large">
-          <label htmlFor="level-range">Level:</label>
-          <div className="level-slider-container">
+        <div className={filterGroupLarge}>
+          <label htmlFor="level-range" className={filterLabel}>Level:</label>
+          <div className="flex items-center gap-3 flex-1">
             <input
               type="range"
               id="level-range"
@@ -197,22 +206,25 @@ function Rankings() {
               max="100"
               value={filters.maxLevel}
               onChange={handleMaxLevelChange}
-              className="level-slider"
+              className="flex-1 h-[6px] rounded-xs bg-gradient-to-r from-navy-border to-navy-deep appearance-none cursor-pointer focus:outline-none"
+              aria-label="Filter by maximum level"
             />
-            <div className="level-indicators">
-              <span className="level-min">{filters.minLevel}</span>
-              <span className="level-max">{filters.maxLevel}</span>
+            <div className="flex justify-between w-[80px] text-xs text-navy-muted font-semibold">
+              <span>{filters.minLevel}</span>
+              <span>{filters.maxLevel}</span>
             </div>
           </div>
         </div>
 
         {/* AI Only Toggle */}
-        <div className="filter-group">
-          <label className="checkbox-label">
+        <div className={filterGroupBase}>
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-text-bright font-medium">
             <input
               type="checkbox"
               checked={filters.aiOnly}
               onChange={handleAiOnlyChange}
+              className="w-[18px] h-[18px] border-2 border-navy-border rounded-sm accent-primary bg-navy-deep cursor-pointer"
+              aria-label="Show AI boxers only"
             />
             <span>AI Only</span>
           </label>
@@ -220,8 +232,8 @@ function Rankings() {
       </div>
 
       {/* Results Info */}
-      <div className="rankings-info">
-        <span className="results-count">
+      <div className="mb-4">
+        <span className="text-sm text-navy-muted font-medium">
           {isLoading ? 'Loading...' : `${filteredData.length} boxer${filteredData.length !== 1 ? 's' : ''} found`}
         </span>
       </div>
@@ -236,19 +248,19 @@ function Rankings() {
         />
       )}
 
-      {/* Rankings List - Table View */}
-      <div className="rankings-list">
+      {/* Rankings List */}
+      <div className="flex flex-col gap-3">
         {isLoading && rankingsData.length === 0 ? (
           /* Loading Skeletons */
           <>
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="rank-card loading">
-                <div className="rank-skeleton">
-                  <div className="skeleton-badge"></div>
-                </div>
-                <div className="rank-skeleton-info">
-                  <div className="skeleton-name"></div>
-                  <div className="skeleton-stats"></div>
+              <div key={i} className="rank-card loading p-4 rounded-lg bg-navy-deep/50 border border-navy-border animate-pulse">
+                <div className="flex gap-4">
+                  <div className="w-[36px] h-[36px] rounded-md bg-gradient-to-r from-navy-border via-navy-deep to-navy-border bg-[length:200%_100%]" />
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="h-[20px] w-[60%] rounded-sm bg-gradient-to-r from-navy-border via-navy-deep to-navy-border bg-[length:200%_100%]" />
+                    <div className="h-[14px] w-[40%] rounded-sm bg-gradient-to-r from-navy-border via-navy-deep to-navy-border bg-[length:200%_100%]" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -269,26 +281,27 @@ function Rankings() {
           })
         ) : (
           /* Empty State */
-          <div className="rankings-empty">
-            <span className="empty-icon">📭</span>
-            <h2>No boxers found</h2>
-            <p>Try adjusting your search or filters</p>
+          <div className="text-center py-[10rem] px-5 bg-navy-deep rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] border border-navy-border">
+            <span className="text-5xl block mb-4 opacity-80" aria-hidden="true">📭</span>
+            <h2 className="text-lg font-bold text-text-bright m-0 mb-2">No boxers found</h2>
+            <p className="text-sm text-navy-muted m-0">Try adjusting your search or filters</p>
           </div>
         )}
       </div>
 
       {/* Pagination Controls */}
       {pagination.pages > 1 && !isLoading && (
-        <div className="rankings-pagination">
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-8 py-5">
           <button
-            className="pagination-btn"
+            className="px-5 py-2 bg-gradient-to-br from-navy-medium to-navy-deep border border-navy-border rounded-md text-text-bright font-semibold cursor-pointer transition-all duration-150 text-sm hover:bg-gradient-to-br hover:from-navy-medium hover:to-navy-dark hover:border-primary-light hover:-translate-y-0.5 hover:shadow-[0_2px_8px_rgba(124,58,237,0.2)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
+            aria-label="Go to previous page"
           >
             ← Prev
           </button>
 
-          <div className="pagination-numbers">
+          <div className="flex gap-2">
             {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
               let pageNum;
               if (pagination.pages <= 5) {
@@ -304,8 +317,14 @@ function Rankings() {
               return (
                 <button
                   key={pageNum}
-                  className={`pagination-number ${page === pageNum ? 'active' : ''}`}
+                  className={`w-9 h-9 border rounded-md font-semibold cursor-pointer transition-all duration-150 flex items-center justify-center ${
+                    page === pageNum
+                      ? 'bg-gradient-to-br from-primary to-primary-dark border-primary text-white shadow-[0_2px_12px_rgba(124,58,237,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                      : 'border-navy-border bg-navy-deep text-text-bright hover:bg-navy-medium hover:border-primary-light hover:shadow-[0_0_12px_rgba(124,58,237,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2'
+                  }`}
                   onClick={() => handlePageChange(pageNum)}
+                  aria-label={`Go to page ${pageNum}`}
+                  aria-current={page === pageNum ? 'page' : undefined}
                 >
                   {pageNum}
                 </button>
@@ -314,9 +333,10 @@ function Rankings() {
           </div>
 
           <button
-            className="pagination-btn"
+            className="px-5 py-2 bg-gradient-to-br from-navy-medium to-navy-deep border border-navy-border rounded-md text-text-bright font-semibold cursor-pointer transition-all duration-150 text-sm hover:bg-gradient-to-br hover:from-navy-medium hover:to-navy-dark hover:border-primary-light hover:-translate-y-0.5 hover:shadow-[0_2px_8px_rgba(124,58,237,0.2)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= pagination.pages}
+            aria-label="Go to next page"
           >
             Next →
           </button>
@@ -325,7 +345,7 @@ function Rankings() {
 
       {/* Page Indicator */}
       {pagination.pages > 1 && (
-        <div className="rankings-page-info">
+        <div className="text-center mt-4 text-navy-muted text-xs font-medium">
           Page {page} of {pagination.pages}
         </div>
       )}

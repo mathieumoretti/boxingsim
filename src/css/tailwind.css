@@ -1,0 +1,12 @@
+/* ========================================
+   TAILWIND CSS IMPORT
+
+   All Tailwind utilities imported through src/index.css
+   This file kept for compatibility only.
+
+   MAT-124: Tailwind Integration
+   ======================================== */
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';

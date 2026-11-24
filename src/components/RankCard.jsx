@@ -1,7 +1,12 @@
+/**
+ * RankCard Component (MAT-105)
+ *
+ * Displays a single boxer in the rankings list with tier badges, stats, and navigation.
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatDisplay, Badge } from './ui';
-import './RankCard.css';
 
 const RankCard = ({ boxer, rank }) => {
   const navigate = useNavigate();
@@ -24,7 +29,6 @@ const RankCard = ({ boxer, rank }) => {
 
   // Format the display value based on ranking criteria
   const getDisplayValue = () => {
-    // Default to showing win rate and record
     const winRate = calculateWinRate();
     const record = `${boxer.wins}-${boxer.losses}`;
     return { primary: winRate, secondary: record };
@@ -35,58 +39,104 @@ const RankCard = ({ boxer, rank }) => {
 
   // Handle card click to navigate to boxer details
   const handleCardClick = () => {
-    // Navigate to a boxer detail page (route to be implemented)
     navigate(`/boxer/${boxer.id}`);
+  };
+
+  // Tier-based card styling with gradients and shadows
+  const getCardStyles = () => {
+    const base = 'flex items-center gap-4 p-5 rounded-xl border transition-all duration-200 cursor-pointer group hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2';
+
+    switch (rank) {
+      case 1:
+        return `${base} bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-300 shadow-[0_4px_16px_rgba(234,179,8,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(234,179,8,0.3)]`;
+      case 2:
+        return `${base} bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 shadow-[0_4px_16px_rgba(175,184,193,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(175,184,193,0.3)]`;
+      case 3:
+        return `${base} bg-gradient-to-br from-orange-50 to-orange-100 border-orange-300 shadow-[0_4px_16px_rgba(213,132,84,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(213,132,84,0.3)]`;
+      default:
+        return `${base} bg-white border-gray-200 shadow-[0_2px_12px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)]`;
+    }
+  };
+
+  // Position badge styling for top 3
+  const getPositionBadgeStyles = () => {
+    const base = 'flex items-center justify-center rounded-full text-xl font-bold w-10 h-10';
+
+    switch (rank) {
+      case 1:
+        return `${base} bg-gradient-to-br from-yellow-300 via-warning to-orange-500 text-text-on-gold shadow-[0_2px_8px_rgba(234,179,8,0.4)]`;
+      case 2:
+        return `${base} bg-gradient-to-br from-gray-300 to-gray-400 text-white shadow-[0_2px_8px_rgba(156,163,175,0.4)]`;
+      case 3:
+        return `${base} bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-[0_2px_8px_rgba(194,65,12,0.4)]`;
+      default:
+        return `${base} bg-gradient-to-br from-navy-medium to-navy-light text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)]`;
+    }
   };
 
   return (
     <div
-      className={`rank-card rank-${rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'regular'}`}
+      className={getCardStyles()}
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
     >
       {/* Position badge */}
-      <div className="rank-position">
-        <span className="rank-badge">{tierBadge}</span>
+      <div className={getPositionBadgeStyles()}>
+        {tierBadge}
       </div>
 
       {/* Boxer info */}
-      <div className="rank-boxer-info">
-        <div className="boxer-name-section">
-          <span className="boxer-avatar" title={`Avatar for ${boxer.name}`}>
-            {String.fromCharCode(0x1F452)}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3 mb-2">
+          <span
+            className="text-2xl flex-shrink-0"
+            title={`Avatar for ${boxer.name}`}
+            aria-hidden="true"
+          >
+            👩‍🦰
           </span>
-          <div className="boxer-text">
-            <span className="boxer-name">{boxer.name}</span>
+          <div className="min-w-0">
+            <span className="text-base font-bold text-gray-900 block truncate">{boxer.name}</span>
             {boxer.nickname && (
-              <span className="boxer-nickname">"{boxer.nickname}"</span>
+              <span className="text-sm text-gray-500 italic block truncate">"{boxer.nickname}"</span>
             )}
           </div>
         </div>
 
-        {/* Stats - migrated to StatDisplay (MAT-154) */}
-        <div className="rank-stats">
+        {/* Stats row */}
+        <div className="flex items-center gap-4 flex-wrap">
           <StatDisplay label="LVL" value={boxer.level} variant="mini" color="level" />
 
-          <div className="stat-group stat-record">
-            <span className="stat-label">Record</span>
-            <span className="stat-value">{boxer.wins}-{boxer.losses}{boxer.draws > 0 ? `-${boxer.draws}` : ''}</span>
+          <div className="flex items-baseline gap-1.5 text-sm">
+            <span className="text-gray-500 font-medium">Record:</span>
+            <span className="font-semibold text-gray-900">
+              {boxer.wins}-{boxer.losses}{boxer.draws > 0 ? `-${boxer.draws}` : ''}
+            </span>
           </div>
 
-          <div className="stat-group stat-winrate">
-            <span className="stat-label">Win Rate</span>
-            <span className="stat-value stat-value-highlight">{displayValue.primary}</span>
+          <div className="flex items-baseline gap-1.5 text-sm">
+            <span className="text-gray-500 font-medium">Win Rate:</span>
+            <span className="font-bold text-primary">{displayValue.primary}</span>
           </div>
         </div>
       </div>
 
-      {/* Arrow indicator for navigation (desktop) */}
-      <div className="rank-nav-arrow" onClick={(e) => { e.stopPropagation(); handleCardClick(); }}>→</div>
+      {/* Arrow indicator for desktop (visible on hover) */}
+      <div
+        className="text-2xl text-gray-400 group-hover:text-primary transition-colors duration-200 hidden sm:block"
+        onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+        aria-hidden="true"
+      >
+        →
+      </div>
 
       {/* View Profile button for mobile */}
-      <button className="rank-mobile-btn" onClick={handleCardClick}>
+      <button
+        className="sm:hidden text-sm font-semibold text-primary cursor-pointer hover:underline focus-visible:outline-none"
+        onClick={handleCardClick}
+      >
         View Profile →
       </button>
     </div>
