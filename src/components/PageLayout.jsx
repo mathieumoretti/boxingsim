@@ -1,7 +1,3 @@
-import React from 'react';
-import { Button } from './ui';
-import './PageLayout.css';
-
 /**
  * PageLayout - Standardized page wrapper component
  *
@@ -23,6 +19,20 @@ import './PageLayout.css';
  * @param {string} [props.crossNavLabel] - Label for cross-navigation button
  * @param {boolean} [props.showCrossNav=false] - Toggle cross-nav visibility
  */
+
+import React from 'react';
+import { Button } from './ui';
+
+// Page-specific background variants (dark mode pages)
+const pageBackgroundVariants = {
+  default: 'bg-gray-100',
+  boxerProfile: 'min-h-screen w-full max-w-none bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light',
+  trainingPage: 'min-h-screen w-full max-w-none bg-gradient-to-br from-navy-medium to-navy-light',
+  fightBookingPage: 'min-h-screen w-full max-w-none bg-gradient-to-br from-navy-medium to-navy-light',
+  fightDetailsPage: 'min-h-screen w-full max-w-none bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light',
+  fightHistoryPage: 'min-h-screen w-full max-w-none bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light',
+};
+
 const PageLayout = ({
   children,
   className = '',
@@ -32,14 +42,14 @@ const PageLayout = ({
   backButtonLabel = '← Back',
   crossNavTo,
   crossNavLabel,
-  showCrossNav = true
+  showCrossNav = true,
 }) => {
   const hasCrossNav = showCrossNav && crossNavTo && crossNavLabel;
 
   return (
-    <div className={`page-layout ${pageClassName}`}>
+    <div className={`min-h-screen ${pageClassName} pt-[calc(theme(spacing.6)+64px)] px-6 pb-10 max-w-[1200px] mx-auto md:max-w-[95%] lg:max-w-[1200px]`}>
       {/* Navigation Bar */}
-      <div className="page-nav">
+      <div className="flex justify-between items-center gap-4 mb-6">
         {/* Back Button */}
         {showBackButton && onBack && (
           <Button
@@ -47,7 +57,9 @@ const PageLayout = ({
             size="md"
             onClick={onBack}
             aria-label="Go back"
-            className="page-back-btn"
+            className={pageClassName.includes('boxer-profile') || pageClassName.includes('training-page') || pageClassName.includes('fight-booking-page') || pageClassName.includes('fight-details-page')
+              ? 'bg-white/10 text-white border border-white/20 hover:bg-white/15 hover:border-white/30'
+              : ''}
           >
             {backButtonLabel}
           </Button>
@@ -57,7 +69,7 @@ const PageLayout = ({
         {hasCrossNav && (
           <a
             href={crossNavTo}
-            className="cross-nav-btn"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-br from-navy-medium to-navy-light text-white border border-white/20 rounded-md text-sm font-semibold cursor-pointer transition-all duration-150 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-gradient-to-br hover:from-navy-light hover:to-navy-medium hover:border-white/30 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-purple-light focus-visible:outline-offset-2"
             aria-label={crossNavLabel}
           >
             {crossNavLabel}
@@ -66,7 +78,7 @@ const PageLayout = ({
       </div>
 
       {/* Content Wrapper */}
-      <main className={`page-content ${className}`}>
+      <main className={className}>
         {children}
       </main>
     </div>

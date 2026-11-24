@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import './FightDetails.css';
-
 /**
  * RoundTimeline - Horizontal scrollable timeline of fight rounds (MAT-104)
  *
@@ -9,6 +6,9 @@ import './FightDetails.css';
  * - Color coding for neutral rounds and victory/defeat outcomes
  * - Final round highlighted with victory indicator
  */
+
+import React, { useState } from 'react';
+
 const RoundTimeline = ({ totalRounds, method }) => {
   const [selectedRound, setSelectedRound] = useState(null);
 
@@ -22,15 +22,25 @@ const RoundTimeline = ({ totalRounds, method }) => {
     return 'completed';
   };
 
-  // Get CSS class for round marker based on status
+  // Get Tailwind classes for round marker based on status
   const getRoundClass = (roundNum) => {
-    const baseClass = 'round-marker';
     const status = getRoundStatus(roundNum);
 
-    let classes = `${baseClass} ${status}`;
+    // Base marker styles
+    let classes = 'inline-flex flex-col items-center justify-center rounded-lg transition-all duration-200 cursor-pointer select-none';
+
+    if (status === 'completed') {
+      classes += ' bg-gradient-to-br from-navy-medium to-navy-light border-2 border-white/15 text-white hover:bg-gradient-to-br hover:from-navy-light hover:to-navy-dark hover:border-primary-light hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)]';
+    } else if (status === 'final') {
+      if (isKO) {
+        classes += ' bg-gradient-to-br from-danger-brighter to-danger border-2 border-warning/60 text-white shadow-[0_4px_16px_rgba(255,107,107,0.5)] scale-110';
+      } else {
+        classes += ' bg-gradient-to-br from-victory-gold to-warning border-2 border-yellow-300/60 text-text-on-gold shadow-[0_4px_16px_rgba(214,158,46,0.5)] scale-110';
+      }
+    }
 
     if (selectedRound === roundNum) {
-      classes += ' selected';
+      classes += ' ring-2 ring-white ring-offset-2 ring-offset-navy-deep';
     }
 
     return classes;
@@ -44,8 +54,6 @@ const RoundTimeline = ({ totalRounds, method }) => {
       case 'final':
         if (isKO) return '🔥';
         return '🏆';
-      case 'not-reached':
-        return '';
       default:
         return '';
     }
@@ -63,8 +71,9 @@ const RoundTimeline = ({ totalRounds, method }) => {
   const rounds = Array.from({ length: maxRounds }, (_, i) => i + 1);
 
   return (
-    <div className="round-timeline-container">
-      <div className="round-timeline">
+    <div className="w-full">
+      {/* Timeline */}
+      <div className="flex gap-3 overflow-x-auto pb-4 px-1 scrollbar-thin scrollbar-thumb-navy-medium scrollbar-track-transparent">
         {rounds.map((roundNum) => {
           const status = getRoundStatus(roundNum);
 
@@ -74,16 +83,19 @@ const RoundTimeline = ({ totalRounds, method }) => {
           return (
             <div
               key={roundNum}
-              className={getRoundClass(roundNum)}
+              className={`${getRoundClass(roundNum)} w-[56px] h-[72px]`}
               onClick={() => handleRoundClick(roundNum)}
               title={`Round ${roundNum}${status === 'final' ? ` - ${isKO ? 'Knockout!' : 'Final Round!'}` : ''}`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleRoundClick(roundNum)}
             >
               {getRoundIcon(roundNum) && (
-                <span className="round-icon">{getRoundIcon(roundNum)}</span>
+                <span className="text-[14px] mb-1">{getRoundIcon(roundNum)}</span>
               )}
-              <span className="round-number">{roundNum}</span>
+              <span className="text-lg font-extrabold leading-none">{roundNum}</span>
               {status === 'final' && (
-                <span className="final-indicator">
+                <span className={`text-[10px] font-bold mt-1 ${isKO ? 'text-danger-brighter' : 'text-white/80'}`}>
                   {isKO ? 'KO' : 'END'}
                 </span>
               )}
@@ -93,35 +105,35 @@ const RoundTimeline = ({ totalRounds, method }) => {
       </div>
 
       {/* Round legend */}
-      <div className="round-legend">
-        <div className="legend-item">
-          <span className="legend-marker completed"></span>
-          <span>Rounds fought</span>
+      <div className="flex flex-wrap items-center gap-4 mt-3 px-1">
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-4 rounded-md bg-gradient-to-br from-navy-medium to-navy-light border border-white/15"></span>
+          <span className="text-sm text-white/70">Rounds fought</span>
         </div>
         {isKO && (
-          <div className="legend-item">
-            <span className="legend-marker final ko"></span>
-            <span>Knockout</span>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-md bg-gradient-to-br from-danger-brighter to-danger border border-warning/60"></span>
+            <span className="text-sm text-white/70">Knockout</span>
           </div>
         )}
         {!isKO && (
-          <div className="legend-item">
-            <span className="legend-marker final decision"></span>
-            <span>Decision</span>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-md bg-gradient-to-br from-victory-gold to-warning border border-yellow-300/60"></span>
+            <span className="text-sm text-white/70">Decision</span>
           </div>
         )}
       </div>
 
-      {/* Selected round info */}
+      {/* Selected round info popup */}
       {selectedRound && selectedRound <= totalRounds && (
-        <div className="round-details-popup">
-          <h4>Round {selectedRound}</h4>
+        <div className="mt-4 p-5 bg-gradient-to-br from-navy-medium to-navy-light border border-white/20 rounded-lg text-center shadow-[0_8px_24px_rgba(0,0,0,0.3)] animate-[slideUp_0.3s_ease]">
+          <h4 className="text-white font-bold text-lg m-0 mb-2">Round {selectedRound}</h4>
           {selectedRound === totalRounds ? (
-            <p className="final-round-text">
+            <p className={`m-0 font-semibold ${isKO ? 'text-danger-brighter' : 'text-victory-gold'}`}>
               {isKO ? '🔥 Knockout victory! The fight ended here.' : '🏆 Final round - decision made.'}
             </p>
           ) : (
-            <p className="mid-round-text">
+            <p className="m-0 text-white/80">
               Round {selectedRound} of {totalRounds} completed.
             </p>
           )}

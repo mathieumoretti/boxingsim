@@ -1,81 +1,90 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './FightBadge.css';
+/**
+ * FightBadge Component
+ *
+ * Displays upcoming fight countdown on boxer cards with urgency-based styling.
+ * Shows time remaining until scheduled fight with color-coded states.
+ */
 
-const FightBadge = ({ fight, currentGameTime }) => {
-  if (!fight) return null;
+import React, { useState, useEffect } from 'react';
 
-  const { opponent_name: opponentName, scheduled_time: scheduledTime, status, rounds } = fight;
+export function FightBadge({ fight }) {
+  const [timeLeft, setTimeLeft] = useState(null);
 
-  // Don't show badge for fights scheduled in the past relative to game time
-  // These should be either completed or cancelled (MAT-FIGHT-SCHEDULING)
-  if (!scheduledTime || !currentGameTime) return null;
+  useEffect(() => {
+    if (!fight?.scheduled_time) return;
 
-  const fightTime = new Date(scheduledTime);
-  const gameTime = new Date(currentGameTime);
+    const updateTimeLeft = () => {
+      const now = new Date().getTime();
+      const scheduled = new Date(fight.scheduled_time).getTime();
+      const remaining = scheduled - now;
 
-  // Hide badge for past-dated scheduled fights (data cleanup needed)
-  if (fightTime < gameTime) {
-    return null;
-  }
+      if (remaining <= 0) {
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
 
-  // Calculate remaining time until fight
-  const calculateRemainingTime = () => {
-    const diffMs = fightTime - gameTime;
-    const diffSeconds = Math.max(0, Math.ceil(diffMs / 1000));
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [fight?.scheduled_time]);
 
-    if (diffSeconds <= 0) return 'Starting!';
+  if (!timeLeft !== null) return null;
 
-    const hours = Math.floor(diffSeconds / 3600);
-    const minutes = Math.floor((diffSeconds % 3600) / 60);
-    const seconds = diffSeconds % 60;
+  // Format time display based on remaining duration
+  const formatCountdown = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days}d`;
+    } else if (hours > 0) {
+      return `${hours}h`;
     } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
+      return `${minutes}m`;
     } else {
-      return `${seconds}s`;
+      return 'NOW';
     }
   };
 
-  // Determine countdown color based on time remaining (adjusted for faster testing)
-  const getCountdownColorClass = () => {
-    const diffMs = fightTime - gameTime;
-    const diffHours = diffMs / (1000 * 60 * 60);
+  // Urgency-based styling
+  const getCountdownClass = () => {
+    if (timeLeft === 0) return 'immediate';
 
-    if (diffHours <= 0) return 'countdown-immediate';
-    if (diffHours < 0.5) return 'countdown-critical'; // Under 30 mins
-    if (diffHours < 2) return 'countdown-urgent'; // Under 2 hours
-    return 'countdown-normal';
+    const hours = timeLeft / (1000 * 60 * 60);
+
+    if (hours <= 1) return 'immediate';
+    if (hours <= 2) return 'critical';
+    if (hours <= 6) return 'urgent';
+    return 'normal';
   };
 
-  // Determine if fight is within pulse window for animation
-  const isWithinPulseWindow = () => {
-    const diffHours = (fightTime - gameTime) / (1000 * 60 * 60);
+  const urgencyClass = getCountdownClass();
 
-    return diffHours > 0 && diffHours < 2;
-  };
+  // Base badge styles with gradient background and shadow
+  const badgeBase = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm border transform transition-all duration-200';
 
-  const countdownText = calculateRemainingTime();
-  const countdownColorClass = getCountdownColorClass();
-  const pulseClass = isWithinPulseWindow() ? 'pulse-animation' : '';
-
-  // Format date for tooltip
-  const formatDateTooltip = () => {
-    const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', hour12: true };
-    return fightTime.toLocaleDateString('en-US', options);
+  // Urgency variants (combat-appropriate colors: amber→orange→red)
+  const urgencyStyles = {
+    normal: 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-amber-400/30',
+    urgent: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-400/40 shadow-[0_2px_12px_rgba(249,115,22,0.5)]',
+    critical: 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400/50 shadow-[0_2px_16px_rgba(239,68,68,0.6)] animate-pulse',
+    immediate: 'bg-gradient-to-r from-danger-bright to-danger text-white border-danger/60 shadow-[0_2px_20px_rgba(239,68,68,0.7)] animate-pulse scale-105',
   };
 
   return (
-    <Link to={`/fight/${fight.fight_id}`} className={`fight-badge ${pulseClass}`}>
-      <span className="fight-icon" title={`Upcoming fight: ${rounds} rounds`}>🥊</span>
-      <span className="fight-info">vs {opponentName}</span>
-      <span className={`fight-timer ${countdownColorClass}`} title={formatDateTooltip()}>
-        ⏱️ {countdownText}
-      </span>
-    </Link>
+    <div
+      className={`${badgeBase} ${urgencyStyles[urgencyClass]}`}
+      role="status"
+      aria-label={`Fight scheduled in ${formatCountdown(timeLeft)}`}
+    >
+      <span className="text-xs animate-[bounce_1s_infinite]">🥊</span>
+      <span>Fight in {formatCountdown(timeLeft)}</span>
+    </div>
   );
-};
+}
 
 export default FightBadge;

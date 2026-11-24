@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import FightHistory from './FightHistory';
 import PageLayout from './PageLayout';
 import { fetchWorldTime } from '../api/world';
-import './FightHistoryPage.css';
 
 /**
  * FightHistoryPage - Dedicated page wrapper for FightHistory component (MAT-121)
@@ -16,7 +15,6 @@ import './FightHistoryPage.css';
  * Uses PageLayout component for standardized page structure (MAT-152).
  */
 const FightHistoryPage = ({ user, onLogout }) => {
-  const { id } = useParams(); // boxerId from URL
   const navigate = useNavigate();
   const [currentGameTime, setCurrentGameTime] = useState(null);
 
@@ -39,13 +37,13 @@ const FightHistoryPage = ({ user, onLogout }) => {
   }, []);
 
   return (
-    <div className="fight-history-page">
+    <div className="min-h-screen bg-gray-50">
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         onBack={() => navigate('/dashboard')}
         backButtonLabel="← Back to Dashboard"
       >
-        <FightHistory boxerId={id} currentGameTime={currentGameTime} />
+        <FightHistory boxerId={undefined} currentGameTime={currentGameTime} />
       </PageLayout>
     </div>
   );

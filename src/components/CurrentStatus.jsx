@@ -5,7 +5,6 @@
  */
 
 import React from 'react';
-import './BoxerProfile.css';
 
 const CurrentStatus = ({ boxer, worldTime }) => {
   if (!boxer) return null;
@@ -16,16 +15,16 @@ const CurrentStatus = ({ boxer, worldTime }) => {
 
   // Get health color based on percentage
   const getHealthColorClass = (healthValue) => {
-    if (healthValue > 50) return 'bg-health-high';
-    if (healthValue > 25) return 'bg-health-medium';
-    return 'bg-health-low';
+    if (healthValue > 50) return 'bg-gradient-to-r from-green-400 to-green-500';
+    if (healthValue > 25) return 'bg-gradient-to-r from-yellow-400 to-orange-400';
+    return 'bg-gradient-to-r from-red-400 to-red-600';
   };
 
   // Get fatigue color based on exhaustion threshold
   const getFatigueColorClass = (fatigueValue) => {
-    if (fatigueValue >= 80) return 'bg-fatigue-critical';   // Red - exhausted
-    if (fatigueValue >= 50) return 'bg-fatigue-warning';    // Yellow - warning
-    return 'bg-fatigue-ok';                                   // Green - healthy
+    if (fatigueValue >= 80) return 'bg-gradient-to-r from-red-500 to-red-600 animate-[healthCritical_2s_ease]';   // Red - exhausted
+    if (fatigueValue >= 50) return 'bg-gradient-to-r from-orange-400 to-warning';    // Yellow - warning
+    return 'bg-gradient-to-r from-green-400 to-emerald-500';                         // Green - healthy
   };
 
   // Calculate recovery time for energy (simple approximation)
@@ -58,38 +57,41 @@ const CurrentStatus = ({ boxer, worldTime }) => {
     const percent = (value / max) * 100;
 
     return (
-      <div className="status-row">
-        <div className="status-label-container">
-          <span className="status-icon">{icon}</span>
-          <span className="status-name">{label}</span>
-          {tooltip && <span className="status-tooltiptext" title={tooltip}></span>}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0" aria-hidden="true">{icon}</span>
+          <span className="text-sm font-semibold text-gray-700">{label}</span>
+          {tooltip && <span className="sr-only" title={tooltip}>{tooltip}</span>}
         </div>
-        <div className="status-bar-container-full">
-          <div className={`status-bar-fill ${colorClass}`}>
-            <div style={{ width: `${percent}%` }}></div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
+            <div className={`h-full ${colorClass} transition-all duration-500`}>
+              <div style={{ width: `${percent}%` }}></div>
+            </div>
           </div>
-        </div>
-        <div className="status-value-container">
-          <span className="status-number">{value}<small>/ {max}</small></span>
+          <span className="text-sm font-bold text-gray-800 min-w-[3.5rem] text-right">{value}<small className="text-gray-500 font-normal">/ {max}</small></span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="current-status-section">
-      <div className="section-header-row">
-        <h3 className="section-title">Current Status</h3>
+    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+      <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-200">
+        <h3 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+          <span className="text-xl" aria-hidden="true">📈</span>
+          Current Status
+        </h3>
         {boxer.has_active_rest && (
-          <div className={`rest-indicator ${isForcedRest ? 'forced' : ''}`}>
-            {isForcedRest ? '🚑' : '🏥'}
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${isForcedRest ? 'bg-red-100 text-red-800 border-2 border-red-400' : 'bg-blue-100 text-blue-800 border border-blue-300'}`}>
+            <span>{isForcedRest ? '🚑' : '🏥'}</span>
             <span>In Recovery</span>
-            {recoveryTime && <span className="recovery-countdown">({recoveryTime} remaining)</span>}
+            {recoveryTime && <span className="text-gray-600">({recoveryTime} remaining)</span>}
           </div>
         )}
       </div>
 
-      <div className="status-grid">
+      <div className="space-y-4">
         <StatusRow
           label="Health"
           value={health}
@@ -103,7 +105,7 @@ const CurrentStatus = ({ boxer, worldTime }) => {
           label="Energy"
           value={energy}
           max={100}
-          colorClass="bg-energy"
+          colorClass="bg-gradient-to-r from-blue-400 to-indigo-500"
           icon="⚡"
           tooltip={energy < 15 ? "Insufficient energy for training (need 15+)" : energy < 30 ? "Low energy - rest recommended" : "Energy level is good"}
         />
@@ -119,15 +121,23 @@ const CurrentStatus = ({ boxer, worldTime }) => {
       </div>
 
       {/* Training eligibility indicator */}
-      <div className="training-eligibility">
+      <div className="mt-5 pt-4 border-t border-gray-200">
         {fatigue >= 80 ? (
-          <span className="eligibility-ineligible">❌ Exhausted - Rest Required</span>
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 border-2 border-red-400 rounded-lg text-sm font-bold text-red-800">
+            ❌ Exhausted - Rest Required
+          </span>
         ) : energy < 15 ? (
-          <span className="eligibility-ineligible">❌ Low Energy - Rest Needed</span>
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 border-2 border-orange-400 rounded-lg text-sm font-bold text-orange-800">
+            ❌ Low Energy - Rest Needed
+          </span>
         ) : health < 50 ? (
-          <span className="eligibility-warning">⚠️ Injured - Recovery Recommended</span>
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 border-2 border-yellow-400 rounded-lg text-sm font-bold text-yellow-800">
+            ⚠️ Injured - Recovery Recommended
+          </span>
         ) : (
-          <span className="eligibility-ready">✅ Ready for Training</span>
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 border-2 border-green-400 rounded-lg text-sm font-bold text-green-800">
+            ✅ Ready for Training
+          </span>
         )}
       </div>
     </div>

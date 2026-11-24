@@ -20,44 +20,67 @@ const ConsumableCard = ({ item, onUse, disabled }) => {
   const quantity = isUnlimited ? Infinity : item.quantity;
   const isAvailable = !disabled && quantity > 0;
 
-  // Determine badge color based on type
+  // Tailwind style objects for type-specific colors
   const typeColors = {
-    energy: 'badge-energy',
-    health: 'badge-health',
-    recovery: 'badge-recovery',
+    energy: {
+      card: 'bg-gradient-to-br from-green-50 to-emerald-100 border-green-400',
+      badgeUnlimited: 'bg-cyan-100 text-sky-700',
+      badgeQuantity: 'bg-gray-100 text-gray-700',
+      badgeOutOfStock: 'bg-red-100 text-red-900',
+      stat: 'bg-green-100 text-green-900',
+      button: 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500',
+    },
+    health: {
+      card: 'bg-gradient-to-br from-red-50 to-orange-100 border-red-400',
+      badgeUnlimited: 'bg-cyan-100 text-sky-700',
+      badgeQuantity: 'bg-gray-100 text-gray-700',
+      badgeOutOfStock: 'bg-red-100 text-red-900',
+      stat: 'bg-red-100 text-red-900',
+      button: 'bg-gradient-to-br from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500',
+    },
+    recovery: {
+      card: 'bg-gradient-to-br from-cyan-50 to-teal-100 border-cyan-400',
+      badgeUnlimited: 'bg-cyan-100 text-sky-700',
+      badgeQuantity: 'bg-gray-100 text-gray-700',
+      badgeOutOfStock: 'bg-red-100 text-red-900',
+      stat: 'bg-cyan-100 text-cyan-900',
+      button: 'bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-400 hover:to-teal-500',
+    },
   };
 
+  const colors = typeColors[item.consumable_type] || typeColors.energy;
+
   return (
-    <div className={`consumable-card ${typeColors[item.consumable_type]} ${!isAvailable ? 'consumable-card-disabled' : ''}`}>
-      <div className="consumable-card-header">
-        <h3 className="consumable-card-name">{item.name}</h3>
+    <div className={`flex flex-col p-4 bg-white border-2 rounded-lg transition-all duration-200 ${colors.card} ${!isAvailable ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-300 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05)]'}`}>
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="m-0 text-base font-semibold text-gray-900">{item.name}</h3>
         {isUnlimited ? (
-          <span className="consumable-badge consumable-badge-unlimited">∞</span>
+          <span className={`inline-flex items-center justify-center px-2 py-0.5 text-sm font-semibold rounded ${colors.badgeUnlimited}`}>∞</span>
         ) : (
-          <span className={`consumable-badge consumable-badge-quantity ${quantity === 0 ? 'badge-out-of-stock' : ''}`}>
+          <span className={`inline-flex items-center justify-center px-2 py-0.5 text-sm font-semibold rounded ${colors.badgeQuantity} ${quantity === 0 ? colors.badgeOutOfStock : ''}`}>
             ×{quantity}
           </span>
         )}
       </div>
 
       {item.description && (
-        <p className="consumable-card-description">{item.description}</p>
+        <p className="m-0 mb-3 text-sm leading-relaxed text-gray-600">{item.description}</p>
       )}
 
       {/* Stats display */}
-      <div className="consumable-card-stats">
+      <div className="flex flex-wrap gap-1 mb-3">
         {item.energy_restore > 0 && (
-          <span className="consumable-stat consumable-stat-energy">
+          <span className={`px-2 py-1 text-xs font-semibold rounded ${colors.stat}`}>
             ⚡ +{Math.round(item.energy_restore)} Energy
           </span>
         )}
         {item.health_restore > 0 && (
-          <span className="consumable-stat consumable-stat-health">
+          <span className={`px-2 py-1 text-xs font-semibold rounded ${colors.stat}`}>
             ❤️ +{Math.round(item.health_restore)} Health
           </span>
         )}
         {item.fatigue_reduction > 0 && (
-          <span className="consumable-stat consumable-stat-recovery">
+          <span className={`px-2 py-1 text-xs font-semibold rounded ${colors.stat}`}>
             🌿 −{Math.round(item.fatigue_reduction)} Fatigue
           </span>
         )}
@@ -65,14 +88,16 @@ const ConsumableCard = ({ item, onUse, disabled }) => {
 
       {/* Cooldown indicator for limited items */}
       {!isUnlimited && item.cooldown_hours > 0 && (
-        <div className="consumable-card-cooldown">
-          <span className="cooldown-label">⏱️ {item.cooldown_hours}h cooldown</span>
+        <div className="mb-3">
+          <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-amber-100 text-amber-900">
+            ⏱️ {item.cooldown_hours}h cooldown
+          </span>
         </div>
       )}
 
       {/* Use button */}
       <button
-        className={`consumable-card-button ${typeColors[item.consumable_type]}`}
+        className={`mt-auto py-2.5 px-4 text-base font-semibold border-none rounded-md cursor-pointer transition-all duration-200 text-white ${colors.button} focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-400 focus-visible:outline-offset-2`}
         onClick={() => onUse(item.id)}
         disabled={!isAvailable || item.on_cooldown}
         aria-label={`Use ${item.name}${item.on_cooldown ? ' (on cooldown)' : ''}`}
@@ -150,13 +175,13 @@ const ConsumablesPanel = ({ boxerId, inventory, onLoad }) => {
    * Section component for each consumable type
    */
   const Section = ({ title, items, icon, emptyMessage }) => (
-    <div className="consumables-section">
-      <h3 className="consumables-section-header">
-        <span className="section-icon">{icon}</span>
+    <div className="p-6 border-b border-gray-200 last:border-b-0">
+      <h3 className="flex items-center gap-2 m-0 mb-4 text-lg font-semibold text-gray-800">
+        <span className="text-xl">{icon}</span>
         {title}
       </h3>
       {items.length > 0 ? (
-        <div className="consumables-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
           {items.map(item => (
             <ConsumableCard
               key={item.id}
@@ -167,7 +192,7 @@ const ConsumablesPanel = ({ boxerId, inventory, onLoad }) => {
           ))}
         </div>
       ) : (
-        <p className="consumables-empty">{emptyMessage}</p>
+        <p className="text-center py-8 text-gray-400 italic">{emptyMessage}</p>
       )}
     </div>
   );
@@ -175,17 +200,22 @@ const ConsumablesPanel = ({ boxerId, inventory, onLoad }) => {
   // Toast notification component
   if (toast) {
     return (
-      <div className="consumables-panel-overlay">
-        <div className={`consumables-toast ${toast.type}`}>
+      <div className="relative">
+        {/* Fixed toast */}
+        <div className={`fixed top-4 right-4 z-[9999] p-4 rounded-lg shadow-[0_10px_24px_rgba(0,0,0,0.1)] font-semibold animate-[slideIn_0.3s_ease-out] ${
+          toast.type === 'success'
+            ? 'bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-500 text-green-900'
+            : 'bg-gradient-to-br from-red-100 to-orange-100 border-2 border-red-500 text-red-900'
+        }`}>
           {toast.type === 'success' ? '✅' : '⚠️'}
-          {toast.message}
+          {' '}{toast.message}
         </div>
 
-        {/* Re-render main panel behind toast */}
-        <div className="consumables-panel">
-          <header className="consumables-panel-header">
-            <h2>🎒 Consumables</h2>
-            <p className="consumables-panel-subtitle">Use items to restore energy, health, and reduce fatigue</p>
+        {/* Main panel behind toast */}
+        <div className="bg-white rounded-xl shadow-[0_4px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+          <header className="p-6 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+            <h2 className="m-0 mb-1 text-2xl font-bold text-gray-900">🎒 Consumables</h2>
+            <p className="m-0 text-sm text-gray-600">Use items to restore energy, health, and reduce fatigue</p>
           </header>
 
           <Section
@@ -214,14 +244,14 @@ const ConsumablesPanel = ({ boxerId, inventory, onLoad }) => {
   }
 
   return (
-    <div className="consumables-panel">
-      <header className="consumables-panel-header">
-        <h2>🎒 Consumables</h2>
-        <p className="consumables-panel-subtitle">Use items to restore energy, health, and reduce fatigue</p>
+    <div className="bg-white rounded-xl shadow-[0_4px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+      <header className="p-6 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
+        <h2 className="m-0 mb-1 text-2xl font-bold text-gray-900">🎒 Consumables</h2>
+        <p className="m-0 text-sm text-gray-600">Use items to restore energy, health, and reduce fatigue</p>
       </header>
 
       {error && (
-        <div className="consumables-error" role="alert">
+        <div className="p-4 m-4 bg-red-50 border border-red-300 rounded-md text-red-900" role="alert">
           ⚠️ {error}
         </div>
       )}
@@ -248,8 +278,8 @@ const ConsumablesPanel = ({ boxerId, inventory, onLoad }) => {
       />
 
       {inventory.length === 0 && !loading && (
-        <div className="consumables-empty-state">
-          <p>📦 Your inventory is empty. Consumables may be awarded through gameplay events.</p>
+        <div className="p-12 text-center text-gray-600">
+          <p className="m-0">📦 Your inventory is empty. Consumables may be awarded through gameplay events.</p>
         </div>
       )}
     </div>

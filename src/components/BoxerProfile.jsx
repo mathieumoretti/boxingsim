@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import TopBar from './TopBar';
 import PageLayout from './PageLayout';
+import { SkipLink } from './SkipLink';
 import BoxerHeader from './BoxerHeader';
 import CareerRecord from './CareerRecord';
 import StatsOverview from './StatsOverview';
@@ -19,7 +20,6 @@ import { fetchBoxer, fetchUpcomingFight } from '../api/fights';
 import { fetchWorldTime } from '../api/world';
 import { getUserErrorMessage } from '../utils/errorMessages';
 import NextFight from './NextFight';
-import './BoxerProfile.css';
 
 const BoxerProfile = ({ user, onLogout }) => {
   const { id: boxerIdParam } = useParams();
@@ -109,17 +109,21 @@ const BoxerProfile = ({ user, onLogout }) => {
     }
   };
 
+  // Section card background style
+  const sectionCardBase = 'bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 mb-6';
+
   if (isLoading) {
     return (
-      <div className="boxer-profile">
+      <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout>
-          <div className="boxer-profile-content">
-            <div className="profile-loading">
-              <div className="loading-spinner"></div>
-              <p>Loading boxer profile...</p>
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem] min-h-screen" tabIndex="-1">
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-5">
+              <div className="w-[50px] h-[50px] border-4 border-white/10 border-t-victory-gold rounded-full animate-[spin_1s_linear_infinite]" />
+              <p className="text-white/60 text-sm">Loading boxer profile...</p>
             </div>
-          </div>
+          </main>
         </PageLayout>
       </div>
     );
@@ -127,17 +131,20 @@ const BoxerProfile = ({ user, onLogout }) => {
 
   if (error && !boxer) {
     return (
-      <div className="boxer-profile">
+      <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <ErrorDisplay
-            error={error}
-            variant="alert"
-            title="Failed to Load Profile"
-            icon={true}
-          />
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
+            <ErrorDisplay
+              error={error}
+              variant="alert"
+              title="Failed to Load Profile"
+              icon={true}
+            />
+          </main>
         </PageLayout>
       </div>
     );
@@ -145,60 +152,76 @@ const BoxerProfile = ({ user, onLogout }) => {
 
   if (!boxer) {
     return (
-      <div className="boxer-profile">
+      <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+        <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <div className="boxer-profile-content">
-            <div className="profile-not-found">
-              <h2>Boxer Not Found</h2>
-              <p>The boxer you're looking for doesn't exist.</p>
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
+            <div className="text-center py-12 px-5">
+              <h2 className="text-white text-3xl m-0 mb-2">Boxer Not Found</h2>
+              <p className="text-gray-500 text-lg m-0">The boxer you're looking for doesn't exist.</p>
             </div>
-          </div>
+          </main>
         </PageLayout>
       </div>
     );
   }
 
   return (
-    <div className="boxer-profile">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+      <SkipLink targetId="profile-content" />
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         onBack={() => navigate('/dashboard')}
       >
-        <div className="boxer-profile-content">
+        <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
           {/* Boxer Header - Avatar, Name, Level, XP */}
-          <BoxerHeader boxer={boxer} />
+          <article aria-label="Boxer header" className={sectionCardBase}>
+            <BoxerHeader boxer={boxer} />
+          </article>
 
           {/* Career Record - W/L/D/KO */}
-          <CareerRecord boxer={boxer} />
+          <section aria-label="Career record" className={sectionCardBase}>
+            <CareerRecord boxer={boxer} />
+          </section>
 
           {/* Next Fight Card (only shows when there's an upcoming fight) */}
-          <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
+          {upcomingFight && (
+            <article aria-label="Next scheduled fight" className={sectionCardBase}>
+              <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
+            </article>
+          )}
 
           {/* Stats Overview - STR/DEF/AGI */}
-          <StatsOverview boxer={boxer} />
+          <section aria-label="Stats overview" className={sectionCardBase}>
+            <StatsOverview boxer={boxer} />
+          </section>
 
           {/* Current Status - Health/Energy/Fatigue */}
-          <CurrentStatus boxer={boxer} worldTime={worldTime} />
+          <section aria-label="Current status" className={sectionCardBase}>
+            <CurrentStatus boxer={boxer} worldTime={worldTime} />
+          </section>
 
           {/* Recent Activity Timeline */}
-          <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+          <section aria-label="Recent activity timeline" className={sectionCardBase}>
+            <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
+          </section>
 
           {/* Action Buttons */}
-          <div className="profile-actions">
-            <Link to={`/boxer/${boxer.id}/fights`} className="action-btn action-primary">
+          <nav className="flex flex-wrap items-center justify-center gap-3 mt-8 pt-6 border-t border-white/10" aria-label="Boxer actions">
+            <Link to={`/boxer/${boxer.id}/fights`} className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-semibold bg-gradient-to-br from-primary to-primary-dark text-white border-none transition-all duration-150 hover:bg-gradient-to-br hover:from-blue-400 hover:to-primary hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-light focus-visible:outline-offset-2 cursor-pointer">
               📜 View Fight History
             </Link>
-            <Link to={`/boxer/${boxer.id}/train`} className="action-btn action-secondary">
+            <Link to={`/boxer/${boxer.id}/train`} className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-semibold bg-gradient-to-br from-success to-emerald-600 text-white border-none transition-all duration-150 hover:bg-gradient-to-br hover:from-emerald-400 hover:to-success hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-success focus-visible:outline-offset-2 cursor-pointer">
               🏋️ Train Boxer
             </Link>
-            <Link to={`/boxer/${boxer.id}/book-fight`} className="action-btn action-accent">
+            <Link to={`/boxer/${boxer.id}/book-fight`} className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-semibold bg-gradient-to-br from-warning to-orange-600 text-white border-none transition-all duration-150 hover:bg-gradient-to-br hover:from-victory-gold hover:to-warning hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-warning focus-visible:outline-offset-2 cursor-pointer">
               🥊 Book Fight
             </Link>
-          </div>
-        </div>
+          </nav>
+        </main>
       </PageLayout>
     </div>
   );

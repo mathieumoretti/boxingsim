@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import './FightHistory.css';
 import { fetchFightHistory, formatTimeAgo, getGroupLabel } from '../api/fights';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage, isNotFoundError } from '../utils/errorMessages';
@@ -26,9 +25,9 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
 
   // Get result badge class and letter
   const getResultBadge = () => {
-    if (isWin) return <span className="result-badge win">W</span>;
-    if (isLoss) return <span className="result-badge loss">L</span>;
-    if (isDraw) return <span className="result-badge draw">D</span>;
+    if (isWin) return <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-bold">W</span>;
+    if (isLoss) return <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold">L</span>;
+    if (isDraw) return <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-gray-400 to-gray-600 text-white text-xs font-bold">D</span>;
     return null;
   };
 
@@ -59,46 +58,67 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
   };
 
   return (
-    <div className={`fight-entry-card ${isExpanded ? 'expanded' : ''}`}>
-      {/* Result Badge - non-clickable */}
-      {getResultBadge()}
+    <div className={`bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-gray-300 ${isExpanded ? 'ring-2 ring-primary/20' : ''}`}>
+      {/* Header row - clickable to expand */}
+      <div
+        className="flex items-center gap-4 p-5 cursor-pointer select-none"
+        onClick={(e) => {
+          // Don't prevent default if clicking the View Details link
+          if (e.target.closest('.view-details-link')) {
+            return;
+          }
+          setIsExpanded(!isExpanded);
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+      >
+        {/* Result Badge */}
+        {getResultBadge()}
 
-      {/* Header row - clickable to expand, separate View Details link navigates */}
-      <div className="fight-entry-header" onClick={(e) => {
-        // Don't prevent default if clicking the View Details link
-        if (e.target.closest('.view-details-link')) {
-          return;
-        }
-        setIsExpanded(!isExpanded);
-      }}>
         {/* Opponent Info */}
-        <div className="fight-info">
-          <div className="opponent-name">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-gray-800 truncate">
             vs {fight.opponent_name || `Boxer #${opponentId}`}
           </div>
-          <div className="fight-summary">
-            Round {fight.round} • {isKnockout && <span className="ko-indicator">🔥 KO</span>} •
-            <Link to={`/fight/${fight.id}`} className="view-details-link">View Details →</Link>
+          <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+            <span>Round {fight.round}</span>
+            {isKnockout && <span className="text-orange-600 font-semibold">🔥 KO</span>}
+            <span>•</span>
+            <Link
+              to={`/fight/${fight.id}`}
+              className="view-details-link inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-gray-100 to-gray-200 rounded-md text-primary-dark text-xs font-semibold transition-all duration-150 hover:bg-gradient-to-r hover:from-primary hover:to-primary-dark hover:text-white hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+            >
+              View Details →
+            </Link>
           </div>
         </div>
 
         {/* Time Ago */}
-        <div className="fight-time">
+        <div className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
           {getTimeAgoDisplay()}
         </div>
 
         {/* Expand Icon */}
-        <div className="expand-icon">
+        <div
+          className={`text-base text-gray-400 transition-all duration-150 flex-shrink-0 ${isExpanded || ''}`}
+        >
           {isExpanded ? '▲' : '▼'}
         </div>
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="fight-entry-details">
-          <div className="detail-row">
-            <span className="detail-label">Final Result:</span>
-            <span className="detail-value">
+        <div className="px-5 pb-5 pt-0 space-y-3 bg-black/5">
+          <div className="flex items-center justify-between py-2 border-b border-gray-100">
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Final Result:</span>
+            <span className="text-sm font-bold text-gray-800">
               {isWin ? '🎉 Victory!' : isLoss ? '💔 Defeat' : '🤝 Draw'}
             </span>
           </div>
@@ -106,9 +126,9 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
           {fight.data && (
             <>
               {(fight.data.my_health !== undefined || fight.data.opponent_health !== undefined) && (
-                <div className="detail-row">
-                  <span className="detail-label">Health at End:</span>
-                  <span className="detail-value">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Health at End:</span>
+                  <span className="text-sm font-bold text-gray-800">
                     You: {Math.round(fight.data.my_health || 100)}% •
                     Opponent: {Math.round(fight.data.opponent_health || 100)}%
                   </span>
@@ -116,36 +136,36 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
               )}
 
               {fight.data.method && (
-                <div className="detail-row">
-                  <span className="detail-label">Method:</span>
-                  <span className="detail-value capitalize">{fight.data.method}</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Method:</span>
+                  <span className="text-sm font-bold text-gray-800 capitalize">{fight.data.method}</span>
                 </div>
               )}
             </>
           )}
 
-          <div className="detail-row">
-            <span className="detail-label">Rounds Fought:</span>
-            <span className="detail-value">{fight.round} of {fight.round || 12}</span>
+          <div className="flex items-center justify-between py-2 border-b border-gray-100">
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Rounds Fought:</span>
+            <span className="text-sm font-bold text-gray-800">{fight.round} of {fight.round || 12}</span>
           </div>
 
           {fight.data?.xp_gained && (
-            <div className="detail-row xp-gained">
-              <span className="detail-label">XP Gained:</span>
-              <span className="detail-value">+{Math.round(fight.data.xp_gained)}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">XP Gained:</span>
+              <span className="text-sm font-bold text-warning-dark">+{Math.round(fight.data.xp_gained)}</span>
             </div>
           )}
 
           {fight.data?.reward && (
-            <div className="detail-row reward">
-              <span className="detail-label">Reward:</span>
-              <span className="detail-value">${Math.round(fight.data.reward)}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Reward:</span>
+              <span className="text-sm font-medium text-gray-700">${Math.round(fight.data.reward)}</span>
             </div>
           )}
 
-          <div className="detail-row">
-            <span className="detail-label">Game Time:</span>
-            <span className="detail-value">
+          <div className="flex items-center justify-between py-2">
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Game Time:</span>
+            <span className="text-sm font-bold text-gray-800 text-right">
               {new Date(fight.end_time || fight.created_at).toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'short',
@@ -174,12 +194,15 @@ const TimelineSection = ({ label, fights, myBoxerId, currentGameTime }) => {
   if (!fights || fights.length === 0) return null;
 
   return (
-    <div className="timeline-section">
-      <div className="timeline-header">
-        <h3 className="timeline-label">{label}</h3>
-        <span className="fight-count">{fights.length} fight{fights.length !== 1 ? 's' : ''}</span>
+    <div className="space-y-4">
+      <div className="relative mb-4">
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide m-0">{label}</h3>
+        <span className="inline-block px-2 py-1 bg-gray-100 text-xs font-semibold text-gray-500 rounded-md ml-2">
+          {fights.length} fight{fights.length !== 1 ? 's' : ''}
+        </span>
+        <div className="h-1 mt-2 bg-gradient-to-r from-gray-300 to-gray-100"></div>
       </div>
-      <div className="fights-list">
+      <div className="space-y-3">
         {fights.map(fight => (
           <FightEntryCard key={fight.id} fight={fight} myBoxerId={myBoxerId} currentGameTime={currentGameTime} />
         ))}
@@ -332,7 +355,12 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
   // Render content based on state
   const renderContent = () => {
     if (isLoading) {
-      return <div className="loading">Loading fight history...</div>;
+      return (
+        <div className="p-8 text-center bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-500 font-medium">Loading fight history...</p>
+        </div>
+      );
     }
 
     if (error) {
@@ -348,11 +376,11 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
 
     if (fights.length === 0) {
       return (
-        <div className="empty-state">
-          <span className="empty-icon">📜</span>
-          <h3>No Fights Yet</h3>
-          <p>This boxer hasn't fought any matches yet.</p>
-          <p className="empty-hint">Book a fight to see the action!</p>
+        <div className="p-12 text-center bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <span className="text-5xl block mb-4" role="img" aria-label="empty scroll">📜</span>
+          <h3 className="text-lg font-semibold text-gray-600 m-0 mb-2">No Fights Yet</h3>
+          <p className="text-gray-500 m-0 mb-1">This boxer hasn't fought any matches yet.</p>
+          <p className="text-sm text-gray-400 italic m-0">Book a fight to see the action!</p>
         </div>
       );
     }
@@ -376,20 +404,20 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
   };
 
   return (
-    <div className="fight-history-container">
-      <div className="fight-history-header">
-        <h2>Fight History</h2>
+    <div className="max-w-[900px] mx-auto my-8">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800 m-0">Fight History</h2>
         <button
           onClick={handleRefresh}
-          className="refresh-btn"
           disabled={isLoading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-semibold transition-all duration-150 hover:from-primary-dark hover:to-navy-medium hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
           title="Refresh fight history"
         >
           {isLoading ? '⟳ Loading...' : '🔄 Refresh'}
         </button>
       </div>
 
-      <div className="fight-history-content">
+      <div className="space-y-6">
         {renderContent()}
       </div>
     </div>

@@ -11,12 +11,10 @@
  *
  * @see MAT-146: Design Tokens Foundation
  * @see MAT-150: Shared UI Component Library
- * @see Auth.css: Supporting styles
  */
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './Auth.css';
 import { login } from '../api/users';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
@@ -62,21 +60,23 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="auth-page">
-      {/* Decorative ring ropes */}
-      <div className="ring-ropes">
-        <div className="rope rope-top"></div>
-        <div className="rope rope-middle"></div>
-        <div className="rope rope-bottom"></div>
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light relative overflow-hidden flex items-center justify-center p-6">
+      {/* Decorative ring ropes - subtle gradient bars */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[15%] left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <div className="absolute top-[50%] left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+        <div className="absolute top-[85%] left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
       </div>
 
-      <div className="auth-container">
-        <div className="auth-card">
+      {/* Main auth container */}
+      <div className="w-full max-w-md relative z-10">
+        {/* Auth card with glass morphism */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] border border-white/20">
           {/* Logo/Branding */}
-          <div className="auth-branding">
-            <div className="boxing-glove-icon">🥊</div>
-            <h1 className="app-name">Boxing Simulator</h1>
-            <p className="tagline">Train. Schedule. Conquer. Own the Ring.</p>
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" aria-hidden="true">🥊</div>
+            <h1 className="text-3xl font-extrabold text-white m-0 mb-2 tracking-tight">Boxing Simulator</h1>
+            <p className="text-sm text-white/70 m-0 italic">Train. Schedule. Conquer. Own the Ring.</p>
           </div>
 
           {/* Error Display */}
@@ -91,11 +91,11 @@ const Login = ({ onLogin }) => {
           )}
 
           {/* Login Form */}
-          <form className="auth-form" onSubmit={handleSubmit} noValidate>
-            <div className="form-field">
-              <label htmlFor="username">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+            <div>
+              <label htmlFor="username" className="block text-sm font-semibold text-white mb-2">
                 Username
-                <span className="required-indicator">*</span>
+                <span className="text-warning">*</span>
               </label>
               <input
                 type="text"
@@ -107,14 +107,18 @@ const Login = ({ onLogin }) => {
                 disabled={isLoading}
                 autoComplete="username"
                 autoFocus
-                className={error && !username.trim() ? 'input-error' : ''}
+                className={`w-full px-4 py-3 rounded-lg text-sm bg-white/10 border-2 transition-all duration-150 placeholder:text-white/40 ${
+                  error && !username.trim()
+                    ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(239,68,68,0.2)]'
+                    : 'border-white/20 text-white focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)]'
+                } focus:outline-none`}
               />
             </div>
 
-            <div className="form-field">
-              <label htmlFor="password">
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
                 Password
-                <span className="required-indicator">*</span>
+                <span className="text-warning">*</span>
               </label>
               <input
                 type="password"
@@ -125,51 +129,62 @@ const Login = ({ onLogin }) => {
                 onChange={handleInputChange('password')}
                 disabled={isLoading}
                 autoComplete="current-password"
-                className={error && !password.trim() ? 'input-error' : ''}
+                className={`w-full px-4 py-3 rounded-lg text-sm bg-white/10 border-2 transition-all duration-150 placeholder:text-white/40 ${
+                  error && !password.trim()
+                    ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(239,68,68,0.2)]'
+                    : 'border-white/20 text-white focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)]'
+                } focus:outline-none`}
               />
             </div>
 
             <button
               type="submit"
-              className="auth-submit-btn"
               disabled={isLoading || !username.trim() || !password.trim()}
+              className={`w-full py-3 px-4 rounded-lg text-sm font-semibold border-none transition-all duration-150 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-light focus-visible:outline-offset-2 ${
+                isLoading || !username.trim() || !password.trim()
+                  ? 'bg-white/20 text-white/50 cursor-not-allowed'
+                  : 'bg-gradient-to-br from-primary to-primary-dark text-white hover:bg-gradient-to-br hover:from-blue-400 hover:to-primary hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(124,58,237,0.4)]'
+              }`}
             >
               {isLoading ? (
-                <>
-                  <span className="btn-spinner"></span>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   Signing in...
-                </>
+                </span>
               ) : (
                 'Sign In'
               )}
             </button>
 
             {/* Divider */}
-            <div className="auth-divider">
-              <span>New to the Ring?</span>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/20"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-transparent text-white/60">New to the Ring?</span>
+              </div>
             </div>
 
             {/* Register Link */}
-            <p className="auth-footer-text">
+            <p className="text-center text-sm text-white/70 m-0 mb-3">
               Create your account to manage your boxing career
             </p>
             <Link
               to="/register"
-              className="auth-register-link"
               onClick={(e) => {
                 if (isLoading) e.preventDefault();
               }}
+              className="block w-full py-3 px-4 rounded-lg text-sm font-semibold bg-white/10 text-white border-2 border-white/20 transition-all duration-150 hover:bg-white/15 hover:border-primary-light hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(124,58,237,0.2)] text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             >
               Create Account →
             </Link>
           </form>
         </div>
 
-        {/* Decorative elements */}
-        <div className="auth-decoration">
-          <div className="corner-accent corner-top-left"></div>
-          <div className="corner-accent corner-bottom-right"></div>
-        </div>
+        {/* Decorative corner accents */}
+        <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-warning/60 rounded-tl-lg"></div>
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-warning/60 rounded-br-lg"></div>
       </div>
     </div>
   );

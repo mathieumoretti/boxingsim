@@ -1,78 +1,151 @@
 /**
  * Alert Component
  *
- * Reusable alert/message display for success, warning, error, and info states.
- * Replaces inline error/success messages with consistent UI.
+ * Reusable alert/notification component with multiple variants.
+ * Supports info, success, warning, and error states.
  *
- * @see MAT-154 - Additional Refactoring Opportunities
- * @see MAT-129 - Error Handling & User Feedback
- *
- * @example
- * // Success message after action
- * <Alert variant="success" title="Success!" message="Training scheduled successfully" />
+ * @see MAT-150 - Shared UI Component Library
+ * @see MAT-146 - Design Tokens Foundation
  *
  * @example
- * // Warning with dismissible option
- * <Alert
- *   variant="warning"
- *   title="Low Energy"
- *   message="Boxer has insufficient energy for training"
- *   dismissible
- *   onDismiss={handleDismiss}
- />
-
+ * // Success alert with title
+ * <Alert variant="success" title="Success!">
+ *   Boxer created successfully
+ * </Alert>
+ *
  * @example
- * // Error display
- * <Alert variant="error" title="Error" message={errorMessage} />
+ * // Error alert without title
+ * <Alert variant="error">
+ *   Something went wrong
+ * </Alert>
+ *
+ * @example
+ * // Warning with dismiss button
+ * <Alert variant="warning" onDismiss={handleDismiss}>
+ *   Training session will end soon
+ * </Alert>
  */
 
 import React from 'react';
-import './Alert.css';
 
 /**
  * Alert component props interface
  *
  * @typedef {Object} AlertProps
- * @property {'info' | 'success' | 'warning' | 'error'} [variant='info'] - Alert type
- * @property {string} [title] - Alert title/heading
- * @property {string} [message] - Alert message/body text
+ * @property {'info' | 'success' | 'warning' | 'error'} [variant='info'] - Alert variant
+ * @property {string} [title] - Optional alert title
+ * @property {React.ReactNode} children - Alert content
+ * @property {function} [onDismiss] - Dismiss callback
  * @property {boolean} [dismissible=false] - Show dismiss button
- * @property {function} [onDismiss] - Dismiss callback (required if dismissible=true)
+ * @property {boolean} [animated=true] - Enable entrance animation
  * @property {string} [className] - Additional CSS classes
  */
+
+// Variant icon mapping
+const variantIcons = {
+  info: 'ℹ️',
+  success: '✅',
+  warning: '⚠️',
+  error: '❌',
+};
+
+// Variant color styles with gradients and borders
+const variantStyles = {
+  info: {
+    background: 'bg-gradient-to-br from-blue-50 to-blue-100 border-t-2 border-primary/60',
+    titleText: 'text-blue-900',
+    text: 'text-blue-800',
+    iconBg: 'bg-blue-100/50',
+    shadow: '',
+  },
+  success: {
+    background: 'bg-gradient-to-br from-success-light to-emerald-50 border-t-2 border-success/60',
+    titleText: 'text-success-darker',
+    text: 'text-success-dark',
+    iconBg: 'bg-success/10',
+    shadow: '',
+  },
+  warning: {
+    background: 'bg-gradient-to-br from-warning-bright/20 to-amber-50 border-t-2 border-warning/60',
+    titleText: 'text-amber-900',
+    text: 'text-amber-800',
+    iconBg: 'bg-warning/10',
+    shadow: '',
+  },
+  error: {
+    background: 'bg-gradient-to-br from-danger-bright/20 to-red-50 border-t-2 border-danger/60 shadow-[0_2px_8px_rgba(239,68,68,0.15)]',
+    titleText: 'text-danger-darker',
+    text: 'text-danger-dark',
+    iconBg: 'bg-danger/10',
+    shadow: '',
+  },
+};
+
+// Icon container styles based on variant
+const iconContainerStyles = {
+  info: 'bg-blue-100 text-blue-700',
+  success: 'bg-success-light text-success-dark',
+  warning: 'bg-warning-bright/20 text-warning-dark',
+  error: 'bg-danger-bright/20 text-danger',
+};
 
 export function Alert({
   variant = 'info',
   title,
-  message,
-  dismissible = false,
+  children,
   onDismiss,
+  dismissible = false,
+  animated = true,
   className = '',
 }) {
-  const alertClass = `alert alert-${variant} ${dismissible ? 'alert-dismissible' : ''} ${className}`.trim();
+  // Get variant styles
+  const styles = variantStyles[variant] || variantStyles.info;
+  const icon = variantIcons[variant];
 
-  // Icons for each variant
-  const icons = {
-    info: 'ℹ️',
-    success: '✅',
-    warning: '⚠️',
-    error: '❌',
-  };
+  // Entrance animation classes
+  const animationClasses = animated
+    ? 'animate-[fadeIn_0.3s_ease-out]'
+    : '';
 
   return (
-    <div className={alertClass} role="alert">
-      <span className="alert-icon" aria-hidden="true">{icons[variant]}</span>
-      <div className="alert-content">
-        {title && <strong className="alert-title">{title}</strong>}
-        {message && <p className="alert-message">{message}</p>}
+    <div
+      className={`
+        relative rounded-lg p-4 mb-4
+        ${styles.background}
+        ${styles.border}
+        ${styles.shadow}
+        ${animationClasses}
+        ${className}
+      `.trim()}
+      role="alert"
+    >
+      {/* Icon */}
+      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full mr-3 shrink-0 ${iconContainerStyles[variant]}`}>
+        <span className="text-sm">{icon}</span>
       </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {title && (
+          <h4 className={`font-semibold mb-1 ${styles.titleText}`}>
+            {title}
+          </h4>
+        )}
+
+        <div className={`text-sm ${styles.text}`}>
+          {children}
+        </div>
+      </div>
+
+      {/* Dismiss button */}
       {dismissible && onDismiss && (
         <button
-          className="alert-dismiss"
           onClick={onDismiss}
+          type="button"
+          className="absolute top-2 right-2 p-1 rounded-md hover:bg-black/10 transition-colors duration-150 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
           aria-label="Dismiss alert"
         >
-          ✕
+          <span className="text-lg leading-none">✕</span>
         </button>
       )}
     </div>

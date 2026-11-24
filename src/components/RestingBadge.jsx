@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './RestingBadge.css';
 
 /**
  * RestingBadge component displays a boxer's rest status with countdown timer.
- * Shows different styling for voluntary rest (yellow/orange) vs forced rest (red).
+ * Shows different styling for voluntary rest (teal) vs forced rest (red/orange).
  *
  * @param {boolean} hasActiveRest - Whether the boxer has an active rest period
  * @param {string|null} restEndsAt - ISO timestamp when rest ends (for voluntary rest)
@@ -61,20 +60,36 @@ const RestingBadge = ({ hasActiveRest, restEndsAt, forcedRestUntil, currentGameT
     const minutes = Math.floor((seconds % 3600) / 60);
 
     if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`;
+      return `${hours}h ${minutes}m`;
     } else {
-      return `${minutes}m remaining`;
+      return `${minutes}m`;
     }
   };
 
   const countdownDisplay = formatRemainingTime(remainingSeconds);
 
+  // Badge variants - use dynamic classes for status
+  const getBadgeClasses = () => {
+    if (isForcedRest) {
+      return 'bg-gradient-to-r from-red-500 to-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.4)] animate-pulse hover:from-red-400 hover:to-red-500';
+    } else {
+      return 'bg-gradient-to-r from-teal-500 to-teal-700 shadow-[0_2px_6px_rgba(13,148,136,0.35)] hover:from-teal-400 hover:to-teal-600';
+    }
+  };
+
   return (
-    <div className={`resting-badge ${isForcedRest ? 'resting-forced' : 'resting-voluntary'}`}>
-      <span className="resting-icon">{isForcedRest ? '🚑' : '🏥'}</span>
-      <span className="resting-status">{isForcedRest ? 'Forced Rest' : 'Resting'}</span>
+    <div
+      className={`absolute top-2 right-2 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide text-white backdrop-blur inline-flex items-center gap-1 transition-all duration-150 hover:-translate-y-0.5 ${getBadgeClasses()}`}
+      title={isForcedRest ? 'Forced rest due to injury/exhaustion' : 'Voluntary rest for recovery'}
+    >
+      <span className="text-xs" aria-hidden="true">{isForcedRest ? '🚑' : '🏥'}</span>
+      <span className="hidden sm:inline">{isForcedRest ? 'Forced Rest' : 'Resting'}</span>
+      <span className="sm:hidden">{isForcedRest ? 'REST' : 'RST'}</span>
       {countdownDisplay && (
-        <span className="resting-timer" title="Time remaining until available">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-semibold text-white/95 bg-black/15"
+          title="Time remaining until available"
+        >
           {countdownDisplay}
         </span>
       )}

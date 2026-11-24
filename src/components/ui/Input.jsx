@@ -1,125 +1,173 @@
 /**
  * Input Component
  *
- * Reusable form input with support for text, email, number, and select types.
- * Includes label, error state, and helper text styling.
+ * Reusable input field with validation states and helpful feedback.
+ * Supports text, password, email, number, and other HTML5 input types.
  *
  * @see MAT-150 - Shared UI Component Library
  * @see MAT-146 - Design Tokens Foundation
  *
  * @example
- * // Text input with label and helper text
- * <Input
- *   type="text"
- *   label="Boxer Name"
- *   helperText="Enter a unique name for your boxer"
- *   value={name}
- *   onChange={handleChange}
- * />
+ * // Basic text input
+ * <Input label="Name" name="name" placeholder="Enter your name" />
  *
  * @example
  * // Input with error state
- * <Input
- *   type="email"
- *   label="Email"
- *   error={errors.email}
- *   value={email}
- *   onChange={handleChange}
- * />
+ * <Input label="Email" type="email" error="Invalid email address" />
  *
  * @example
- * // Select dropdown
- * <Input
- *   type="select"
- *   label="Weight Class"
- *   options={[
- *     { value: "lightweight", label: "Lightweight (135 lbs)" },
- *     { value: "welterweight", label: "Welterweight (147 lbs)" }
- *   ]}
- *   value={weightClass}
- *   onChange={handleChange}
- * />
+ * // Password input with help text
+ * <Input type="password" label="Password" help="Must be at least 8 characters" />
  */
 
 import React from 'react';
-import './Input.css';
 
 /**
  * Input component props interface
  *
  * @typedef {Object} InputProps
- * @property {'text' | 'email' | 'number' | 'select'} [type='text'] - Input type
- * @property {string} [label] - Label text displayed above input
- * @property {string} [error] - Error message displayed below input
- * @property {string} [helperText] - Helper text displayed below input
- * @property {Array<{value: string, label: string}>} [options] - Options for select type
- * @property {string|number} [value] - Input value (controlled component)
- * @property {function} [onChange] - Change event handler
- * @property {boolean} [disabled=false] - Disabled state
+ * @property {string} [type='text'] - HTML input type
+ * @property {string} name - Input field name
+ * @property {string} label - Field label
+ * @property {string} [value] - Current value (controlled)
+ * @property {string} [defaultValue] - Initial value (uncontrolled)
  * @property {string} [placeholder] - Placeholder text
- * @property {string} [name] - Input name attribute
+ * @property {boolean} [disabled=false] - Disabled state
+ * @property {boolean} [required=false] - Required field indicator
+ * @property {string} [error] - Error message to display
+ * @property {string} [help] - Help text to display
+ * @property {'sm' | 'md'} [size='md'] - Input size
+ * @property {function} [onChange] - Change event handler
+ * @property {function} [onBlur] - Blur event handler
+ * @property {function} [onClick] - Click event handler
  * @property {string} [className] - Additional CSS classes
  */
 
+// Size styles
+const sizeStyles = {
+  sm: 'text-sm py-2 px-3',
+  md: 'text-base py-3 px-4',
+};
+
+// State-based border and focus styles
+const stateStyles = {
+  default: {
+    border: 'border-gray-300',
+    focus: 'focus:border-primary focus:ring-2 focus:ring-primary/20 focus:ring-offset-0',
+    icon: '',
+  },
+  error: {
+    border: 'border-danger-bright',
+    focus: 'focus:border-danger focus:ring-2 focus:ring-danger/20 focus:ring-offset-0',
+    icon: '⚠️',
+  },
+  disabled: {
+    border: 'border-gray-200',
+    focus: '',
+    base: 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60',
+  },
+};
+
 export function Input({
   type = 'text',
-  label,
-  error,
-  helperText,
-  options = [],
-  value,
-  onChange,
-  disabled = false,
-  placeholder,
   name,
+  label,
+  value,
+  defaultValue,
+  placeholder,
+  disabled = false,
+  required = false,
+  error,
+  help,
+  size = 'md',
+  onChange,
+  onBlur,
+  onClick,
   className = '',
+  ...rest
 }) {
-  const inputClass = `input-field input-${type} ${className}`.trim();
+  // Determine state styles
+  const isDisabled = disabled || rest.readOnly;
+  const hasError = !!error && !isDisabled;
 
-  // Determine if we have any validation/message content to show
-  const hasHelperContent = helperText || error;
+  let styles = isDisabled ? stateStyles.disabled : (hasError ? stateStyles.error : stateStyles.default);
 
+  // Construct input wrapper classes
   return (
-    <div className="input-wrapper">
+    <div className={`flex flex-col gap-1.5 ${className}`}>
+      {/* Label */}
       {label && (
-        <label className="input-label" htmlFor={name}>
+        <label
+          htmlFor={name}
+          className="text-sm font-medium text-gray-700"
+        >
           {label}
+          {required && (
+            <span className="text-danger-bright ml-0.5" aria-hidden="true">*</span>
+          )}
         </label>
       )}
 
-      {type === 'select' ? (
-        <select
-          className={inputClass}
-          value={value || ''}
-          onChange={onChange}
-          disabled={disabled}
-          name={name}
-          id={name}
-        >
-          <option value="">Select an option</option>
-          {options.map((option, index) => (
-            <option key={index} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : (
+      {/* Input field wrapper */}
+      <div className="relative">
+        {/* Error icon (visible when has error) */}
+        {hasError && type !== 'password' && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none z-10">
+            ⚠️
+          </div>
+        )}
+
+        {/* Input element */}
         <input
-          type={type}
-          className={inputClass}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          placeholder={placeholder}
-          name={name}
           id={name}
+          type={type}
+          name={name}
+          value={value}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          required={required}
+          onChange={onChange}
+          onBlur={onBlur}
+          onClick={onClick}
+          className={`
+            w-full rounded-md border transition-all duration-200
+            bg-white text-gray-900 shadow-subtle
+            placeholder:text-gray-400
+            ${sizeStyles[size]}
+            ${styles.border}
+            ${styles.focus}
+            ${isDisabled ? styles.base : ''}
+            ${hasError && type !== 'password' ? 'pl-8' : 'pl-4'}
+          `.trim()}
+          aria-invalid={hasError ? 'true' : undefined}
+          aria-describedby={error || help ? `${name}-description` : undefined}
+          {...rest}
         />
+
+        {/* Password toggle could go here */}
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <p
+          id={`${name}-description`}
+          className="text-sm text-danger-bright flex items-center gap-1"
+          role="alert"
+        >
+          <span aria-hidden="true">⚠️</span>
+          {error}
+        </p>
       )}
 
-      {hasHelperContent && (
-        <div className={`input-helper ${error ? 'input-helper-error' : ''}`}>
-          {error || helperText}
-        </div>
+      {/* Help text (only when no error) */}
+      {help && !error && (
+        <p
+          id={`${name}-description`}
+          className="text-sm text-gray-500"
+        >
+          {help}
+        </p>
       )}
     </div>
   );

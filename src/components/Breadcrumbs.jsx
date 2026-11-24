@@ -15,29 +15,28 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './Breadcrumbs.css';
 
 const Breadcrumbs = ({ items = [], separator = ' / ' }) => {
   if (!items.length) return null;
 
   return (
-    <nav className="breadcrumbs" aria-label="Breadcrumb navigation">
-      <ol className="breadcrumb-list">
+    <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb navigation">
+      <ol className="flex items-center gap-2">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
           return (
-            <li key={index} className="breadcrumb-item">
+            <li key={index} className="flex items-center gap-2">
               {isLast ? (
                 // Last item - current page (non-clickable)
-                <span className="breadcrumb-link breadcrumb-link--current" aria-current="page">
+                <span className="font-semibold text-gray-900" aria-current="page">
                   {item.label}
                 </span>
               ) : (
                 // Previous items - clickable links
                 <Link
                   to={item.href || '#'}
-                  className="breadcrumb-link"
+                  className="font-medium text-primary hover:text-primary-light transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded"
                   onClick={(e) => {
                     if (!item.href) e.preventDefault();
                   }}
@@ -48,7 +47,7 @@ const Breadcrumbs = ({ items = [], separator = ' / ' }) => {
 
               {/* Separator (not shown on last item) */}
               {!isLast && (
-                <span className="breadcrumb-separator" aria-hidden="true">
+                <span className="text-gray-400" aria-hidden="true">
                   {separator}
                 </span>
               )}

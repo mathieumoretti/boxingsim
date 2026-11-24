@@ -1,6 +1,12 @@
+/**
+ * TrainingPage - Training management page content
+ *
+ * Compact single-column layout inheriting navy gradient from PageLayout.
+ * Minimal separation for clean information flow.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './TrainingPage.css';
 import TopBar from './TopBar';
 import PageLayout from './PageLayout';
 import TrainingScheduler from './TrainingScheduler';
@@ -52,11 +58,11 @@ const TrainingPage = ({ user, onLogout }) => {
 
   if (isLoading) {
     return (
-      <div className="training-page">
+      <div className="min-h-screen bg-gradient-to-br from-navy-medium to-navy-light">
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout>
-          <div className="training-page-content">
-            <div className="loading-state">Loading boxer data...</div>
+          <div className="max-w-[900px] mx-auto px-6 py-6 pb-[10rem]">
+            <div className="text-center py-8 px-6 text-white/60 text-sm">Loading boxer data...</div>
           </div>
         </PageLayout>
       </div>
@@ -65,7 +71,7 @@ const TrainingPage = ({ user, onLogout }) => {
 
   if (error && !boxer) {
     return (
-      <div className="training-page">
+      <div className="min-h-screen bg-gradient-to-br from-navy-medium to-navy-light">
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
@@ -78,13 +84,13 @@ const TrainingPage = ({ user, onLogout }) => {
 
   if (!boxer) {
     return (
-      <div className="training-page">
+      <div className="min-h-screen bg-gradient-to-br from-navy-medium to-navy-light">
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <div className="training-page-content">
-            <div className="error-state">Boxer not found</div>
+          <div className="max-w-[900px] mx-auto px-6 py-6 pb-[10rem]">
+            <div className="text-center py-8 px-6 text-white/60 text-sm">Boxer not found</div>
           </div>
         </PageLayout>
       </div>
@@ -92,33 +98,35 @@ const TrainingPage = ({ user, onLogout }) => {
   }
 
   return (
-    <div className="training-page">
+    <div className="min-h-screen bg-gradient-to-br from-navy-medium to-navy-light">
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         onBack={() => navigate('/dashboard')}
       >
-        {/* Training Scheduler Section */}
-        <section className="training-scheduler-section">
-          <h3>Schedule Training</h3>
-          <TrainingScheduler
-            boxerId={boxer.id}
-            boxer={boxer}
-            onClose={() => navigate('/dashboard')}
-            onTrainingScheduled={handleTrainingScheduled}
-          />
-        </section>
+        <div className="max-w-[900px] mx-auto px-6 py-6 pb-8 md:pb-10 lg:pb-8">
+          {/* Training Scheduler Section */}
+          <section className="mb-4 md:mb-4 lg:mb-4">
+            <h3 className="text-sm font-semibold text-victory-gold uppercase tracking-wider m-0 mb-2">Schedule Training</h3>
+            <TrainingScheduler
+              boxerId={boxer.id}
+              boxer={boxer}
+              onClose={() => navigate('/dashboard')}
+              onTrainingScheduled={handleTrainingScheduled}
+            />
+          </section>
 
-        {/* Stat Progression Chart Section */}
-        <section className="stat-progression-section">
-          <h3>Stat Progression</h3>
-          <StatProgressionChart boxerId={boxer.id} compact />
-        </section>
+          {/* Stat Progression Chart Section */}
+          <section className="mb-4 md:mb-4 lg:mb-4">
+            <h3 className="text-sm font-semibold text-victory-gold uppercase tracking-wider m-0 mb-2">Stat Progression</h3>
+            <StatProgressionChart boxerId={boxer.id} compact />
+          </section>
 
-        {/* Training History Section */}
-        <section className="training-history-section">
-          <h3>Training History</h3>
-          <TrainingHistory boxerId={boxer.id} compact />
-        </section>
+          {/* Training History Section */}
+          <section className="mb-4 md:mb-4 lg:mb-4">
+            <h3 className="text-sm font-semibold text-victory-gold uppercase tracking-wider m-0 mb-2">Training History</h3>
+            <TrainingHistory boxerId={boxer.id} compact />
+          </section>
+        </div>
       </PageLayout>
     </div>
   );

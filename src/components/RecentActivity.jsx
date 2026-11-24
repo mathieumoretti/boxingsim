@@ -8,7 +8,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchFightHistory } from '../api/fights';
 import { fetchTrainingHistory } from '../api/training';
-import './BoxerProfile.css';
 
 const RecentActivity = ({ boxerId, gameTime }) => {
   const [activities, setActivities] = useState([]);
@@ -104,10 +103,10 @@ const RecentActivity = ({ boxerId, gameTime }) => {
   const getFightColorClass = (winnerId, boxer1Id, boxer2Id) => {
     const outcome = deriveOutcome(winnerId, boxer1Id, boxer2Id);
     switch (outcome) {
-      case 'win': return 'bg-activity-win';
-      case 'loss': return 'bg-activity-loss';
-      case 'draw': return 'bg-activity-draw';
-      default: return 'bg-activity-upcoming';
+      case 'win': return 'border-l-4 border-l-success bg-gradient-to-r from-green-50 to-emerald-50';
+      case 'loss': return 'border-l-4 border-l-danger bg-gradient-to-r from-red-50 to-orange-50';
+      case 'draw': return 'border-l-4 border-l-gray-400 bg-gradient-to-r from-gray-50 to-slate-100';
+      default: return 'border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50';
     }
   };
 
@@ -220,12 +219,21 @@ const RecentActivity = ({ boxerId, gameTime }) => {
 
   if (isLoading) {
     return (
-      <div className="recent-activity-section">
-        <h3 className="section-title">Recent Activity</h3>
-        <div className="activity-loading">
-          <div className="activity-skeleton"></div>
-          <div className="activity-skeleton"></div>
-          <div className="activity-skeleton"></div>
+      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+          <span className="text-xl" aria-hidden="true">📜</span>
+          Recent Activity
+        </h3>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -233,42 +241,51 @@ const RecentActivity = ({ boxerId, gameTime }) => {
 
   if (error) {
     return (
-      <div className="recent-activity-section">
-        <h3 className="section-title">Recent Activity</h3>
-        <div className="activity-error">{error}</div>
+      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+          <span className="text-xl" aria-hidden="true">📜</span>
+          Recent Activity
+        </h3>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">{error}</div>
       </div>
     );
   }
 
   if (activities.length === 0) {
     return (
-      <div className="recent-activity-section">
-        <h3 className="section-title">Recent Activity</h3>
-        <div className="activity-empty">
-          <p>No activity yet. Start training or book a fight!</p>
+      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+          <span className="text-xl" aria-hidden="true">📜</span>
+          Recent Activity
+        </h3>
+        <div className="text-center py-6">
+          <p className="text-gray-500 m-0 italic">No activity yet. Start training or book a fight!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="recent-activity-section">
-      <h3 className="section-title">Recent Activity</h3>
+    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
+      <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+        <span className="text-xl" aria-hidden="true">📜</span>
+        Recent Activity
+      </h3>
 
-      <div className="activity-timeline">
+      <div className="space-y-3">
         {activities.map((activity, index) => (
           <div
             key={`${activity.type}-${activity.id}`}
-            className={`activity-item ${activity.colorClass || ''} ${activity.isScheduled ? 'activity-upcoming' : ''}`}
+            className={`flex items-start gap-3 p-4 rounded-lg border border-gray-200 shadow-sm transition-all duration-150 hover:shadow-md ${activity.colorClass || ''} ${activity.isScheduled ? 'bg-blue-50' : ''}`}
           >
-            <div className="activity-icon">{activity.icon}</div>
-            <div className="activity-content">
-              <div className="activity-header">
-                <span className="activity-time">{formatTimeAgo(activity.date, activity.isScheduled)}</span>
-                <span className="activity-title">{activity.title}</span>
+            <div className="text-xl flex-shrink-0" aria-hidden="true">{activity.icon}</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-gray-500">{formatTimeAgo(activity.date, activity.isScheduled)}</span>
               </div>
+              <h4 className="text-sm font-bold text-gray-900 m-0 truncate">{activity.title}</h4>
               {activity.description && (
-                <div className="activity-description">{activity.description}</div>
+                <p className="text-xs text-gray-600 m-0 mt-0.5">{activity.description}</p>
               )}
             </div>
           </div>

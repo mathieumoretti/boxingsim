@@ -28,27 +28,27 @@ const RecoveryBadge = ({ boxer, compact = false }) => {
     // Compact badge version - shows inline with boxer name/info
     return (
       <span
-        className="recovery-badge recovery-badge-compact"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-red-100 to-orange-100 border border-red-400 text-red-900 shadow-[0_2px_8px_rgba(239,68,68,0.15)]"
         title={`On forced recovery until ${status.recovery_until?.toLocaleString()}`}
       >
-        <span className="recovery-badge-icon">🩹</span>
-        <span className="recovery-badge-text">Recovering: {status.time_remaining}</span>
+        <span className="text-base">🩹</span>
+        <span>Recovering: {status.time_remaining}</span>
       </span>
     );
   }
 
   // Full banner version - for prominent display (e.g., on boxer profile)
   return (
-    <div className="recovery-badge recovery-banner" role="alert">
-      <div className="recovery-banner-content">
-        <div className="recovery-banner-icon">⚠️</div>
-        <div className="recovery-banner-details">
-          <h4 className="recovery-banner-title">Forced Recovery Active</h4>
-          <p className="recovery-banner-description">
+    <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-amber-100 to-yellow-100 border-2 border-amber-500 rounded-lg mb-6 shadow-[0_4px_16px_rgba(245,158,11,0.15)]" role="alert">
+      <div className="flex gap-4 items-start">
+        <div className="text-4xl flex-shrink-0">⚠️</div>
+        <div className="flex-1">
+          <h4 className="m-0 mb-2 text-lg font-bold text-amber-900">Forced Recovery Active</h4>
+          <p className="m-0 mb-3 text-base leading-relaxed text-amber-800">
             This boxer is on mandatory recovery from fight injuries.
             They cannot fight until their health has been restored.
           </p>
-          <div className="recovery-banner-stats">
+          <div className="flex flex-wrap gap-6 text-base text-amber-800">
             <span className="recovery-banner-time">
               <strong>Time Remaining:</strong> {status.time_remaining}
             </span>
@@ -63,9 +63,9 @@ const RecoveryBadge = ({ boxer, compact = false }) => {
 
       {/* Optional progress bar */}
       {status.percentage_healed !== undefined && (
-        <div className="recovery-banner-progress-bar">
+        <div className="w-full h-2 bg-amber-100 rounded-full overflow-hidden">
           <div
-            className="recovery-banner-progress-fill"
+            className="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-300"
             style={{ width: `${Math.min(status.percentage_healed, 100)}%` }}
           />
         </div>

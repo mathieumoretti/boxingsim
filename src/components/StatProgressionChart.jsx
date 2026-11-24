@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './StatProgressionChart.css';
 import { fetchStatProgression } from '../api/training';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
@@ -39,20 +38,20 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
   const chartInnerWidth = chartWidth - padding.left - padding.right;
   const chartInnerHeight = chartHeight - padding.top - padding.bottom;
 
-  // Stat configuration
+  // Stat configuration with Tailwind colors
   const statConfig = {
     strength: {
-      color: '#fc8181',
+      color: '#dc2626', // red-600
       label: 'STR',
       fullLabel: 'Strength'
     },
     defense: {
-      color: '#63b3ed',
+      color: '#2563eb', // blue-600
       label: 'DEF',
       fullLabel: 'Defense'
     },
     agility: {
-      color: '#f6ad55',
+      color: '#ca8a04', // yellow-600
       label: 'AGI',
       fullLabel: 'Agility'
     }
@@ -64,15 +63,17 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
 
   if (isLoading) {
     return (
-      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
-        <div className="chart-loading">Loading...</div>
+      <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
+        <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm font-medium">
+          Loading...
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
+      <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
         <ErrorDisplay error={error} variant="alert" title="Failed to Load Chart" />
       </div>
     );
@@ -80,9 +81,9 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
 
   if (!data || !data.points || data.points.length === 0) {
     return (
-      <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
-        <div className="chart-empty-state">
-          No stat data yet.
+      <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
+        <div className="flex items-center justify-center h-[200px]">
+          <p className="text-sm font-medium text-gray-600 m-0">No stat data yet.</p>
         </div>
       </div>
     );
@@ -123,30 +124,38 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
   };
 
   return (
-    <div className={`stat-progression-chart ${compact ? 'compact' : ''}`}>
+    <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
       <svg
         width={chartWidth}
         height={chartHeight}
-        className="progression-svg"
+        className="w-full"
         onMouseLeave={handleMouseLeave}
       >
         <defs>
           {/* Gradients for areas under lines */}
           <linearGradient id="strengthGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fc8181" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#fc8181" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#dc2626" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#dc2626" stopOpacity="0.0" />
           </linearGradient>
           <linearGradient id="defenseGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#63b3ed" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#63b3ed" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
           </linearGradient>
           <linearGradient id="agilityGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f6ad55" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#f6ad55" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#ca8a04" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#ca8a04" stopOpacity="0.0" />
           </linearGradient>
 
-          {/* Tooltip circle marker */}
-          <circle id="hoverMarker" r="6" fill="white" stroke="#000" strokeWidth="2" />
+          {/* Drop shadows for lines */}
+          <filter id="strengthShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#dc2626" floodOpacity="0.5"/>
+          </filter>
+          <filter id="defenseShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#2563eb" floodOpacity="0.5"/>
+          </filter>
+          <filter id="agilityShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#ca8a04" floodOpacity="0.5"/>
+          </filter>
         </defs>
 
         {/* Grid lines (horizontal) */}
@@ -168,7 +177,9 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 x={padding.left - 10}
                 y={y + 4}
                 textAnchor="end"
-                className="grid-label"
+                fill="#6b7280"
+                fontSize={compact ? 9 : 10}
+                fontFamily="inherit"
               >
                 {Math.round(statValue)}
               </text>
@@ -189,7 +200,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="stat-line"
+          filter="url(#strengthShadow)"
+          className="transition-all duration-150 hover:stroke-[4] cursor-crosshair"
         />
         <path
           d={generatePath('defense')}
@@ -198,7 +210,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="stat-line"
+          filter="url(#defenseShadow)"
+          className="transition-all duration-150 hover:stroke-[4] cursor-crosshair"
         />
         <path
           d={generatePath('agility')}
@@ -207,7 +220,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="stat-line"
+          filter="url(#agilityShadow)"
+          className="transition-all duration-150 hover:stroke-[4] cursor-crosshair"
         />
 
         {/* Data points (circles) */}
@@ -229,7 +243,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 fill={statConfig.strength.color}
                 stroke="white"
                 strokeWidth="2"
-                className="data-point"
+                filter="url(#strengthShadow)"
+                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'strength', value: point.strength, x: strengthX, y: strengthY, date: point.date })}
               />
               {/* Defense point */}
@@ -240,7 +255,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 fill={statConfig.defense.color}
                 stroke="white"
                 strokeWidth="2"
-                className="data-point"
+                filter="url(#defenseShadow)"
+                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'defense', value: point.defense, x: defenseX, y: defenseY, date: point.date })}
               />
               {/* Agility point */}
@@ -251,7 +267,8 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 fill={statConfig.agility.color}
                 stroke="white"
                 strokeWidth="2"
-                className="data-point"
+                filter="url(#agilityShadow)"
+                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'agility', value: point.agility, x: agilityX, y: agilityY, date: point.date })}
               />
             </g>
@@ -265,7 +282,9 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
               x={getX(0)}
               y={chartHeight - padding.bottom + 20}
               textAnchor="middle"
-              className="x-label"
+              fill="#6b7280"
+              fontSize={compact ? 9 : 10}
+              fontFamily="inherit"
             >
               {new Date(data.points[0].date).toLocaleDateString()}
             </text>
@@ -273,14 +292,16 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
               x={getX(data.points.length - 1)}
               y={chartHeight - padding.bottom + 20}
               textAnchor="middle"
-              className="x-label"
+              fill="#6b7280"
+              fontSize={compact ? 9 : 10}
+              fontFamily="inherit"
             >
               {new Date(data.points[data.points.length - 1].date).toLocaleDateString()}
             </text>
           </>
         )}
 
-        {/* Tooltip (shown on hover) */}
+        {/* Tooltip ring (shown on hover) */}
         {hoveredPoint && (
           <g>
             <circle
@@ -290,7 +311,6 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
               fill="none"
               stroke="rgba(255, 255, 255, 0.5)"
               strokeWidth="2"
-              className="tooltip-target"
             />
           </g>
         )}
@@ -299,31 +319,44 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
       {/* Tooltip overlay (HTML for better formatting) */}
       {hoveredPoint && (
         <div
-          className="chart-tooltip"
-          style={{ left: hoveredPoint.x, top: hoveredPoint.y - 50 }}
+          className="absolute bg-navy-medium border border-white/10 rounded-md p-3 shadow-[0_8px_24px_rgba(0,0,0,0.6)] pointer-events-none z-[50]"
+          style={{
+            left: hoveredPoint.x,
+            top: hoveredPoint.y - 50,
+            transform: 'translateX(-50%)'
+          }}
         >
-          <div className="tooltip-header">
-            <strong>{statConfig[hoveredPoint.stat].fullLabel}</strong>
-            <span>{new Date(hoveredPoint.date).toLocaleDateString()}</span>
+          <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/10">
+            <span className="text-xs text-gray-400 font-medium">{new Date(hoveredPoint.date).toLocaleDateString()}</span>
+            <strong className="text-xs text-white font-bold uppercase tracking-wider">{statConfig[hoveredPoint.stat].fullLabel}</strong>
           </div>
-          <div className="tooltip-value">
+          <div className="text-sm text-white font-bold">
             {statConfig[hoveredPoint.stat].label}: {Math.round(hoveredPoint.value)}
           </div>
         </div>
       )}
 
-      {/* Legend - inline and compact */}
-      <div className={`chart-legend ${compact ? 'inline' : ''}`}>
-        <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: statConfig.strength.color }}></span>
+      {/* Legend */}
+      <div className={`flex gap-4 md:gap-3 ${compact ? 'text-[0.65rem]' : ''}`}>
+        <div className="inline-flex items-center gap-1 text-xs text-gray-400 font-medium">
+          <span
+            className="w-[8px] h-[8px] rounded-full shadow-[0_0_8px_rgba(220,38,38,0.5)]"
+            style={{ backgroundColor: statConfig.strength.color }}
+          ></span>
           <span>STR</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: statConfig.defense.color }}></span>
+        <div className="inline-flex items-center gap-1 text-xs text-gray-400 font-medium">
+          <span
+            className="w-[8px] h-[8px] rounded-full shadow-[0_0_8px_rgba(37,99,235,0.5)]"
+            style={{ backgroundColor: statConfig.defense.color }}
+          ></span>
           <span>DEF</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: statConfig.agility.color }}></span>
+        <div className="inline-flex items-center gap-1 text-xs text-gray-400 font-medium">
+          <span
+            className="w-[8px] h-[8px] rounded-full shadow-[0_0_8px_rgba(202,138,4,0.5)]"
+            style={{ backgroundColor: statConfig.agility.color }}
+          ></span>
           <span>AGI</span>
         </div>
       </div>

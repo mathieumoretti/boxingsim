@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './MiniWorldClock.css';
 import { fetchWorldTime } from '../api/world';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
@@ -43,7 +42,7 @@ const MiniWorldClock = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="mini-world-clock mini-world-clock-loading">Loading...</div>;
+    return <div className="inline-flex items-center gap-2 bg-white/5 px-4 py-2 rounded-md border border-white/10 text-sm text-gray-500">Loading...</div>;
   }
 
   if (error) {
@@ -57,20 +56,31 @@ const MiniWorldClock = () => {
     );
   }
 
-  const statusClass = timeData.status === 'running' ? 'status-running' :
-                      timeData.status === 'paused' ? 'status-paused' : 'status-stopped';
+  // Dynamic status badge classes based on clock state
+  const getStatusBadgeClass = (status) => {
+    switch(status) {
+      case 'running': return 'bg-green-100/80 text-green-700 border-green-300';
+      case 'paused': return 'bg-yellow-100/80 text-yellow-700 border-yellow-300';
+      default: return 'bg-gray-400/20 text-gray-500 border-gray-400/30';
+    }
+  };
+
+  const statusText = timeData.status === 'running' ? 'Running' : timeData.status === 'paused' ? 'Paused' : 'Stopped';
 
   return (
-    <div className="mini-world-clock">
-      <div className={`clock-status ${statusClass}`}>
-        {timeData.clock_running && <span className="status-dot"></span>}
-        <span className="status-text">
-          {timeData.status === 'running' ? 'Running' : timeData.status === 'paused' ? 'Paused' : 'Stopped'}
-        </span>
+    <div className="inline-flex items-center gap-2 sm:gap-5 bg-white/5 px-4 py-2 rounded-md border border-white/10">
+      {/* Status Badge */}
+      <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border ${getStatusBadgeClass(timeData.status)}`}>
+        {timeData.clock_running && (
+          <span className="w-[6px] h-[6px] rounded-full bg-green-500 animate-pulse"></span>
+        )}
+        <span>{statusText}</span>
       </div>
-      <div className="game-time-display">
-        <span className="time-label">GAME TIME</span>
-        <span className="time-value">{timeData.formatted_time}</span>
+
+      {/* Time Display */}
+      <div className="flex flex-col items-center">
+        <span className="text-xs text-gray-400 uppercase tracking-wider mb-1 hidden sm:block">GAME TIME</span>
+        <span className="text-sm font-bold text-white tabular-nums">{timeData.formatted_time}</span>
       </div>
     </div>
   );
