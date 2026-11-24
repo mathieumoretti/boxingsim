@@ -227,7 +227,7 @@ func TestE2E_FullGameplayLoop(t *testing.T) {
 			t.Fatalf("expected exactly 1 pending fight_simulate event, got %d", len(fightEvents))
 		}
 
-		// Pre-fight snapshots (W/L deltas must be exact — Review Focus #2)
+		// Pre-fight snapshots (W/L deltas must be exactly +1 after one processing pass)
 		beforeA, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.boxerID))
 		if err != nil {
 			t.Fatalf("GetByID boxer %d: %v", env.boxerID, err)
@@ -294,10 +294,54 @@ func TestE2E_FullGameplayLoop(t *testing.T) {
 				t.Errorf("loser %d has nil ForcedRecoveryUntil (worker-parity callback not fired)", loserID)
 			}
 		}
+
+		// Review Focus #2: worker-crash replay — re-invoking the processor on the
+		// already-completed event must be a safe no-op (nil error) with no state
+		// change: fight stays completed, W/L records stay exactly at the post-pass
+		// values (no second application of the result).
+		replay, err := env.eventStore.GetByID(ctx, domain.ScheduledEventID(fightEvents[0].ID))
+		if err != nil {
+			t.Fatalf("eventStore.GetByID(%d): %v", fightEvents[0].ID, err)
+		}
+		if err := env.processor.ProcessScheduledEvent(ctx, replay); err != nil {
+			t.Fatalf("reprocessing completed event %d must be a no-op, got error: %v", replay.ID, err)
+		}
+		fReplay, err := env.fightStore.GetByID(ctx, domain.FightID(env.fightID))
+		if err != nil {
+			t.Fatalf("fightStore.GetByID(%d) after replay: %v", env.fightID, err)
+		}
+		if fReplay.Status != model.FightStatusCompleted {
+			t.Errorf("fight status after replay = %q, want %q", fReplay.Status, model.FightStatusCompleted)
+		}
+		reA, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.boxerID))
+		if err != nil {
+			t.Fatalf("GetByID boxer %d after replay: %v", env.boxerID, err)
+		}
+		reB, err := env.boxerStore.GetByID(ctx, domain.BoxerID(env.opponentID))
+		if err != nil {
+			t.Fatalf("GetByID opponent %d after replay: %v", env.opponentID, err)
+		}
+		if winnerID == env.boxerID {
+			if reA.Wins != afterA.Wins || reB.Losses != afterB.Losses {
+				t.Errorf("replay changed records: A wins=%d (was %d), B losses=%d (was %d)",
+					reA.Wins, afterA.Wins, reB.Losses, afterB.Losses)
+			}
+		} else {
+			if reB.Wins != afterB.Wins || reA.Losses != afterA.Losses {
+				t.Errorf("replay changed records: B wins=%d (was %d), A losses=%d (was %d)",
+					reB.Wins, afterB.Wins, reA.Losses, afterA.Losses)
+			}
+		}
 	})
 
 	// 5. Rankings: live view over boxers; both fighters must appear (Review Focus #4: 0-0 and 1-0 win rates)
 	t.Run("RankingsUpdated", func(t *testing.T) {
+		// Review Focus #4 requires a true 0-0 boxer (win-rate divide-by-zero guard):
+		// the two fighters are already 1-0/0-1 here, so create a third boxer that
+		// has never fought and assert it is included in the rankings.
+		token := login_user(t, env.router, "e2e_player", "Passw0rd!")
+		unfoughtID := createBoxer(t, env.router, token, "E2E Unfought Boxer")
+
 		ranked, err := env.rankingsStore.GetRankings(ctx, model.RankingByWinRate, 10)
 		if err != nil {
 			t.Fatalf("GetRankings(win_rate): %v", err)
@@ -311,6 +355,9 @@ func TestE2E_FullGameplayLoop(t *testing.T) {
 		}
 		if !found[env.opponentID] {
 			t.Errorf("win-rate rankings missing opponent boxer %d (got %d rows)", env.opponentID, len(ranked))
+		}
+		if !found[unfoughtID] {
+			t.Errorf("win-rate rankings missing 0-0 boxer %d (got %d rows)", unfoughtID, len(ranked))
 		}
 	})
 
@@ -530,6 +577,9 @@ func setupGameplayEnv(t *testing.T) *gameplayEnv {
 // processDueEvents runs one worker-style poll-and-process pass: it fetches all pending
 // events due at the current game time and processes each through the worker-parity
 // EventProcessor, exactly like one iteration of the worker's event loop.
+// Deliberate deltas from cmd/worker/main.go: the due-event limit is 50 (worker: 100)
+// and CompleteAllDueTrainingSessions is not called — this test completes training via
+// the API (the production path), so no due sessions accumulate for the worker.
 // It returns the number of due events processed.
 func processDueEvents(t *testing.T, env *gameplayEnv) int {
 	t.Helper()
@@ -598,11 +648,12 @@ func advanceGameTime(t *testing.T, env *gameplayEnv, target time.Time) {
 	if err != nil {
 		t.Fatalf("advanceGameTime: GetCurrentGameTime: %v", err)
 	}
-	diff := got.Sub(target)
-	if diff < 0 {
-		diff = -diff
-	}
-	if diff > time.Second {
-		t.Fatalf("advanceGameTime: game time %v not within 1s of target %v", got, target)
+	// Assert only monotonicity: game time must be at or past target so that every
+	// event scheduled at or before target is now due. No upper bound — an upper
+	// bound of N seconds couples the test to (Postgres round-trip time x speed
+	// factor 60) and would flake on loaded CI runners; the lower bound is the
+	// only invariant the gameplay assertions depend on.
+	if got.Before(target) {
+		t.Fatalf("advanceGameTime: game time %v is before target %v (anchor update not visible)", got, target)
 	}
 }
