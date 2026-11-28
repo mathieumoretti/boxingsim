@@ -29,14 +29,14 @@ const Breadcrumbs = ({ items = [], separator = ' / ' }) => {
             <li key={index} className="flex items-center gap-2">
               {isLast ? (
                 // Last item - current page (non-clickable)
-                <span className="font-semibold text-gray-900" aria-current="page">
+                <span className="font-semibold text-white" aria-current="page">
                   {item.label}
                 </span>
               ) : (
                 // Previous items - clickable links
                 <Link
                   to={item.href || '#'}
-                  className="font-medium text-primary hover:text-primary-light transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded"
+                  className="font-medium text-primary-light hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded"
                   onClick={(e) => {
                     if (!item.href) e.preventDefault();
                   }}
@@ -47,7 +47,7 @@ const Breadcrumbs = ({ items = [], separator = ' / ' }) => {
 
               {/* Separator (not shown on last item) */}
               {!isLast && (
-                <span className="text-gray-400" aria-hidden="true">
+                <span className="text-white/40" aria-hidden="true">
                   {separator}
                 </span>
               )}

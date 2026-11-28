@@ -30,7 +30,7 @@ export function FightBadge({ fight }) {
     return () => clearInterval(interval);
   }, [fight?.scheduled_time]);
 
-  if (!timeLeft !== null) return null;
+  if (timeLeft === null) return null;
 
   // Format time display based on remaining duration
   const formatCountdown = (ms) => {

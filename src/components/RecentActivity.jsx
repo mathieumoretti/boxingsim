@@ -63,7 +63,7 @@ const RecentActivity = ({ boxerId, gameTime }) => {
         title: getTrainingTitle(session),
         description: getTrainingDescription(session),
         icon: getTrainingIcon(session.training_type_id),
-        colorClass: 'bg-activity-training',
+        colorClass: 'bg-white/5 border-white/15',
         gains: session.gains || {}
       }));
 
@@ -103,10 +103,10 @@ const RecentActivity = ({ boxerId, gameTime }) => {
   const getFightColorClass = (winnerId, boxer1Id, boxer2Id) => {
     const outcome = deriveOutcome(winnerId, boxer1Id, boxer2Id);
     switch (outcome) {
-      case 'win': return 'border-l-4 border-l-success bg-gradient-to-r from-green-50 to-emerald-50';
-      case 'loss': return 'border-l-4 border-l-danger bg-gradient-to-r from-red-50 to-orange-50';
-      case 'draw': return 'border-l-4 border-l-gray-400 bg-gradient-to-r from-gray-50 to-slate-100';
-      default: return 'border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50';
+      case 'win': return 'bg-green-500/10 border-green-400/30';
+      case 'loss': return 'bg-red-500/10 border-red-400/30';
+      case 'draw': return 'bg-white/5 border-white/15';
+      default: return 'bg-blue-500/10 border-blue-400/30';
     }
   };
 
@@ -219,18 +219,18 @@ const RecentActivity = ({ boxerId, gameTime }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+        <h3 className="text-lg font-bold text-white m-0 mb-4 flex items-center gap-2">
           <span className="text-xl" aria-hidden="true">📜</span>
           Recent Activity
         </h3>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 animate-pulse">
-              <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+            <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-white/15"></div>
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-white/10 rounded w-3/4"></div>
+                <div className="h-3 bg-white/10 rounded w-1/2"></div>
               </div>
             </div>
           ))}
@@ -241,33 +241,33 @@ const RecentActivity = ({ boxerId, gameTime }) => {
 
   if (error) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+        <h3 className="text-lg font-bold text-white m-0 mb-4 flex items-center gap-2">
           <span className="text-xl" aria-hidden="true">📜</span>
           Recent Activity
         </h3>
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">{error}</div>
+        <div className="p-4 bg-red-500/10 border border-red-400/30 rounded-lg text-sm text-red-200">{error}</div>
       </div>
     );
   }
 
   if (activities.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-        <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+        <h3 className="text-lg font-bold text-white m-0 mb-4 flex items-center gap-2">
           <span className="text-xl" aria-hidden="true">📜</span>
           Recent Activity
         </h3>
         <div className="text-center py-6">
-          <p className="text-gray-500 m-0 italic">No activity yet. Start training or book a fight!</p>
+          <p className="text-white/60 m-0 italic">No activity yet. Start training or book a fight!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-      <h3 className="text-lg font-bold text-gray-800 m-0 mb-4 flex items-center gap-2">
+    <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+      <h3 className="text-lg font-bold text-white m-0 mb-4 flex items-center gap-2">
         <span className="text-xl" aria-hidden="true">📜</span>
         Recent Activity
       </h3>
@@ -276,16 +276,16 @@ const RecentActivity = ({ boxerId, gameTime }) => {
         {activities.map((activity, index) => (
           <div
             key={`${activity.type}-${activity.id}`}
-            className={`flex items-start gap-3 p-4 rounded-lg border border-gray-200 shadow-sm transition-all duration-150 hover:shadow-md ${activity.colorClass || ''} ${activity.isScheduled ? 'bg-blue-50' : ''}`}
+            className={`flex items-start gap-3 p-3 rounded-lg border transition-all duration-150 hover:bg-white/10 ${activity.colorClass || 'bg-white/5 border-white/15'} ${activity.isScheduled ? 'bg-blue-500/10' : ''}`}
           >
             <div className="text-xl flex-shrink-0" aria-hidden="true">{activity.icon}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-gray-500">{formatTimeAgo(activity.date, activity.isScheduled)}</span>
+                <span className="text-xs font-semibold text-white/50">{formatTimeAgo(activity.date, activity.isScheduled)}</span>
               </div>
-              <h4 className="text-sm font-bold text-gray-900 m-0 truncate">{activity.title}</h4>
+              <h4 className="text-sm font-bold text-white m-0 truncate">{activity.title}</h4>
               {activity.description && (
-                <p className="text-xs text-gray-600 m-0 mt-0.5">{activity.description}</p>
+                <p className="text-xs text-white/60 m-0 mt-0.5">{activity.description}</p>
               )}
             </div>
           </div>

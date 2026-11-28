@@ -115,7 +115,7 @@ const NextFight = ({ upcomingFight, boxerId, gameTime, onRefresh }) => {
           className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold border-none cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2 ${
             isCancelling
               ? 'bg-white/10 text-white/50 cursor-not-allowed'
-              : 'bg-gradient-to-br from-danger to-danger-darker text-white hover:bg-gradient-to-br hover:from-danger-brighter hover:to-danger hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(239,68,68,0.3)]'
+              : 'bg-gradient-to-br from-danger to-danger-darker text-white hover:bg-gradient-to-br hover:from-danger-bright hover:to-danger hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(239,68,68,0.3)]'
           }`}
           disabled={isCancelling}
           aria-label={`Cancel fight against ${opponentName}`}
@@ -126,7 +126,7 @@ const NextFight = ({ upcomingFight, boxerId, gameTime, onRefresh }) => {
 
       {/* Error Message */}
       {cancelError && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded-md text-sm text-red-900" role="alert">
+        <div className="mt-4 p-3 bg-red-500/10 border border-red-400/30 rounded-md text-sm text-red-200" role="alert">
           ⚠️ {cancelError}
         </div>
       )}
@@ -159,7 +159,7 @@ const NextFight = ({ upcomingFight, boxerId, gameTime, onRefresh }) => {
                 Keep Fight
               </button>
               <button
-                className="px-5 py-2.5 bg-gradient-to-br from-danger to-danger-darker text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-150 hover:bg-gradient-to-br hover:from-danger-brighter hover:to-danger hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(239,68,68,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 bg-gradient-to-br from-danger to-danger-darker text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-150 hover:bg-gradient-to-br hover:from-danger-bright hover:to-danger hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(239,68,68,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleCancelFight}
                 disabled={isCancelling}
               >

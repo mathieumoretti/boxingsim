@@ -74,7 +74,7 @@ function App() {
           path="/create-boxer"
           element={
             <ProtectedRoute>
-              <CreateBoxer user={currentUser} />
+              <CreateBoxer user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
@@ -94,7 +94,7 @@ function App() {
           path="/rankings"
           element={
             <ProtectedRoute>
-              <Rankings />
+              <Rankings user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
@@ -114,7 +114,7 @@ function App() {
           path="/boxer/:id/fights"
           element={
             <ProtectedRoute>
-              <FightHistoryPage />
+              <FightHistoryPage user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
@@ -144,7 +144,7 @@ function App() {
           path="/boxers"
           element={
             <ProtectedRoute>
-              <BoxersList user={currentUser} />
+              <BoxersList user={currentUser} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />

@@ -58,7 +58,7 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
   };
 
   return (
-    <div className={`bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-gray-300 ${isExpanded ? 'ring-2 ring-primary/20' : ''}`}>
+    <div className={`bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] overflow-hidden transition-all duration-150 hover:bg-white/15 ${isExpanded ? 'ring-2 ring-primary/30' : ''}`}>
       {/* Header row - clickable to expand */}
       <div
         className="flex items-center gap-4 p-5 cursor-pointer select-none"
@@ -84,16 +84,16 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
 
         {/* Opponent Info */}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-gray-800 truncate">
+          <div className="text-sm font-bold text-white truncate">
             vs {fight.opponent_name || `Boxer #${opponentId}`}
           </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+          <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
             <span>Round {fight.round}</span>
-            {isKnockout && <span className="text-orange-600 font-semibold">🔥 KO</span>}
+            {isKnockout && <span className="text-orange-300 font-semibold">🔥 KO</span>}
             <span>•</span>
             <Link
               to={`/fight/${fight.id}`}
-              className="view-details-link inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-gray-100 to-gray-200 rounded-md text-primary-dark text-xs font-semibold transition-all duration-150 hover:bg-gradient-to-r hover:from-primary hover:to-primary-dark hover:text-white hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+              className="view-details-link inline-flex items-center gap-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-md text-white text-xs font-semibold transition-all duration-150 hover:bg-white/15 hover:border-white/30 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             >
               View Details →
             </Link>
@@ -101,13 +101,13 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
         </div>
 
         {/* Time Ago */}
-        <div className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+        <div className="text-xs text-white/50 whitespace-nowrap flex-shrink-0">
           {getTimeAgoDisplay()}
         </div>
 
         {/* Expand Icon */}
         <div
-          className={`text-base text-gray-400 transition-all duration-150 flex-shrink-0 ${isExpanded || ''}`}
+          className={`text-base text-white/40 transition-all duration-150 flex-shrink-0 ${isExpanded || ''}`}
         >
           {isExpanded ? '▲' : '▼'}
         </div>
@@ -115,10 +115,10 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-5 pb-5 pt-0 space-y-3 bg-black/5">
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Final Result:</span>
-            <span className="text-sm font-bold text-gray-800">
+        <div className="px-5 pb-5 pt-0 space-y-3 bg-white/5">
+          <div className="flex items-center justify-between py-2 border-b border-white/10">
+            <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Final Result:</span>
+            <span className="text-sm font-bold text-white">
               {isWin ? '🎉 Victory!' : isLoss ? '💔 Defeat' : '🤝 Draw'}
             </span>
           </div>
@@ -126,9 +126,9 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
           {fight.data && (
             <>
               {(fight.data.my_health !== undefined || fight.data.opponent_health !== undefined) && (
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Health at End:</span>
-                  <span className="text-sm font-bold text-gray-800">
+                <div className="flex items-center justify-between py-2 border-b border-white/10">
+                  <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Health at End:</span>
+                  <span className="text-sm font-bold text-white">
                     You: {Math.round(fight.data.my_health || 100)}% •
                     Opponent: {Math.round(fight.data.opponent_health || 100)}%
                   </span>
@@ -136,36 +136,36 @@ const FightEntryCard = React.memo(({ fight, myBoxerId, currentGameTime }) => {
               )}
 
               {fight.data.method && (
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Method:</span>
-                  <span className="text-sm font-bold text-gray-800 capitalize">{fight.data.method}</span>
+                <div className="flex items-center justify-between py-2 border-b border-white/10">
+                  <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Method:</span>
+                  <span className="text-sm font-bold text-white capitalize">{fight.data.method}</span>
                 </div>
               )}
             </>
           )}
 
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Rounds Fought:</span>
-            <span className="text-sm font-bold text-gray-800">{fight.round} of {fight.round || 12}</span>
+          <div className="flex items-center justify-between py-2 border-b border-white/10">
+            <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Rounds Fought:</span>
+            <span className="text-sm font-bold text-white">{fight.round} of {fight.round || 12}</span>
           </div>
 
           {fight.data?.xp_gained && (
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">XP Gained:</span>
-              <span className="text-sm font-bold text-warning-dark">+{Math.round(fight.data.xp_gained)}</span>
+            <div className="flex items-center justify-between py-2 border-b border-white/10">
+              <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">XP Gained:</span>
+              <span className="text-sm font-bold text-warning-bright">+{Math.round(fight.data.xp_gained)}</span>
             </div>
           )}
 
           {fight.data?.reward && (
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Reward:</span>
-              <span className="text-sm font-medium text-gray-700">${Math.round(fight.data.reward)}</span>
+            <div className="flex items-center justify-between py-2 border-b border-white/10">
+              <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Reward:</span>
+              <span className="text-sm font-medium text-white/70">${Math.round(fight.data.reward)}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between py-2">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Game Time:</span>
-            <span className="text-sm font-bold text-gray-800 text-right">
+            <span className="text-xs text-white/60 font-semibold uppercase tracking-wide">Game Time:</span>
+            <span className="text-sm font-bold text-white text-right">
               {new Date(fight.end_time || fight.created_at).toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'short',
@@ -196,11 +196,11 @@ const TimelineSection = ({ label, fights, myBoxerId, currentGameTime }) => {
   return (
     <div className="space-y-4">
       <div className="relative mb-4">
-        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide m-0">{label}</h3>
-        <span className="inline-block px-2 py-1 bg-gray-100 text-xs font-semibold text-gray-500 rounded-md ml-2">
+        <h3 className="text-sm font-bold text-white/60 uppercase tracking-wide m-0">{label}</h3>
+        <span className="inline-block px-2 py-1 bg-white/10 text-xs font-semibold text-white/60 rounded-md ml-2">
           {fights.length} fight{fights.length !== 1 ? 's' : ''}
         </span>
-        <div className="h-1 mt-2 bg-gradient-to-r from-gray-300 to-gray-100"></div>
+        <div className="h-1 mt-2 bg-gradient-to-r from-white/20 to-transparent"></div>
       </div>
       <div className="space-y-3">
         {fights.map(fight => (
@@ -356,9 +356,9 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="p-8 text-center bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-500 font-medium">Loading fight history...</p>
+        <div className="p-8 text-center bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-light border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-white/60 font-medium">Loading fight history...</p>
         </div>
       );
     }
@@ -376,11 +376,11 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
 
     if (fights.length === 0) {
       return (
-        <div className="p-12 text-center bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <div className="p-12 text-center bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10">
           <span className="text-5xl block mb-4" role="img" aria-label="empty scroll">📜</span>
-          <h3 className="text-lg font-semibold text-gray-600 m-0 mb-2">No Fights Yet</h3>
-          <p className="text-gray-500 m-0 mb-1">This boxer hasn't fought any matches yet.</p>
-          <p className="text-sm text-gray-400 italic m-0">Book a fight to see the action!</p>
+          <h3 className="text-lg font-semibold text-white/80 m-0 mb-2">No Fights Yet</h3>
+          <p className="text-white/60 m-0 mb-1">This boxer hasn't fought any matches yet.</p>
+          <p className="text-sm text-white/50 italic m-0">Book a fight to see the action!</p>
         </div>
       );
     }
@@ -405,8 +405,8 @@ const FightHistory = ({ boxerId, currentGameTime }) => {
 
   return (
     <div className="max-w-[900px] mx-auto my-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 m-0">Fight History</h2>
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+        <h2 className="text-2xl font-bold text-white m-0">Fight History</h2>
         <button
           onClick={handleRefresh}
           disabled={isLoading}

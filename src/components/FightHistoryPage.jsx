@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import TopBar from './TopBar';
 import FightHistory from './FightHistory';
 import PageLayout from './PageLayout';
@@ -16,6 +16,7 @@ import { fetchWorldTime } from '../api/world';
  */
 const FightHistoryPage = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const { id } = useParams(); // boxerId from /boxer/:id/fights
   const [currentGameTime, setCurrentGameTime] = useState(null);
 
   useEffect(() => {
@@ -37,13 +38,13 @@ const FightHistoryPage = ({ user, onLogout }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
-        onBack={() => navigate('/dashboard')}
-        backButtonLabel="← Back to Dashboard"
+        onBack={() => navigate(id ? `/boxer/${id}` : '/boxers')}
+        backButtonLabel="← Back to Profile"
       >
-        <FightHistory boxerId={undefined} currentGameTime={currentGameTime} />
+        <FightHistory boxerId={id} currentGameTime={currentGameTime} />
       </PageLayout>
     </div>
   );

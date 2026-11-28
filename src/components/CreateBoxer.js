@@ -3,8 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
+import TopBar from './TopBar';
+import { SkipLink } from './SkipLink';
 
-const CreateBoxer = ({ user }) => {
+const CreateBoxer = ({ user, onLogout }) => {
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.replace('/login');
+    }
+  };
+
   const [name, setName] = useState('');
   const [boxerClass, setBoxerClass] = useState('heavyweight');
   const [error, setError] = useState(null);
@@ -68,15 +78,19 @@ const CreateBoxer = ({ user }) => {
   };
 
   return (
-    <div className="max-w-[500px] mx-auto p-8">
-      <h2 className="text-xl font-bold text-gray-800 text-center mb-6 m-0">Create New Boxer</h2>
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+      <SkipLink targetId="main-content" />
+      <TopBar currentUser={user} onLogout={handleLogout} />
+
+      <main id="main-content" className="max-w-[500px] mx-auto p-8" tabIndex="-1">
+      <h2 className="text-xl font-bold text-white text-center mb-6 m-0">Create New Boxer</h2>
 
       {error && (
         <ErrorDisplay error={error} variant="alert" icon={true} title="Creation Failed" />
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 text-green-700 rounded-lg text-center font-medium mb-4 border border-green-200">
+        <div className="p-4 bg-green-500/10 border border-green-400/30 rounded-lg text-center font-medium mb-4 text-green-200">
           {success}
         </div>
       )}
@@ -90,7 +104,7 @@ const CreateBoxer = ({ user }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full p-4 border border-gray-300 rounded-lg text-base bg-white transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+            className="w-full p-4 border border-white/20 rounded-lg text-base text-white bg-navy-dark transition-all duration-150 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary/30 placeholder:text-white/40"
           />
         </div>
 
@@ -99,7 +113,7 @@ const CreateBoxer = ({ user }) => {
             id="boxer-class"
             value={boxerClass}
             onChange={(e) => setBoxerClass(e.target.value)}
-            className="w-full p-4 border border-gray-300 rounded-lg text-base bg-white transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+            className="w-full p-4 border border-white/20 rounded-lg text-base text-white bg-navy-dark transition-all duration-150 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary/30"
           >
             <option value="heavyweight">Heavyweight</option>
             <option value="middleweight">Middleweight</option>
@@ -116,6 +130,7 @@ const CreateBoxer = ({ user }) => {
           {isLoading ? 'Creating...' : 'Create Boxer'}
         </button>
       </form>
+      </main>
     </div>
   );
 };

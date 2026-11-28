@@ -64,7 +64,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
   if (isLoading) {
     return (
       <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
-        <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm font-medium">
+        <div className="flex items-center justify-center h-[200px] text-white/60 text-sm font-medium">
           Loading...
         </div>
       </div>
@@ -83,7 +83,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
     return (
       <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
         <div className="flex items-center justify-center h-[200px]">
-          <p className="text-sm font-medium text-gray-600 m-0">No stat data yet.</p>
+          <p className="text-sm font-medium text-white/60 m-0">No stat data yet.</p>
         </div>
       </div>
     );
@@ -124,11 +124,10 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
   };
 
   return (
-    <div className="bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
+    <div className="relative bg-navy-darkest rounded-xl p-5 md:p-4 shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10 mb-5">
       <svg
-        width={chartWidth}
-        height={chartHeight}
-        className="w-full"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="w-full h-auto"
         onMouseLeave={handleMouseLeave}
       >
         <defs>
@@ -177,7 +176,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 x={padding.left - 10}
                 y={y + 4}
                 textAnchor="end"
-                fill="#6b7280"
+                fill="#9ca3af"
                 fontSize={compact ? 9 : 10}
                 fontFamily="inherit"
               >
@@ -244,7 +243,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 stroke="white"
                 strokeWidth="2"
                 filter="url(#strengthShadow)"
-                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
+                className="transition-all duration-150 cursor-pointer"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'strength', value: point.strength, x: strengthX, y: strengthY, date: point.date })}
               />
               {/* Defense point */}
@@ -256,7 +255,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 stroke="white"
                 strokeWidth="2"
                 filter="url(#defenseShadow)"
-                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
+                className="transition-all duration-150 cursor-pointer"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'defense', value: point.defense, x: defenseX, y: defenseY, date: point.date })}
               />
               {/* Agility point */}
@@ -268,7 +267,7 @@ const StatProgressionChart = ({ boxerId, compact = false }) => {
                 stroke="white"
                 strokeWidth="2"
                 filter="url(#agilityShadow)"
-                className="transition-all duration-150 cursor-pointer hover:r-[7] hover:fill-white hover:stroke-[3]"
+                className="transition-all duration-150 cursor-pointer"
                 onMouseEnter={(e) => setHoveredPoint({ index, stat: 'agility', value: point.agility, x: agilityX, y: agilityY, date: point.date })}
               />
             </g>

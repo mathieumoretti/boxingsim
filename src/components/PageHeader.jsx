@@ -42,10 +42,10 @@ const PageHeader = ({
       {/* Title Section */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-gray-900 m-0">{title}</h1>
+          <h1 className="text-3xl font-bold text-white m-0">{title}</h1>
 
           {subtitle && (
-            <p className="text-base text-gray-600 m-0">{subtitle}</p>
+            <p className="text-base text-white/60 m-0">{subtitle}</p>
           )}
         </div>
 

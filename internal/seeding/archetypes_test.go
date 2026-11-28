@@ -62,10 +62,11 @@ func TestGetArchetypeByName(t *testing.T) {
 }
 
 func TestRandomArchetype(t *testing.T) {
-	// Generate 100 archetypes and verify distribution
+	// Generate 1000 archetypes and verify distribution
+	// (large sample keeps the statistical assertions stable across CI runs)
 	counts := make(map[string]int)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		arch := RandomArchetype()
 		counts[arch.Name]++
 	}
@@ -75,10 +76,12 @@ func TestRandomArchetype(t *testing.T) {
 		t.Errorf("Expected diverse archetype distribution, got %d unique types", len(counts))
 	}
 
-	// Common archetypes should appear more frequently
+	// Common archetypes (Brawler + Technician + All-Rounder, 50% combined weight)
+	// should appear more frequently: expect ~500 of 1000, allow 400 as a
+	// statistical floor (>6 sigma below the mean)
 	totalCommon := counts["All-Rounder"] + counts["Brawler"] + counts["Technician"]
-	if totalCommon < 40 {
-		t.Errorf("Expected common archetypes to appear at least 40 times, got %d", totalCommon)
+	if totalCommon < 400 {
+		t.Errorf("Expected common archetypes to appear at least 400 times out of 1000, got %d", totalCommon)
 	}
 }
 

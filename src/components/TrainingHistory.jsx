@@ -3,6 +3,36 @@ import { fetchTrainingHistory } from '../api/training';
 import { ErrorDisplay } from './ErrorDisplay';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
+// Friendly display names for the internal training type keys (DB snake_case)
+const TRAINING_TYPE_LABELS = {
+  normal_training: 'General Training',
+  strength_training: 'Strength Training',
+  defense_drill: 'Defense Drills',
+  agility_workout: 'Agility Workout',
+  sparring: 'Sparring',
+  cardio: 'Cardio',
+};
+
+const getTrainingTypeLabel = (type) => {
+  if (!type) return '';
+  if (TRAINING_TYPE_LABELS[type]) return TRAINING_TYPE_LABELS[type];
+  // Fallback: pretty-print any unknown key (e.g. "speed_work" -> "Speed Work")
+  return String(type)
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+// Map internal type names (e.g. "strength_training") to the base style key
+const normalizeTrainingType = (type) => {
+  const key = String(type || '').toLowerCase();
+  if (key.startsWith('strength')) return 'strength';
+  if (key.startsWith('defense')) return 'defense';
+  if (key.startsWith('agility')) return 'agility';
+  if (key.startsWith('normal')) return 'general';
+  return key;
+};
+
 const TrainingHistory = ({ boxerId, compact = false }) => {
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +59,7 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
   };
 
   const getTrainingTypeIcon = (type) => {
-    switch (type?.toLowerCase()) {
+    switch (normalizeTrainingType(type)) {
       case 'strength':
         return '💪';
       case 'defense':
@@ -44,49 +74,49 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
   };
 
   const getTrainingBorderClass = (type) => {
-    switch (type?.toLowerCase()) {
+    switch (normalizeTrainingType(type)) {
       case 'strength':
-        return 'border-l-[4px] border-l-red-500';
+        return 'border-red-400/40';
       case 'defense':
-        return 'border-l-[4px] border-l-blue-500';
+        return 'border-blue-400/40';
       case 'agility':
-        return 'border-l-[4px] border-l-yellow-500';
+        return 'border-amber-400/40';
       case 'recovery':
-        return 'border-l-[4px] border-l-teal-500';
+        return 'border-teal-400/40';
       default:
-        return 'border-l-[4px] border-l-gray-400';
+        return 'border-white/15';
     }
   };
 
   const getTypeBadgeClasses = (type) => {
-    switch (type?.toLowerCase()) {
+    switch (normalizeTrainingType(type)) {
       case 'strength':
-        return 'bg-gradient-to-r from-red-50 to-red-100 text-red-700';
+        return 'bg-red-500/10 border border-red-400/30 text-red-200';
       case 'defense':
-        return 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700';
+        return 'bg-blue-500/10 border border-blue-400/30 text-blue-200';
       case 'agility':
-        return 'bg-gradient-to-r from-yellow-50 to-yellow-200 text-yellow-800';
+        return 'bg-amber-500/10 border border-amber-400/30 text-amber-200';
       case 'recovery':
-        return 'bg-gradient-to-r from-teal-50 to-teal-200 text-teal-800';
+        return 'bg-teal-500/10 border border-teal-400/30 text-teal-200';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-white/10 border border-white/15 text-white/80';
     }
   };
 
   const getGainTagClasses = (type) => {
     switch (type) {
       case 'xp':
-        return 'bg-gradient-to-r from-purple-50 to-purple-200 text-purple-800';
+        return 'bg-victory-gold/10 border border-victory-gold/40 text-victory-gold';
       case 'strength':
-        return 'bg-gradient-to-r from-red-50 to-red-100 text-red-700';
+        return 'bg-red-500/10 border border-red-400/30 text-red-200';
       case 'defense':
-        return 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700';
+        return 'bg-blue-500/10 border border-blue-400/30 text-blue-200';
       case 'agility':
-        return 'bg-gradient-to-r from-yellow-50 to-yellow-200 text-yellow-800';
+        return 'bg-amber-500/10 border border-amber-400/30 text-amber-200';
       case 'recovery':
-        return 'bg-gradient-to-r from-teal-50 to-teal-200 text-teal-800';
+        return 'bg-teal-500/10 border border-teal-400/30 text-teal-200';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-white/10 border border-white/15 text-white/70';
     }
   };
 
@@ -116,15 +146,15 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl p-8 text-center shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <div className="text-gray-500 text-base font-medium">Loading...</div>
+      <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+        <div className="text-white/60 text-base font-medium">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl p-8 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="bg-white/5 border border-white/10 rounded-xl p-8">
         <ErrorDisplay error={error} variant="alert" title="Failed to Load History" />
       </div>
     );
@@ -132,8 +162,8 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
 
   if (history.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-8 text-center shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <div className="text-gray-500 text-base font-medium">No training sessions yet.</div>
+      <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+        <div className="text-white/60 text-base font-medium">No training sessions yet.</div>
       </div>
     );
   }
@@ -144,7 +174,7 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
         {history.map((session) => (
           <div
             key={session.id}
-            className={`bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 ${getTrainingBorderClass(session.training_type)}`}
+            className={`bg-white/5 border rounded-xl overflow-hidden transition-all duration-150 hover:bg-white/10 hover:-translate-y-0.5 ${getTrainingBorderClass(session.training_type)}`}
           >
             <div className="flex items-center justify-between p-4 gap-4">
               {/* Type Badge */}
@@ -152,13 +182,13 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
                 className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide ${getTypeBadgeClasses(session.training_type)}`}
               >
                 <span className="text-base">{getTrainingTypeIcon(session.training_type)}</span>
-                <span>{session.training_type || 'Unknown'}</span>
+                <span>{getTrainingTypeLabel(session.training_type) || 'Unknown'}</span>
               </div>
 
               {/* Session Info */}
               <div className="flex-1">
-                <div className="text-sm font-bold text-gray-800 mb-1">{session.training_type || 'Unknown'} Training</div>
-                <div className="text-xs text-gray-500">{formatDateTime(session.completed_at)}</div>
+                <div className="text-sm font-bold text-white mb-1">{getTrainingTypeLabel(session.training_type) || 'Unknown'}</div>
+                <div className="text-xs text-white/60">{formatDateTime(session.completed_at)}</div>
               </div>
 
               {/* Gains Display */}
@@ -183,16 +213,16 @@ const TrainingHistory = ({ boxerId, compact = false }) => {
                     +{session.xp_gained} XP
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-gray-100 to-gray-200 rounded text-xs font-semibold text-gray-600">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/10 border border-white/15 rounded text-xs font-semibold text-white/70">
                   {session.duration_hours}h • {session.energy_cost || 0}E
                 </span>
               </div>
             </div>
 
             {/* Summary Footer */}
-            <div className="p-3 bg-black/5 border-t border-gray-200 flex justify-between items-center">
-              <span className="text-xs text-gray-500 font-mono">ID: {session.id.slice(-8)}</span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-green-50 to-green-200 rounded text-xs font-bold uppercase tracking-wide text-green-800">
+            <div className="p-3 bg-white/5 border-t border-white/10 flex justify-between items-center">
+              <span className="text-xs text-white/50 font-mono">ID: </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 border border-green-400/30 rounded text-xs font-bold uppercase tracking-wide text-green-200">
                 ✓ Completed
               </span>
             </div>

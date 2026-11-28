@@ -39,34 +39,34 @@ import React from 'react';
 const colorStyles = {
   default: {
     gradient: 'from-gray-400 to-gray-600',
-    bgGradient: 'bg-gradient-to-br from-gray-100 to-gray-200',
-    text: 'text-gray-700',
-    label: 'text-gray-500',
-    barBg: 'bg-gray-200',
+    bgGradient: 'bg-white/10 border border-white/15',
+    text: 'text-white',
+    label: 'text-white/60',
+    barBg: 'bg-white/15',
     shadow: '',
   },
   strength: {
     gradient: 'from-strength to-red-600',
-    bgGradient: 'bg-gradient-to-br from-red-50 to-red-100',
-    text: 'text-strength',
-    label: 'text-gray-600',
-    barBg: 'bg-gray-200',
+    bgGradient: 'bg-red-500/15 border border-red-400/30',
+    text: 'text-red-400',
+    label: 'text-white/60',
+    barBg: 'bg-white/15',
     shadow: 'shadow-[0_2px_8px_rgba(239,68,68,0.15)]',
   },
   defense: {
     gradient: 'from-defense to-blue-600',
-    bgGradient: 'bg-gradient-to-br from-blue-50 to-blue-100',
-    text: 'text-defense',
-    label: 'text-gray-600',
-    barBg: 'bg-gray-200',
+    bgGradient: 'bg-blue-500/15 border border-blue-400/30',
+    text: 'text-blue-400',
+    label: 'text-white/60',
+    barBg: 'bg-white/15',
     shadow: 'shadow-[0_2px_8px_rgba(59,130,246,0.15)]',
   },
   agility: {
     gradient: 'from-agility to-amber-600',
-    bgGradient: 'bg-gradient-to-br from-amber-50 to-amber-100',
-    text: 'text-agility-dark',
-    label: 'text-gray-600',
-    barBg: 'bg-gray-200',
+    bgGradient: 'bg-amber-500/15 border border-amber-400/30',
+    text: 'text-amber-400',
+    label: 'text-white/60',
+    barBg: 'bg-white/15',
     shadow: 'shadow-[0_2px_8px_rgba(234,179,8,0.15)]',
   },
 };
@@ -112,7 +112,7 @@ export function StatDisplay({
           <span className={`text-xs font-semibold ${theme.text} tabular-nums`}>
             {displayValue}
             {max > 0 && !showPercentage && (
-              <span className="text-gray-400 ml-1">/ {max}</span>
+              <span className="text-white/50 ml-1">/ {max}</span>
             )}
           </span>
         </div>
@@ -131,7 +131,7 @@ export function StatDisplay({
   if (variant === 'mini') {
     return (
       <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${theme.bgGradient} ${theme.shadow}`}>
-        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <span className="text-xs font-semibold text-white/70 uppercase tracking-wide">
           {label}
         </span>
         <span className={`text-sm font-bold ${theme.text} tabular-nums`}>

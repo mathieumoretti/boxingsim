@@ -119,8 +119,8 @@ const FightBookingPage = ({ user, onLogout }) => {
         opponent_id: selectedOpponent.opponent.boxer.id
       });
 
-      // Success - redirect to dashboard
-      navigate('/dashboard');
+      // Success - back to the boxer's profile (shows the scheduled fight)
+      navigate(id ? `/boxer/${id}` : '/boxers');
     } catch (err) {
       // Use specific error message from utility with boxer/opponent context
       const errorMessage = getUserErrorMessage(err, 'fightBooking', {
@@ -161,7 +161,7 @@ const FightBookingPage = ({ user, onLogout }) => {
           <main id="booking-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-              <p className="text-base text-gray-600">Loading boxer details...</p>
+              <p className="text-base text-white/60">Loading boxer details...</p>
             </div>
           </main>
         </PageLayout>
@@ -198,13 +198,13 @@ const FightBookingPage = ({ user, onLogout }) => {
       <TopBar currentUser={user} onLogout={onLogout} />
       <PageLayout
         variant="fight-booking-page"
-        onBack={() => navigate('/dashboard')}
-        backButtonLabel="← Back to Dashboard"
+        onBack={() => navigate(id ? `/boxer/${id}` : '/boxers')}
+        backButtonLabel="← Back to Profile"
       >
         {/* Main Content */}
         <main id="booking-content" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none" tabIndex="-1">
           {/* Boxer Summary (Header Info) */}
-          <header className="bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light p-6 rounded-xl mb-6 text-white shadow-[0_4px_16px_rgba(31,40,51,0.2)]" aria-label="Fighter information">
+          <header className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-xl p-6 mb-6 text-white" aria-label="Fighter information">
             <div className="mb-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-white/70">BOOK A FIGHT FOR</span>
               <h1 className="text-3xl font-bold m-0">{boxer.name}</h1>
@@ -221,19 +221,19 @@ const FightBookingPage = ({ user, onLogout }) => {
           </header>
 
         {/* Filter Controls */}
-        <section aria-label="Opponent filters" className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-          <fieldset className="mb-5 pb-5 border-b border-gray-200">
-            <legend className="text-sm font-semibold text-gray-700 mb-3">Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}</legend>
+        <section aria-label="Opponent filters" className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+          <fieldset className="mb-5 pb-5 border-b border-white/10">
+            <legend className="text-sm font-semibold text-white/80 mb-3">Level Range: {getLevelRangeMin()}-{getLevelRangeMax()}</legend>
             <input
               type="range"
               min="0"
               max="10"
               value={filters.levelRange}
               onChange={(e) => handleFilterChange('levelRange', parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+              className="w-full h-2 bg-white/15 rounded-lg appearance-none cursor-pointer accent-primary-light"
               aria-label="Set level range for opponent matching"
             />
-            <div className="flex justify-between mt-2 text-xs font-semibold text-gray-500">
+            <div className="flex justify-between mt-2 text-xs font-semibold text-white/50">
               <span>0</span>
               <span>5</span>
               <span>10+</span>
@@ -246,9 +246,9 @@ const FightBookingPage = ({ user, onLogout }) => {
                 type="checkbox"
                 checked={filters.aiOnly}
                 onChange={(e) => handleFilterChange('aiOnly', e.target.checked)}
-                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                className="w-4 h-4 accent-primary-light cursor-pointer"
               />
-              <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">AI Fighters Only</span>
+              <span className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">AI Fighters Only</span>
             </label>
 
             <label className="inline-flex items-center gap-2 cursor-pointer group">
@@ -256,9 +256,9 @@ const FightBookingPage = ({ user, onLogout }) => {
                 type="checkbox"
                 checked={filters.minHealth >= 80}
                 onChange={(e) => handleFilterChange('minHealth', e.target.checked ? 80 : 30)}
-                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                className="w-4 h-4 accent-primary-light cursor-pointer"
               />
-              <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">Excellent Health Only</span>
+              <span className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">Excellent Health Only</span>
             </label>
           </div>
         </section>
@@ -275,9 +275,9 @@ const FightBookingPage = ({ user, onLogout }) => {
 
         {/* Match Validation Warnings */}
         {hasWarnings && matchValidation && (
-          <div role="alert" className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-6 shadow-[0_2px_8px_rgba(251,191,36,0.1)]">
-            <h4 className="m-0 mb-2 text-base font-semibold text-amber-900">⚠️ Match Concerns:</h4>
-            <ul className="m-0 space-y-1 list-disc list-inside text-sm text-amber-800">
+          <div role="alert" className="bg-amber-500/10 border border-amber-400/30 rounded-lg p-4 mb-6">
+            <h4 className="m-0 mb-2 text-base font-semibold text-amber-200">⚠️ Match Concerns:</h4>
+            <ul className="m-0 space-y-1 list-disc list-inside text-sm text-amber-200/90">
               {matchValidation.warnings.map((warning, idx) => (
                 <li key={idx}>{warning}</li>
               ))}
@@ -286,13 +286,13 @@ const FightBookingPage = ({ user, onLogout }) => {
         )}
 
         {/* Booking Actions */}
-        <footer className="bg-gray-50 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <footer className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10">
           {selectedOpponent && (
-            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-              <p className="m-0 text-sm font-semibold text-gray-700">
+            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p className="m-0 text-sm font-semibold text-white">
                 Selected: <strong>{selectedOpponent.opponent.boxer.name}</strong>
               </p>
-              <p className="m-0 mt-1 text-sm font-semibold text-gray-600">
+              <p className="m-0 mt-1 text-sm font-semibold text-white/70">
                 Match Quality: <strong>{Math.round(selectedOpponent.score.overall_score * 100)}%</strong>
               </p>
             </div>
@@ -307,7 +307,7 @@ const FightBookingPage = ({ user, onLogout }) => {
           <button
             className={`w-full py-3 px-4 text-base font-semibold rounded-lg border-none transition-all duration-150 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
               !selectedOpponent || isBooking
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-white/10 text-white/40 cursor-not-allowed'
                 : 'bg-gradient-to-br from-success to-emerald-600 text-white hover:bg-gradient-to-br hover:from-emerald-400 hover:to-success hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(34,197,94,0.3)]'
             }`}
             onClick={handleBookFight}
