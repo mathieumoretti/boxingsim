@@ -78,7 +78,7 @@ const Dashboard = ({ user }) => {
       const fights = Array.isArray(fightsData) ? fightsData : [];
 
       // Calculate notifications (boxers needing attention)
-      const now = new Date(worldTime?.game_time || new Date());
+      const now = new Date(worldTime?.current_game_time || new Date());
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
       const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -177,7 +177,7 @@ const Dashboard = ({ user }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
         <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
@@ -189,7 +189,7 @@ const Dashboard = ({ user }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
         <SkipLink targetId="main-content" />
         <TopBar currentUser={currentUser} onLogout={handleLogout} />
         <ErrorDisplay
@@ -204,7 +204,7 @@ const Dashboard = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
       <SkipLink targetId="main-content" />
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
 
@@ -240,9 +240,9 @@ const Dashboard = ({ user }) => {
           {/* Left Column: Notifications & Upcoming Fights */}
           <div className="lg:col-span-2 space-y-6">
             {/* Notifications Panel */}
-            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Notifications">
-              <header className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+            <section className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10 overflow-hidden" aria-label="Notifications">
+              <header className="flex items-center justify-between p-5 border-b border-white/10">
+                <h2 className="text-lg font-bold text-white m-0 flex items-center gap-2">
                   <span aria-hidden="true">🔔</span>
                   Notifications
                 </h2>
@@ -275,9 +275,9 @@ const Dashboard = ({ user }) => {
             </section>
 
             {/* Upcoming Fights Panel */}
-            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Upcoming fights">
-              <header className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+            <section className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10 overflow-hidden" aria-label="Upcoming fights">
+              <header className="flex items-center justify-between p-5 border-b border-white/10">
+                <h2 className="text-lg font-bold text-white m-0 flex items-center gap-2">
                   <span aria-hidden="true">🥊</span>
                   Upcoming Fights
                 </h2>
@@ -310,9 +310,9 @@ const Dashboard = ({ user }) => {
 
           {/* Right Column: Recent Activity */}
           <div className="space-y-6">
-            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Recent activity">
-              <header className="p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+            <section className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10 overflow-hidden" aria-label="Recent activity">
+              <header className="p-5 border-b border-white/10">
+                <h2 className="text-lg font-bold text-white m-0 flex items-center gap-2">
                   <span aria-hidden="true">📜</span>
                   Recent Activity
                 </h2>
@@ -339,9 +339,9 @@ const Dashboard = ({ user }) => {
             </section>
 
             {/* Quick Actions Panel */}
-            <section className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden" aria-label="Quick actions">
-              <header className="p-5 bg-gradient-to-br from-gray-50 to-slate-100 border-b border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800 m-0">Quick Actions</h2>
+            <section className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/10 overflow-hidden" aria-label="Quick actions">
+              <header className="p-5 border-b border-white/10">
+                <h2 className="text-lg font-bold text-white m-0">Quick Actions</h2>
               </header>
 
               <div className="p-5 space-y-3">
@@ -350,12 +350,12 @@ const Dashboard = ({ user }) => {
                   Create Fighter
                 </Link>
 
-                <Link to="/boxers" className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-100 text-gray-700 rounded-lg font-semibold transition-all duration-150 hover:bg-gray-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-400 focus-visible:outline-offset-2">
+                <Link to="/boxers" className="flex items-center gap-2 w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg font-semibold transition-all duration-150 hover:bg-white/15 hover:border-white/30 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">
                   <span aria-hidden="true">🥊</span>
                   View All Boxers
                 </Link>
 
-                <Link to="/rankings" className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-100 text-gray-700 rounded-lg font-semibold transition-all duration-150 hover:bg-gray-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-400 focus-visible:outline-offset-2">
+                <Link to="/rankings" className="flex items-center gap-2 w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg font-semibold transition-all duration-150 hover:bg-white/15 hover:border-white/30 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">
                   <span aria-hidden="true">🏆</span>
                   View Rankings
                 </Link>
@@ -374,18 +374,18 @@ const StatCard = ({ icon, value, label, href }) => {
   const isCurrentPage = href && window.location.href.includes(href);
 
   return (
-    <div className={`bg-white rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 ${href && !isCurrentPage ? 'cursor-pointer hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-150' : ''}`}>
+    <div className={`bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-4 border border-white/10 ${href && !isCurrentPage ? 'cursor-pointer hover:bg-white/15 hover:-translate-y-0.5 transition-all duration-150' : ''}`}>
       {href && !isCurrentPage ? (
         <a href={href} className="block" onClick={(e) => e.preventDefault()}>
           <span className="text-2xl mb-1 block" aria-hidden="true">{icon}</span>
-          <span className="text-2xl font-bold text-gray-900 block mb-0.5">{value}</span>
-          <span className="text-sm text-gray-600">{label}</span>
+          <span className="text-2xl font-bold text-white block mb-0.5">{value}</span>
+          <span className="text-sm text-white/70">{label}</span>
         </a>
       ) : (
         <>
           <span className="text-2xl mb-1 block" aria-hidden="true">{icon}</span>
-          <span className="text-2xl font-bold text-gray-900 block mb-0.5">{value}</span>
-          <span className="text-sm text-gray-600">{label}</span>
+          <span className="text-2xl font-bold text-white block mb-0.5">{value}</span>
+          <span className="text-sm text-white/70">{label}</span>
         </>
       )}
     </div>
@@ -395,8 +395,8 @@ const StatCard = ({ icon, value, label, href }) => {
 const EmptyState = ({ icon, title, message }) => (
   <div className="text-center py-8">
     <div className="text-4xl mb-2" aria-hidden="true">{icon}</div>
-    <h3 className="m-0 mb-1 text-sm font-semibold text-gray-700">{title}</h3>
-    <p className="m-0 text-xs text-gray-500">{message}</p>
+    <h3 className="m-0 mb-1 text-sm font-semibold text-white/90">{title}</h3>
+    <p className="m-0 text-xs text-white/60">{message}</p>
   </div>
 );
 
@@ -404,12 +404,12 @@ const NotificationItem = ({ notification, worldTime }) => {
   const isUrgent = notification.priority === 'high';
 
   return (
-    <li className={`p-3 rounded-lg border ${isUrgent ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+    <li className={`p-3 rounded-lg border ${isUrgent ? 'bg-red-500/10 border-red-400/30' : 'bg-blue-500/10 border-blue-400/30'}`}>
       <div className="flex items-start gap-2">
         <span className="text-sm flex-shrink-0" aria-hidden="true">
           {isUrgent ? '⚠️' : 'ℹ️'}
         </span>
-        <span className={`flex-1 text-sm ${isUrgent ? 'text-red-900' : 'text-blue-900'}`}>{notification.message}</span>
+        <span className={`flex-1 text-sm ${isUrgent ? 'text-red-200' : 'text-blue-200'}`}>{notification.message}</span>
         {notification.scheduled_time && (
           <TimeUntil datetime={notification.scheduled_time} worldTime={worldTime} />
         )}
@@ -419,23 +419,23 @@ const NotificationItem = ({ notification, worldTime }) => {
 };
 
 const FightItem = ({ fight, worldTime }) => (
-  <li className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+  <li className="p-3 rounded-lg bg-white/5 border border-white/15">
     <div className="flex items-center justify-between">
-      <span className="text-sm font-semibold text-gray-700">Fight #{fight.id}</span>
+      <span className="text-sm font-semibold text-white">Fight #{fight.id}</span>
       <TimeUntil datetime={fight.scheduled_time} worldTime={worldTime} />
     </div>
     {fight.round && (
-      <span className="mt-1 inline-block text-xs text-gray-500">{fight.round} rounds</span>
+      <span className="mt-1 inline-block text-xs text-white/60">{fight.round} rounds</span>
     )}
   </li>
 );
 
 const ActivityItem = ({ fight }) => (
-  <li className="p-3 rounded-lg bg-green-50 border border-green-200">
+  <li className="p-3 rounded-lg bg-green-500/10 border border-green-400/30">
     <div className="flex items-center gap-2">
       <span className="text-sm flex-shrink-0" aria-hidden="true">✅</span>
-      <span className="flex-1 text-sm font-semibold text-green-900">Fight #{fight.id} completed</span>
-      <time className="text-xs text-green-700" dateTime={fight.scheduled_time}>
+      <span className="flex-1 text-sm font-semibold text-green-200">Fight #{fight.id} completed</span>
+      <time className="text-xs text-green-300" dateTime={fight.scheduled_time}>
         {formatDate(fight.scheduled_time)}
       </time>
     </div>
@@ -446,7 +446,7 @@ const TimeUntil = ({ datetime, worldTime }) => {
   if (!worldTime) return null;
 
   const target = new Date(datetime);
-  const now = new Date(worldTime.game_time);
+  const now = new Date(worldTime.current_game_time);
   const diff = target - now;
 
   if (diff <= 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-danger text-white">Now</span>;
@@ -456,14 +456,14 @@ const TimeUntil = ({ datetime, worldTime }) => {
 
   if (hours > 24) {
     const days = Math.floor(hours / 24);
-    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-700">In {days}d</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-white/10 border border-white/20 text-white">In {days}d</span>;
   }
 
   if (hours > 0) {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-800">In {hours}h</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-orange-500/10 text-orange-200">In {hours}h</span>;
   }
 
-  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">In {minutes}m</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-500/10 text-red-200">In {minutes}m</span>;
 };
 
 // Utility functions

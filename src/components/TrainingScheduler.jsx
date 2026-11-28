@@ -5,6 +5,26 @@ import { ErrorDisplay } from './ErrorDisplay';
 import { Alert } from './ui';
 import { getUserErrorMessage } from '../utils/errorMessages';
 
+// Friendly display names for the internal training type keys (DB snake_case)
+const TRAINING_TYPE_LABELS = {
+  normal_training: 'General Training',
+  strength_training: 'Strength Training',
+  defense_drill: 'Defense Drills',
+  agility_workout: 'Agility Workout',
+  sparring: 'Sparring',
+  cardio: 'Cardio',
+};
+
+const getTrainingTypeLabel = (type) => {
+  if (!type?.name) return type?.name || '';
+  if (TRAINING_TYPE_LABELS[type.name]) return TRAINING_TYPE_LABELS[type.name];
+  // Fallback: pretty-print any unknown key (e.g. "speed_work" -> "Speed Work")
+  return type.name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compact = false }) => {
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedType, setSelectedType] = useState('');
@@ -21,31 +41,21 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
 
   // Fetch world time for rest countdown (only when boxer has active rest)
   useEffect(() => {
-    const loadWorldTimeData = async () => {
+    if (!boxer?.has_active_rest) return undefined;
+
+    let interval;
+    const load = async () => {
       try {
         const data = await fetchWorldTime();
         setWorldTime(data);
-
-        // Set up periodic refresh for countdown updates
-        const interval = setInterval(async () => {
-          try {
-            const data = await fetchWorldTime();
-            setWorldTime(data);
-          } catch (err) {
-            // Silently fail - countdown will just be stale
-          }
-        }, 5000);
-
-        return () => clearInterval(interval);
       } catch (err) {
-        console.warn('Failed to load world time:', err);
+        // Silently fail - countdown will just be stale
       }
     };
 
-    // Load world time if boxer has active rest period
-    if (boxer?.has_active_rest) {
-      loadWorldTimeData();
-    }
+    load();
+    interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
   }, [boxer?.has_active_rest]);
 
   const loadTrainingTypes = async () => {
@@ -200,19 +210,19 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
   // Dynamic classes for rest warning
   const getRestWarningClasses = () => {
     if (isForcedRest) {
-      return 'bg-gradient-to-r from-red-50 to-orange-100 border-b border-red-200';
+      return 'bg-red-500/10 border border-red-400/30';
     } else {
-      return 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-yellow-200';
+      return 'bg-amber-500/10 border border-amber-400/30';
     }
   };
 
   const getEnergyStatusClasses = () => {
     if (energyCost > boxer?.energy) {
-      return 'text-red-600';
+      return 'text-red-400';
     } else if (boxer?.energy - energyCost < 30) {
-      return 'text-yellow-600';
+      return 'text-amber-400';
     } else {
-      return 'text-green-600';
+      return 'text-green-400';
     }
   };
 
@@ -229,7 +239,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
   if (isLoading) {
     return (
       <div className="p-8">
-        <div className="text-center text-gray-500 py-12">Loading training types...</div>
+        <div className="text-center text-white/60 py-12">Loading training types...</div>
       </div>
     );
   }
@@ -237,7 +247,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
   if (trainingTypes.length === 0) {
     return (
       <div className="p-8">
-        <div className="text-center text-red-600 bg-red-50 py-12 rounded-lg">No training types available</div>
+        <div className="text-center text-red-200 bg-red-500/10 border border-red-400/30 py-12 rounded-lg">No training types available</div>
       </div>
     );
   }
@@ -246,13 +256,13 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
     <div className={`p-6 ${boxer?.has_active_rest ? 'has-rest' : ''}`}>
       {/* Energy Indicator - inline at top */}
       {selectedType && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <span className="text-sm text-gray-700">Energy: </span>
+        <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+          <span className="text-sm text-white/80">Energy: </span>
           <span className={`font-semibold ${getEnergyStatusClasses()}`}>
             {boxer?.energy || 0} / 100 available
           </span>
           {energyCost <= boxer?.energy && (
-            <span className="text-sm text-gray-600 ml-2">({Math.round(boxer?.energy - energyCost)} after)</span>
+            <span className="text-sm text-white/60 ml-2">({Math.round(boxer?.energy - energyCost)} after)</span>
           )}
         </div>
       )}
@@ -262,11 +272,11 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
         <div className={`mb-4 p-3 rounded-lg ${getRestWarningClasses()}`}>
           <div className="flex items-center gap-2">
             <span className="text-xl">{isForcedRest ? '🚑' : '🏥'}</span>
-            <strong className={isForcedRest ? 'text-red-800' : 'text-yellow-800'}>
+            <strong className={isForcedRest ? 'text-red-200' : 'text-amber-200'}>
               {isForcedRest ? 'Forced Rest Active' : 'Currently Resting'}
             </strong>
             {restCountdownDisplay && (
-              <span className={`text-xs ${isForcedRest ? 'text-red-700' : 'text-yellow-700'}`}>
+              <span className={`text-xs ${isForcedRest ? 'text-red-200/80' : 'text-amber-200/80'}`}>
                 — {restCountdownDisplay}
               </span>
             )}
@@ -282,19 +292,19 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
         <div className="flex gap-4 flex-wrap">
           {/* Training Type Selection */}
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="training-type" className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <label htmlFor="training-type" className="block text-sm font-medium text-white/80 mb-2">Type</label>
             <select
               id="training-type"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               required
               disabled={isSubmitting || boxer?.has_active_rest}
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm bg-white transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full p-3 bg-navy-dark border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40 transition-all duration-150 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary/30 disabled:bg-white/5 disabled:cursor-not-allowed"
             >
               <option value="">Select type...</option>
               {trainingTypes.map(type => (
                 <option key={type.id} value={type.id}>
-                  {type.name} ({type.energy_cost} E/h)
+                  {getTrainingTypeLabel(type)} ({type.energy_cost} E/h)
                 </option>
               ))}
             </select>
@@ -302,7 +312,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
 
           {/* Duration Slider */}
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+            <label htmlFor="duration" className="block text-sm font-medium text-white/80 mb-2">Duration</label>
             <div className="flex items-center gap-4">
               <input
                 id="duration"
@@ -314,13 +324,13 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
                 onChange={(e) => setDurationHours(parseFloat(e.target.value))}
                 required
                 disabled={isSubmitting || boxer?.has_active_rest}
-                className="flex-1 h-[6px] rounded bg-gradient-to-r from-indigo-200 to-indigo-400 appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="flex-1 h-[6px] rounded bg-white/15 appearance-none cursor-pointer accent-primary-light focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-gray-100 to-gray-200 rounded text-sm font-bold text-gray-800 min-w-[60px] justify-center">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-white/10 border border-white/20 rounded text-sm font-bold text-white min-w-[60px] justify-center">
                 {durationHours}h
               </span>
             </div>
-            <div className="flex justify-between w-[60px] mt-2 text-xs text-gray-500 font-semibold">
+            <div className="flex justify-between w-[60px] mt-2 text-xs text-white/50 font-semibold">
               <span>1</span>
               <span>8</span>
             </div>
@@ -329,16 +339,16 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
 
         {/* Training Type Description */}
         {trainingType && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 m-0">{trainingType.description || 'No description available'}</p>
+          <div className="p-3 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+            <p className="text-sm text-blue-200 m-0">{trainingType.description || 'No description available'}</p>
           </div>
         )}
 
         {/* Energy Cost Preview */}
         {selectedType && (
-          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-            <span className="text-sm text-gray-700 font-medium">Cost: </span>
-            <span className={`text-sm font-bold ${energyCost > boxer?.energy ? 'text-red-600' : 'text-gray-800'}`}>
+          <div className="flex items-center gap-2 p-3 bg-white/5 rounded-lg border border-white/10">
+            <span className="text-sm text-white/80 font-medium">Cost: </span>
+            <span className={`text-sm font-bold ${energyCost > boxer?.energy ? 'text-red-400' : 'text-white'}`}>
               {energyCost} energy
             </span>
           </div>
@@ -349,48 +359,48 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
           <>
             {/* Fatigue Effectiveness Warning */}
             {effectiveGains.fatigueMultiplier < 0.8 && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              <div className="p-3 bg-amber-500/10 border border-amber-400/30 rounded-lg text-sm text-amber-200">
                 ⚠️ High fatigue reduces gains by {Math.round((1 - effectiveGains.fatigueMultiplier) * 100)}%
               </div>
             )}
 
-            <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+            <div className="p-4 bg-white/5 rounded-lg border border-white/10">
               {/* Gain Bars */}
               <div className="space-y-2 mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-600 font-semibold w-[80px]">STR</span>
-                  <div className="flex-1 h-[6px] bg-gray-200 rounded overflow-hidden">
+                  <span className="text-xs text-white/70 font-semibold w-[80px]">STR</span>
+                  <div className="flex-1 h-[6px] bg-white/15 rounded overflow-hidden">
                     <div
                       className={`h-full rounded transition-all duration-200 ${getGainBarClasses('strength')}`}
                       style={{ width: `${Math.min((effectiveGains.strength / 5) * 100, 100)}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-800 font-bold w-[60px] text-right">+{effectiveGains.strength}</span>
+                  <span className="text-sm text-white font-bold w-[60px] text-right">+{effectiveGains.strength}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-600 font-semibold w-[80px]">DEF</span>
-                  <div className="flex-1 h-[6px] bg-gray-200 rounded overflow-hidden">
+                  <span className="text-xs text-white/70 font-semibold w-[80px]">DEF</span>
+                  <div className="flex-1 h-[6px] bg-white/15 rounded overflow-hidden">
                     <div
                       className={`h-full rounded transition-all duration-200 ${getGainBarClasses('defense')}`}
                       style={{ width: `${Math.min((effectiveGains.defense / 5) * 100, 100)}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-800 font-bold w-[60px] text-right">+{effectiveGains.defense}</span>
+                  <span className="text-sm text-white font-bold w-[60px] text-right">+{effectiveGains.defense}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-600 font-semibold w-[80px]">AGI</span>
-                  <div className="flex-1 h-[6px] bg-gray-200 rounded overflow-hidden">
+                  <span className="text-xs text-white/70 font-semibold w-[80px]">AGI</span>
+                  <div className="flex-1 h-[6px] bg-white/15 rounded overflow-hidden">
                     <div
                       className={`h-full rounded transition-all duration-200 ${getGainBarClasses('agility')}`}
                       style={{ width: `${Math.min((effectiveGains.agility / 5) * 100, 100)}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-800 font-bold w-[60px] text-right">+{effectiveGains.agility}</span>
+                  <span className="text-sm text-white font-bold w-[60px] text-right">+{effectiveGains.agility}</span>
                 </div>
               </div>
 
               {/* XP Preview */}
-              <div className="text-center pt-2 border-t border-slate-200 text-sm text-purple-700 font-medium">
+              <div className="text-center pt-2 border-t border-white/10 text-sm text-victory-gold font-medium">
                 +{effectiveGains.xp} XP toward Level {boxer?.level || 1}
               </div>
             </div>
@@ -400,7 +410,7 @@ const TrainingScheduler = ({ boxerId, boxer, onClose, onTrainingScheduled, compa
         {/* Submit Button */}
         <button
           type="submit"
-          className={`w-full inline-flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white border-none rounded-lg text-base font-bold uppercase tracking-wide cursor-pointer transition-all duration-150 hover:from-purple-400 hover:to-purple-500 hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(124,58,237,0.35)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${''}`}
+          className="w-full inline-flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-primary to-primary-dark text-white border-none rounded-lg text-base font-bold uppercase tracking-wide cursor-pointer transition-all duration-150 hover:from-primary-light hover:to-primary hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(37,99,235,0.35)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
           disabled={!selectedType || isSubmitting || boxer?.has_active_rest}
           title={boxer?.has_active_rest ? (isForcedRest ? 'Cannot schedule during forced rest' : 'Cannot schedule during rest') : 'Schedule Training'}
         >

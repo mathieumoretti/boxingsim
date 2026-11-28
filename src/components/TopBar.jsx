@@ -63,23 +63,41 @@ const TopBar = ({ currentUser, onLogout }) => {
             onToggle={handleMobileNavToggle}
           />
 
-          <div className="flex items-center gap-4">
-            <Link to="/create-boxer" className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-primary-dark to-primary rounded-md cursor-pointer transition-all duration-150 shadow-[0_2px_8px_rgba(37,99,235,0.4)] hover:bg-gradient-to-br hover:from-primary hover:to-primary-light hover:shadow-[0_4px_12px_rgba(37,99,235,0.6)] hover:-translate-y-1 active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 focus-visible:shadow-[0_0_0_4px_rgba(59,130,246,0.3)]">
-              <span className="text-lg font-bold leading-none md:hidden lg:block xl:block">+</span>
-              <span className="hidden md:block">Add Fighter</span>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/create-boxer"
+              title="Add Fighter"
+              aria-label="Add Fighter"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-white bg-gradient-to-br from-primary to-primary-light cursor-pointer transition-all duration-150 shadow-[0_2px_8px_rgba(37,99,235,0.4)] hover:shadow-[0_4px_12px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
+            >
+              <span className="text-lg font-bold leading-none" aria-hidden="true">+</span>
             </Link>
 
             {currentUser && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-text-muted font-medium truncate max-w-[120px] hidden md:block">
+              <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+                <span className="text-sm text-text-muted font-medium truncate max-w-[110px] hidden md:block">
                   {currentUser.username}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 text-sm font-medium text-text-muted bg-transparent border border-white/20 rounded-md cursor-pointer transition-all duration-150 hover:text-danger-bright hover:border-danger hover:bg-danger/10 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2"
+                  title="Logout"
+                  className="flex items-center justify-center w-9 h-9 text-text-muted bg-transparent border border-white/20 rounded-md cursor-pointer transition-all duration-150 hover:text-danger-bright hover:border-danger hover:bg-danger/10 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2"
                   aria-label="Logout"
                 >
-                  Logout
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2v10" />
+                    <path d="M18.4 6.6a9 9 0 1 1-12.77.04" />
+                  </svg>
                 </button>
               </div>
             )}

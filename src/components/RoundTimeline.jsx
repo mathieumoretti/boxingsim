@@ -33,9 +33,9 @@ const RoundTimeline = ({ totalRounds, method }) => {
       classes += ' bg-gradient-to-br from-navy-medium to-navy-light border-2 border-white/15 text-white hover:bg-gradient-to-br hover:from-navy-light hover:to-navy-dark hover:border-primary-light hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)]';
     } else if (status === 'final') {
       if (isKO) {
-        classes += ' bg-gradient-to-br from-danger-brighter to-danger border-2 border-warning/60 text-white shadow-[0_4px_16px_rgba(255,107,107,0.5)] scale-110';
+        classes += ' bg-gradient-to-br from-danger-bright to-danger border-2 border-warning/60 text-white shadow-[0_4px_16px_rgba(255,107,107,0.5)] scale-110';
       } else {
-        classes += ' bg-gradient-to-br from-victory-gold to-warning border-2 border-yellow-300/60 text-text-on-gold shadow-[0_4px_16px_rgba(214,158,46,0.5)] scale-110';
+        classes += ' bg-gradient-to-br from-victory-gold to-warning border-2 border-yellow-300/60 text-black shadow-[0_4px_16px_rgba(214,158,46,0.5)] scale-110';
       }
     }
 
@@ -95,7 +95,7 @@ const RoundTimeline = ({ totalRounds, method }) => {
               )}
               <span className="text-lg font-extrabold leading-none">{roundNum}</span>
               {status === 'final' && (
-                <span className={`text-[10px] font-bold mt-1 ${isKO ? 'text-danger-brighter' : 'text-white/80'}`}>
+                <span className={`text-[10px] font-bold mt-1 ${isKO ? 'text-danger-bright' : 'text-white/80'}`}>
                   {isKO ? 'KO' : 'END'}
                 </span>
               )}
@@ -112,7 +112,7 @@ const RoundTimeline = ({ totalRounds, method }) => {
         </div>
         {isKO && (
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-md bg-gradient-to-br from-danger-brighter to-danger border border-warning/60"></span>
+            <span className="w-4 h-4 rounded-md bg-gradient-to-br from-danger-bright to-danger border border-warning/60"></span>
             <span className="text-sm text-white/70">Knockout</span>
           </div>
         )}
@@ -129,7 +129,7 @@ const RoundTimeline = ({ totalRounds, method }) => {
         <div className="mt-4 p-5 bg-gradient-to-br from-navy-medium to-navy-light border border-white/20 rounded-lg text-center shadow-[0_8px_24px_rgba(0,0,0,0.3)] animate-[slideUp_0.3s_ease]">
           <h4 className="text-white font-bold text-lg m-0 mb-2">Round {selectedRound}</h4>
           {selectedRound === totalRounds ? (
-            <p className={`m-0 font-semibold ${isKO ? 'text-danger-brighter' : 'text-victory-gold'}`}>
+            <p className={`m-0 font-semibold ${isKO ? 'text-danger-bright' : 'text-victory-gold'}`}>
               {isKO ? '🔥 Knockout victory! The fight ended here.' : '🏆 Final round - decision made.'}
             </p>
           ) : (

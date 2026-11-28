@@ -48,13 +48,13 @@ const RankCard = ({ boxer, rank }) => {
 
     switch (rank) {
       case 1:
-        return `${base} bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-300 shadow-[0_4px_16px_rgba(234,179,8,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(234,179,8,0.3)]`;
+        return `${base} bg-gradient-to-br from-victory-gold/15 to-amber-500/5 border-victory-gold/50 shadow-[0_4px_16px_rgba(255,215,0,0.15)] hover:shadow-[0_8px_24px_rgba(255,215,0,0.25)]`;
       case 2:
-        return `${base} bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 shadow-[0_4px_16px_rgba(175,184,193,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(175,184,193,0.3)]`;
+        return `${base} bg-gradient-to-br from-white/10 to-white/5 border-gray-400/50 shadow-[0_4px_16px_rgba(175,184,193,0.1)] hover:shadow-[0_8px_24px_rgba(175,184,193,0.2)]`;
       case 3:
-        return `${base} bg-gradient-to-br from-orange-50 to-orange-100 border-orange-300 shadow-[0_4px_16px_rgba(213,132,84,0.2),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_24px_rgba(213,132,84,0.3)]`;
+        return `${base} bg-gradient-to-br from-orange-500/10 to-amber-500/5 border-orange-400/50 shadow-[0_4px_16px_rgba(213,132,84,0.1)] hover:shadow-[0_8px_24px_rgba(213,132,84,0.2)]`;
       default:
-        return `${base} bg-white border-gray-200 shadow-[0_2px_12px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)]`;
+        return `${base} bg-gradient-to-br from-white/10 to-white/5 border-white/10 hover:bg-white/15 shadow-[0_2px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)]`;
     }
   };
 
@@ -64,7 +64,7 @@ const RankCard = ({ boxer, rank }) => {
 
     switch (rank) {
       case 1:
-        return `${base} bg-gradient-to-br from-yellow-300 via-warning to-orange-500 text-text-on-gold shadow-[0_2px_8px_rgba(234,179,8,0.4)]`;
+        return `${base} bg-gradient-to-br from-yellow-300 via-warning to-orange-500 text-black shadow-[0_2px_8px_rgba(234,179,8,0.4)]`;
       case 2:
         return `${base} bg-gradient-to-br from-gray-300 to-gray-400 text-white shadow-[0_2px_8px_rgba(156,163,175,0.4)]`;
       case 3:
@@ -98,34 +98,34 @@ const RankCard = ({ boxer, rank }) => {
             👩‍🦰
           </span>
           <div className="min-w-0">
-            <span className="text-base font-bold text-gray-900 block truncate">{boxer.name}</span>
+            <span className="text-base font-bold text-white block truncate">{boxer.name}</span>
             {boxer.nickname && (
-              <span className="text-sm text-gray-500 italic block truncate">"{boxer.nickname}"</span>
+              <span className="text-sm text-white/60 italic block truncate">"{boxer.nickname}"</span>
             )}
           </div>
         </div>
 
         {/* Stats row */}
         <div className="flex items-center gap-4 flex-wrap">
-          <StatDisplay label="LVL" value={boxer.level} variant="mini" color="level" />
+          <StatDisplay label="LVL" value={boxer.level} variant="mini" />
 
           <div className="flex items-baseline gap-1.5 text-sm">
-            <span className="text-gray-500 font-medium">Record:</span>
-            <span className="font-semibold text-gray-900">
+            <span className="text-white/60 font-medium">Record:</span>
+            <span className="font-semibold text-white">
               {boxer.wins}-{boxer.losses}{boxer.draws > 0 ? `-${boxer.draws}` : ''}
             </span>
           </div>
 
           <div className="flex items-baseline gap-1.5 text-sm">
-            <span className="text-gray-500 font-medium">Win Rate:</span>
-            <span className="font-bold text-primary">{displayValue.primary}</span>
+            <span className="text-white/60 font-medium">Win Rate:</span>
+            <span className="font-bold text-primary-light">{displayValue.primary}</span>
           </div>
         </div>
       </div>
 
       {/* Arrow indicator for desktop (visible on hover) */}
       <div
-        className="text-2xl text-gray-400 group-hover:text-primary transition-colors duration-200 hidden sm:block"
+        className="text-2xl text-white/40 group-hover:text-primary-light transition-colors duration-200 hidden sm:block"
         onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
         aria-hidden="true"
       >
@@ -134,7 +134,7 @@ const RankCard = ({ boxer, rank }) => {
 
       {/* View Profile button for mobile */}
       <button
-        className="sm:hidden text-sm font-semibold text-primary cursor-pointer hover:underline focus-visible:outline-none"
+        className="sm:hidden text-sm font-semibold text-primary-light cursor-pointer hover:underline focus-visible:outline-none"
         onClick={handleCardClick}
       >
         View Profile →

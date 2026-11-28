@@ -35,7 +35,7 @@ const VictoryBanner = ({ winner, loser, method, round }) => {
   const victoryEmoji = isKO ? '🔥' : '🏆';
   const bannerStyle = isKO
     ? 'bg-gradient-to-br from-red-400 to-danger text-white shadow-[0_8px_24px_rgba(255,107,107,0.5)]'
-    : 'bg-gradient-to-br from-victory-gold to-warning text-text-on-gold shadow-[0_8px_24px_rgba(214,158,46,0.4)]';
+    : 'bg-gradient-to-br from-victory-gold to-warning text-black shadow-[0_8px_24px_rgba(214,158,46,0.4)]';
 
   return (
     <div className={`py-6 px-8 rounded-xl text-center mb-8 ${bannerStyle} animate-[bannerSlideIn_0.5s_ease]`}>
@@ -375,7 +375,7 @@ const FightDetails = () => {
         <div className="flex items-stretch justify-center gap-6 relative flex-wrap">
           <BoxerComparisonCard boxer={boxer1} role="boxer1" fightData={isFightCompleted ? fightData : undefined} />
 
-          <div className="text-lg font-extrabold text-white p-3 bg-gradient-to-br from-danger-brighter to-danger rounded-full w-[56px] h-[56px] flex items-center justify-center shadow-[0_4px_12px_rgba(239,68,68,0.6)] flex-shrink-0">VS</div>
+          <div className="text-lg font-extrabold text-white p-3 bg-gradient-to-br from-danger-bright to-danger rounded-full w-[56px] h-[56px] flex items-center justify-center shadow-[0_4px_12px_rgba(239,68,68,0.6)] flex-shrink-0">VS</div>
 
           <BoxerComparisonCard boxer={boxer2} role="boxer2" fightData={isFightCompleted ? fightData : undefined} />
         </div>

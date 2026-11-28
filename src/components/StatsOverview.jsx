@@ -20,8 +20,8 @@ const StatsOverview = ({ boxer }) => {
   const maxPossibleStat = averageStatForLevel * 2; // Estimated max
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-      <h3 className="text-lg font-bold text-gray-800 m-0 mb-5 flex items-center gap-2">
+    <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+      <h3 className="text-lg font-bold text-white m-0 mb-5 flex items-center gap-2">
         <span className="text-xl" aria-hidden="true">💪</span>
         Combat Stats
       </h3>
@@ -33,7 +33,7 @@ const StatsOverview = ({ boxer }) => {
           icon="💪"
           variant="bar"
           color="strength"
-          maxValue={maxPossibleStat}
+          max={Math.max(100, maxPossibleStat)}
         />
 
         <StatDisplay
@@ -42,7 +42,7 @@ const StatsOverview = ({ boxer }) => {
           icon="🛡️"
           variant="bar"
           color="defense"
-          maxValue={maxPossibleStat}
+          max={Math.max(100, maxPossibleStat)}
         />
 
         <StatDisplay
@@ -51,12 +51,12 @@ const StatsOverview = ({ boxer }) => {
           icon="⚡"
           variant="bar"
           color="agility"
-          maxValue={maxPossibleStat}
+          max={Math.max(100, maxPossibleStat)}
         />
       </div>
 
-      <div className="mt-5 pt-4 border-t border-gray-200">
-        <p className="text-sm text-gray-600 m-0 italic">Stats determine combat performance. Higher values mean better in-ring capabilities.</p>
+      <div className="mt-5 pt-4 border-t border-white/10">
+        <p className="text-sm text-white/60 m-0 italic">Stats determine combat performance. Higher values mean better in-ring capabilities.</p>
       </div>
     </div>
   );

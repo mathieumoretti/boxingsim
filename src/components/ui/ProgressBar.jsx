@@ -40,52 +40,52 @@ import React from 'react';
 const variantStyles = {
   health: {
     bar: 'from-success to-emerald-600',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(16,185,129,0.4)]',
-    text: 'text-success-dark',
+    text: 'text-success-light',
   },
   energy: {
     bar: 'from-warning-bright to-amber-600',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(251,191,36,0.4)]',
-    text: 'text-warning-dark',
+    text: 'text-warning-bright',
   },
   fatigue: {
     bar: 'from-danger-bright to-rose-600',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(239,68,68,0.4)]',
-    text: 'text-danger-dark',
+    text: 'text-danger-bright',
   },
   xp: {
     bar: 'from-primary to-blue-600',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_8px_rgba(59,130,246,0.3)]',
-    text: 'text-primary-dark',
+    text: 'text-primary-light',
   },
   strength: {
     bar: 'from-strength to-red-700',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(239,68,68,0.4)]',
-    text: 'text-strength-dark',
+    text: 'text-strength',
   },
   defense: {
     bar: 'from-defense to-blue-700',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]',
-    text: 'text-defense-dark',
+    text: 'text-defense',
   },
   agility: {
     bar: 'from-agility to-amber-700',
-    bg: 'bg-gray-200',
+    bg: 'bg-white/15',
     shadow: 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
     glow: 'shadow-[0_0_10px_rgba(234,179,8,0.4)]',
-    text: 'text-agility-dark',
+    text: 'text-amber-400',
   },
 };
 
@@ -132,7 +132,7 @@ export function ProgressBar({
         <div className="flex items-center justify-between mb-1">
           <span className={`text-sm font-medium ${styles.text}`}>{label}</span>
           {!showValue && (
-            <span className="text-xs text-gray-500 font-mono">
+            <span className="text-xs text-white/50 font-mono">
               {value} / {max}
             </span>
           )}
@@ -142,8 +142,8 @@ export function ProgressBar({
       {/* Compact label */}
       {label && compact && (
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-gray-600 font-medium">{label}</span>
-          <span className="text-xs text-gray-500 font-mono">
+          <span className="text-xs text-white/60 font-medium">{label}</span>
+          <span className="text-xs text-white/50 font-mono">
             {Math.round(percentage)}%
           </span>
         </div>

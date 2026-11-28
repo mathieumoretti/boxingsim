@@ -19,9 +19,9 @@ import PageHeader from '../components/PageHeader';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { API_BASE_URL, authenticatedFetch, getUser } from '../utils/auth';
-import '../styles/ring-canvas.css';
+import { SkipLink } from '../components/SkipLink';
 
-const BoxersList = ({ user }) => {
+const BoxersList = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [boxers, setBoxers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +64,13 @@ const BoxersList = ({ user }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Refresh the roster periodically so training/rest badges stay current
+  useEffect(() => {
+    if (!currentUser) return undefined;
+    const interval = setInterval(() => loadUserBoxers(currentUser.id), 15000);
+    return () => clearInterval(interval);
+  }, [currentUser, loadUserBoxers]);
+
   const handleBoxerStateChanged = useCallback((boxerId) => {
     if (currentUser) {
       loadUserBoxers(currentUser.id);
@@ -85,6 +92,27 @@ const BoxersList = ({ user }) => {
 
       if (boxersResponse.ok) {
         boxersArray = Array.isArray(boxersData) ? boxersData : [];
+
+        // Attach each boxer's active training session so cards can show
+        // a training badge without extra per-card requests
+        boxersArray = await Promise.all(boxersArray.map(async (boxer) => {
+          try {
+            const sessionResponse = await authenticatedFetch(
+              `${API_BASE_URL}/boxers/${boxer.id}/training-sessions`,
+              { method: 'GET' }
+            );
+            if (sessionResponse.ok) {
+              const sessions = await sessionResponse.json();
+              if (Array.isArray(sessions) && sessions.length > 0) {
+                return { ...boxer, has_active_training: true, training_session: sessions[0] };
+              }
+            }
+          } catch (err) {
+            // Non-fatal — badge simply won't show
+          }
+          return { ...boxer, has_active_training: false };
+        }));
+
         setBoxers(boxersArray);
       } else {
         setError(boxersData.error || 'Failed to load boxers');
@@ -133,8 +161,12 @@ const BoxersList = ({ user }) => {
   }, []);
 
   const handleLogout = useCallback(() => {
-    window.location.replace('/login');
-  }, []);
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.replace('/login');
+    }
+  }, [onLogout]);
 
   // Calculate quick stats (memoized to prevent recalculation on every render - MAT-132)
   const stats = React.useMemo(() => ({
@@ -173,11 +205,11 @@ const BoxersList = ({ user }) => {
   const filteredBoxers = filterBoxers(boxers);
 
   return (
-    <div className="boxers-list-page">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+      <SkipLink targetId="main-content" />
       <TopBar currentUser={currentUser} onLogout={handleLogout} />
 
-      <div className="ring-canvas">
-        <div className="container">
+      <main id="main-content" className="max-w-[1400px] mx-auto px-6 py-6" tabIndex="-1">
           {/* Page Header */}
           <PageHeader
             title="My Boxers"
@@ -185,21 +217,17 @@ const BoxersList = ({ user }) => {
             actions={
               <button
                 onClick={() => navigate('/create-boxer')}
-                className="btn-create-boxer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg text-sm font-semibold cursor-pointer transition-all duration-150 hover:from-primary-light hover:to-primary hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
               >
                 <span aria-hidden="true">+</span>
                 Create Fighter
               </button>
             }
-            breadcrumbs={[
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Boxers' }
-            ]}
           />
 
           {/* Quick Stats Summary */}
           {boxers.length > 0 && (
-            <section className="boxers-stats" aria-label="Roster summary">
+            <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" aria-label="Roster summary">
               <StatSummaryCard
                 icon="🥊"
                 value={stats.totalBoxers}
@@ -225,21 +253,21 @@ const BoxersList = ({ user }) => {
 
           {/* Search and Filter Bar (MAT-122) */}
           {boxers.length > 0 && (
-            <div className="boxers-filter-bar">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
               {/* Search Input */}
-              <div className="filter-search">
+              <div className="relative flex-1 min-w-[200px] max-w-[350px]">
                 <input
                   type="text"
                   placeholder="Search boxers by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="filter-search-input"
+                  className="w-full px-4 py-2.5 bg-navy-dark border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary/30"
                   aria-label="Search boxers"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="filter-search-clear"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-white/60 hover:text-white cursor-pointer text-base"
                     aria-label="Clear search"
                   >
                     ×
@@ -248,30 +276,30 @@ const BoxersList = ({ user }) => {
               </div>
 
               {/* Status Filter */}
-              <div className="filter-status" role="group" aria-label="Filter by status">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
                 <button
-                  className={`filter-status-btn ${statusFilter === 'all' ? 'active' : ''}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-150 cursor-pointer ${statusFilter === 'all' ? 'bg-gradient-to-br from-primary to-primary-dark text-white border-primary/50' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/30'}`}
                   onClick={() => setStatusFilter('all')}
                   aria-pressed={statusFilter === 'all'}
                 >
                   All ({boxers.length})
                 </button>
                 <button
-                  className={`filter-status-btn ${statusFilter === 'available' ? 'active' : ''}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-150 cursor-pointer ${statusFilter === 'available' ? 'bg-gradient-to-br from-primary to-primary-dark text-white border-primary/50' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/30'}`}
                   onClick={() => setStatusFilter('available')}
                   aria-pressed={statusFilter === 'available'}
                 >
                   Available ({boxers.filter(b => !b.has_active_training && !b.has_active_rest).length})
                 </button>
                 <button
-                  className={`filter-status-btn ${statusFilter === 'training' ? 'active' : ''}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-150 cursor-pointer ${statusFilter === 'training' ? 'bg-gradient-to-br from-primary to-primary-dark text-white border-primary/50' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/30'}`}
                   onClick={() => setStatusFilter('training')}
                   aria-pressed={statusFilter === 'training'}
                 >
                   Training ({stats.inTraining})
                 </button>
                 <button
-                  className={`filter-status-btn ${statusFilter === 'resting' ? 'active' : ''}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-150 cursor-pointer ${statusFilter === 'resting' ? 'bg-gradient-to-br from-primary to-primary-dark text-white border-primary/50' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/15 hover:border-white/30'}`}
                   onClick={() => setStatusFilter('resting')}
                   aria-pressed={statusFilter === 'resting'}
                 >
@@ -283,12 +311,12 @@ const BoxersList = ({ user }) => {
 
           {/* Results Count */}
           {boxers.length > 0 && (
-            <div className="boxers-results-count">
+            <div className="text-sm text-white/60 mb-6 flex flex-wrap items-center gap-4">
               Showing {filteredBoxers.length} of {boxers.length} boxers
               {(searchQuery || statusFilter !== 'all') && (
                 <button
                   onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
-                  className="boxers-clear-filters"
+                  className="bg-transparent border-none text-primary-light text-sm font-semibold cursor-pointer hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                 >
                   Clear Filters
                 </button>
@@ -298,7 +326,7 @@ const BoxersList = ({ user }) => {
 
           {/* Main Content Area */}
           {isLoading ? (
-            <div className="boxers-loading">
+            <div className="py-16 flex items-center justify-center">
               <LoadingSpinner size="lg" aria-label="Loading boxers" />
             </div>
           ) : error ? (
@@ -310,41 +338,41 @@ const BoxersList = ({ user }) => {
               icon={true}
             />
           ) : boxers.length === 0 ? (
-            <div className="boxers-empty-state">
-              <div className="empty-state-icon" aria-hidden="true">🥊</div>
-              <h2 className="empty-state-title">Your roster is empty</h2>
-              <p className="empty-state-description">
+            <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-12 border border-white/10 text-center">
+              <div className="text-5xl mb-4" aria-hidden="true">🥊</div>
+              <h2 className="text-lg font-bold text-white m-0 mb-2">Your roster is empty</h2>
+              <p className="text-white/60 m-0 mb-6">
                 Create your first boxer and begin their journey to championship glory.
                 Train, fight, and build a legendary career in the ring.
               </p>
               <button
                 onClick={() => navigate('/create-boxer')}
-                className="btn-empty-cta"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg font-semibold cursor-pointer transition-all duration-150 hover:from-primary-light hover:to-primary hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
               >
                 <span aria-hidden="true">➕</span>
                 Create Your First Boxer
               </button>
             </div>
           ) : (
-            <section className="boxers-section" aria-label="Boxer roster">
+            <section aria-label="Boxer roster">
               {filteredBoxers.length === 0 ? (
-                <div className="boxers-no-results">
-                  <div className="no-results-icon" aria-hidden="true">🔍</div>
-                  <h3 className="no-results-title">No boxers found</h3>
-                  <p className="no-results-message">
+                <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-10 border border-white/10 text-center">
+                  <div className="text-4xl mb-3" aria-hidden="true">🔍</div>
+                  <h3 className="text-base font-bold text-white/80 m-0 mb-2">No boxers found</h3>
+                  <p className="text-sm text-white/60 m-0 mb-5">
                     {searchQuery
                       ? `No boxers match "${searchQuery}". Try a different search term.`
                       : 'No boxers match the selected filters.'}
                   </p>
                   <button
                     onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
-                    className="btn-clear-all"
+                    className="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-150 hover:bg-white/15 hover:border-white/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                   >
                     Clear All Filters
                   </button>
                 </div>
               ) : (
-                <div className="boxers-grid" role="list">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" role="list">
                   {filteredBoxers.map((boxer) => (
                   <BoxerCard
                     key={boxer.id}
@@ -362,18 +390,17 @@ const BoxersList = ({ user }) => {
               )}
             </section>
           )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 // Simple inline stat card component
 const StatSummaryCard = ({ icon, value, label }) => (
-  <div className="stat-summary-card">
-    <span className="stat-summary-icon" aria-hidden="true">{icon}</span>
-    <span className="stat-summary-value">{value}</span>
-    <span className="stat-summary-label">{label}</span>
+  <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-4 border border-white/10">
+    <span className="text-2xl mb-1 block" aria-hidden="true">{icon}</span>
+    <span className="text-2xl font-bold text-white block mb-0.5">{value}</span>
+    <span className="text-sm text-white/70">{label}</span>
   </div>
 );
 

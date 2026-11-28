@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import TopBar from './TopBar';
+import { SkipLink } from './SkipLink';
 import RankCard from './RankCard';
 import { fetchRankings, RANKING_CRITERIA, getCriteriaDisplayValue } from '../api/rankings';
 import { ErrorDisplay } from './ErrorDisplay';
@@ -13,7 +15,15 @@ import { getUserErrorMessage } from '../utils/errorMessages';
 
 const DEFAULT_LIMIT = 25;
 
-function Rankings() {
+function Rankings({ user, onLogout }) {
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.replace('/login');
+    }
+  };
+
   // State management as specified in MAT-105
   const [criteria, setCriteria] = useState('win_rate');
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,10 +160,14 @@ function Rankings() {
   const filterGroupLarge = `${filterGroupBase} flex-1 min-w-[200px] max-w-[350px]`;
 
   // Label styles for filters
-  const filterLabel = 'text-xs font-semibold text-navy-muted uppercase tracking-wider whitespace-nowrap';
+  const filterLabel = 'text-xs font-semibold text-text-muted uppercase tracking-wider whitespace-nowrap';
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-6 bg-gradient-to-b from-navy-deep to-navy-dark min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
+      <SkipLink targetId="main-content" />
+      <TopBar currentUser={user} onLogout={handleLogout} />
+
+      <main id="main-content" className="max-w-[1400px] mx-auto px-6 py-6" tabIndex="-1">
       {/* Header Section */}
       <div className="flex flex-wrap items-center justify-between gap-6 mb-6">
         <div className="flex items-center gap-3">
@@ -168,7 +182,7 @@ function Rankings() {
             placeholder="Search boxers..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full px-5 py-3 border-2 border-navy-border rounded-md text-sm transition-all duration-150 bg-navy-deep text-white placeholder:text-navy-muted focus:outline-none focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)]"
+            className="w-full px-5 py-3 border-2 border-navy-border rounded-md text-sm transition-all duration-150 bg-navy-deep text-white placeholder:text-text-muted focus:outline-none focus:border-primary-light focus:shadow-[0_0_0_3px_rgba(124,58,237,0.2)]"
             aria-label="Search boxers by name or nickname"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base opacity-60" aria-hidden="true">🔍</span>
@@ -206,10 +220,10 @@ function Rankings() {
               max="100"
               value={filters.maxLevel}
               onChange={handleMaxLevelChange}
-              className="flex-1 h-[6px] rounded-xs bg-gradient-to-r from-navy-border to-navy-deep appearance-none cursor-pointer focus:outline-none"
+              className="flex-1 h-[6px] rounded-sm bg-gradient-to-r from-navy-border to-navy-deep appearance-none cursor-pointer focus:outline-none"
               aria-label="Filter by maximum level"
             />
-            <div className="flex justify-between w-[80px] text-xs text-navy-muted font-semibold">
+            <div className="flex justify-between w-[80px] text-xs text-text-muted font-semibold">
               <span>{filters.minLevel}</span>
               <span>{filters.maxLevel}</span>
             </div>
@@ -233,7 +247,7 @@ function Rankings() {
 
       {/* Results Info */}
       <div className="mb-4">
-        <span className="text-sm text-navy-muted font-medium">
+        <span className="text-sm text-text-muted font-medium">
           {isLoading ? 'Loading...' : `${filteredData.length} boxer${filteredData.length !== 1 ? 's' : ''} found`}
         </span>
       </div>
@@ -284,7 +298,7 @@ function Rankings() {
           <div className="text-center py-[10rem] px-5 bg-navy-deep rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] border border-navy-border">
             <span className="text-5xl block mb-4 opacity-80" aria-hidden="true">📭</span>
             <h2 className="text-lg font-bold text-text-bright m-0 mb-2">No boxers found</h2>
-            <p className="text-sm text-navy-muted m-0">Try adjusting your search or filters</p>
+            <p className="text-sm text-text-muted m-0">Try adjusting your search or filters</p>
           </div>
         )}
       </div>
@@ -345,10 +359,11 @@ function Rankings() {
 
       {/* Page Indicator */}
       {pagination.pages > 1 && (
-        <div className="text-center mt-4 text-navy-muted text-xs font-medium">
+        <div className="text-center mt-4 text-text-muted text-xs font-medium">
           Page {page} of {pagination.pages}
         </div>
       )}
+      </main>
     </div>
   );
 }

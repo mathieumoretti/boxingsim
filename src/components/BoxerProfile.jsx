@@ -109,16 +109,13 @@ const BoxerProfile = ({ user, onLogout }) => {
     }
   };
 
-  // Section card background style
-  const sectionCardBase = 'bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 mb-6';
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-navy-dark via-navy-medium to-navy-light">
         <SkipLink targetId="profile-content" />
         <TopBar currentUser={user} onLogout={onLogout} />
         <PageLayout>
-          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem] min-h-screen" tabIndex="-1">
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-10 min-h-screen" tabIndex="-1">
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-5">
               <div className="w-[50px] h-[50px] border-4 border-white/10 border-t-victory-gold rounded-full animate-[spin_1s_linear_infinite]" />
               <p className="text-white/60 text-sm">Loading boxer profile...</p>
@@ -137,7 +134,7 @@ const BoxerProfile = ({ user, onLogout }) => {
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-10" tabIndex="-1">
             <ErrorDisplay
               error={error}
               variant="alert"
@@ -158,10 +155,10 @@ const BoxerProfile = ({ user, onLogout }) => {
         <PageLayout
           onBack={() => navigate('/dashboard')}
         >
-          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
+          <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-10" tabIndex="-1">
             <div className="text-center py-12 px-5">
               <h2 className="text-white text-3xl m-0 mb-2">Boxer Not Found</h2>
-              <p className="text-gray-500 text-lg m-0">The boxer you're looking for doesn't exist.</p>
+              <p className="text-white/60 text-lg m-0">The boxer you're looking for doesn't exist.</p>
             </div>
           </main>
         </PageLayout>
@@ -176,36 +173,36 @@ const BoxerProfile = ({ user, onLogout }) => {
       <PageLayout
         onBack={() => navigate('/dashboard')}
       >
-        <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-[12rem]" tabIndex="-1">
+        <main id="profile-content" className="max-w-[1000px] mx-auto px-5 py-6 pb-10" tabIndex="-1">
           {/* Boxer Header - Avatar, Name, Level, XP */}
-          <article aria-label="Boxer header" className={sectionCardBase}>
+          <article aria-label="Boxer header">
             <BoxerHeader boxer={boxer} />
           </article>
 
           {/* Career Record - W/L/D/KO */}
-          <section aria-label="Career record" className={sectionCardBase}>
+          <section aria-label="Career record">
             <CareerRecord boxer={boxer} />
           </section>
 
           {/* Next Fight Card (only shows when there's an upcoming fight) */}
           {upcomingFight && (
-            <article aria-label="Next scheduled fight" className={sectionCardBase}>
+            <article aria-label="Next scheduled fight">
               <NextFight upcomingFight={upcomingFight} boxerId={boxer.id} gameTime={worldTime?.current_game_time} onRefresh={loadProfileData} />
             </article>
           )}
 
           {/* Stats Overview - STR/DEF/AGI */}
-          <section aria-label="Stats overview" className={sectionCardBase}>
+          <section aria-label="Stats overview">
             <StatsOverview boxer={boxer} />
           </section>
 
           {/* Current Status - Health/Energy/Fatigue */}
-          <section aria-label="Current status" className={sectionCardBase}>
+          <section aria-label="Current status">
             <CurrentStatus boxer={boxer} worldTime={worldTime} />
           </section>
 
           {/* Recent Activity Timeline */}
-          <section aria-label="Recent activity timeline" className={sectionCardBase}>
+          <section aria-label="Recent activity timeline">
             <RecentActivity boxerId={boxer.id} gameTime={worldTime?.current_game_time} />
           </section>
 

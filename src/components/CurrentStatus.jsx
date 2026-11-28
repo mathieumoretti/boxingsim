@@ -54,39 +54,40 @@ const CurrentStatus = ({ boxer, worldTime }) => {
   const isForcedRest = boxer.forced_rest_until !== null;
 
   const StatusRow = ({ label, value, max, colorClass, icon, tooltip }) => {
-    const percent = (value / max) * 100;
+    const percent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
     return (
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
           <span className="text-sm flex-shrink-0" aria-hidden="true">{icon}</span>
-          <span className="text-sm font-semibold text-gray-700">{label}</span>
+          <span className="text-sm font-semibold text-white/80">{label}</span>
           {tooltip && <span className="sr-only" title={tooltip}>{tooltip}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
-            <div className={`h-full ${colorClass} transition-all duration-500`}>
-              <div style={{ width: `${percent}%` }}></div>
-            </div>
+          <div className="flex-1 h-3 bg-white/15 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${colorClass} transition-all duration-500`}
+              style={{ width: `${percent}%` }}
+            />
           </div>
-          <span className="text-sm font-bold text-gray-800 min-w-[3.5rem] text-right">{value}<small className="text-gray-500 font-normal">/ {max}</small></span>
+          <span className="text-sm font-bold text-white min-w-[3.5rem] text-right">{value}<small className="text-white/50 font-normal">/ {max}</small></span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-6">
-      <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-200">
-        <h3 className="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+    <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-white/10 mb-6">
+      <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+        <h3 className="text-lg font-bold text-white m-0 flex items-center gap-2">
           <span className="text-xl" aria-hidden="true">📈</span>
           Current Status
         </h3>
         {boxer.has_active_rest && (
-          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${isForcedRest ? 'bg-red-100 text-red-800 border-2 border-red-400' : 'bg-blue-100 text-blue-800 border border-blue-300'}`}>
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${isForcedRest ? 'bg-red-500/15 text-red-200 border border-red-400/50' : 'bg-blue-500/15 text-blue-200 border border-blue-400/50'}`}>
             <span>{isForcedRest ? '🚑' : '🏥'}</span>
             <span>In Recovery</span>
-            {recoveryTime && <span className="text-gray-600">({recoveryTime} remaining)</span>}
+            {recoveryTime && <span className="text-white/60">({recoveryTime} remaining)</span>}
           </div>
         )}
       </div>
@@ -121,21 +122,21 @@ const CurrentStatus = ({ boxer, worldTime }) => {
       </div>
 
       {/* Training eligibility indicator */}
-      <div className="mt-5 pt-4 border-t border-gray-200">
+      <div className="mt-5 pt-4 border-t border-white/10">
         {fatigue >= 80 ? (
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 border-2 border-red-400 rounded-lg text-sm font-bold text-red-800">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-400/40 rounded-lg text-sm font-bold text-red-200">
             ❌ Exhausted - Rest Required
           </span>
         ) : energy < 15 ? (
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 border-2 border-orange-400 rounded-lg text-sm font-bold text-orange-800">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-400/40 rounded-lg text-sm font-bold text-orange-200">
             ❌ Low Energy - Rest Needed
           </span>
         ) : health < 50 ? (
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 border-2 border-yellow-400 rounded-lg text-sm font-bold text-yellow-800">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border border-yellow-400/40 rounded-lg text-sm font-bold text-yellow-200">
             ⚠️ Injured - Recovery Recommended
           </span>
         ) : (
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 border-2 border-green-400 rounded-lg text-sm font-bold text-green-800">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-400/40 rounded-lg text-sm font-bold text-green-200">
             ✅ Ready for Training
           </span>
         )}

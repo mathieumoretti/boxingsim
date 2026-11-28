@@ -12,6 +12,7 @@ import ProgressBar from './ui/ProgressBar';
 import StatDisplay from './ui/StatDisplay';
 import FightBadge from './FightBadge';
 import RestingBadge from './RestingBadge';
+import { fetchActiveTrainingSessions } from '../api/training';
 
 /**
  * Generate consistent avatar emoji based on name hash
@@ -52,90 +53,52 @@ const formatTimeRemaining = (seconds) => {
   return `${minutes}m`;
 };
 
-export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
-  // Training session state
-  const [activeSession, setActiveSession] = useState(boxer.active_session);
-  const [countdown, setCountdown] = useState(null);
+export function BoxerCard({ boxer, onTrainClick, onFightClick, onOpenFightBooking, upcomingFight, worldTime }) {
+  // Training session — provided by the parent list when available (BoxersList
+  // attaches it as `training_session`), otherwise fetched for this boxer.
+  const [fetchedSession, setFetchedSession] = useState(null);
 
-  // Rest status polling state (MAT-96)
-  const [isResting, setIsResting] = useState(boxer.is_resting);
-  const [restEndTime, setRestEndTime] = useState(boxer.rest_end_time);
-
-  // Upcoming fight state
-  const [upcomingFight, setUpcomingFight] = useState(null);
-
-  // Fetch upcoming fight for this boxer
   useEffect(() => {
-    const fetchUpcomingFight = async () => {
-      try {
-        const response = await fetch(`/api/fights/upcoming/${boxer.id}`);
-        if (response.ok) {
-          const fight = await response.json();
-          setUpcomingFight(fight);
+    // Only fetch when the parent did not already provide training status
+    if (boxer.has_active_training !== undefined || boxer.training_session) return;
+
+    let cancelled = false;
+    fetchActiveTrainingSessions(boxer.id)
+      .then((sessions) => {
+        if (!cancelled && Array.isArray(sessions) && sessions.length > 0) {
+          setFetchedSession(sessions[0]);
         }
-      } catch (err) {
-        // 404 is OK - no upcoming fight
-        if (err.status !== 404) {
-          console.debug('[BoxerCard] Failed to fetch upcoming fight:', err.message);
-        }
-      }
-    };
+      })
+      .catch((err) => {
+        console.debug('[BoxerCard] Failed to fetch training sessions:', err.message);
+      });
 
-    fetchUpcomingFight();
-  }, [boxer.id]);
+    return () => { cancelled = true; };
+  }, [boxer.id, boxer.has_active_training, boxer.training_session]);
 
-  // Poll training session end time every second when active
-  useEffect(() => {
-    if (!activeSession || !activeSession.end_time) return;
+  const trainingSession = boxer.training_session || fetchedSession || null;
+  const inTraining = !!(boxer.has_active_training || trainingSession);
 
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const endTime = new Date(activeSession.end_time).getTime();
-      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+  // Rest status (from the API: has_active_rest + next_available_training)
+  const isResting = !!boxer.has_active_rest;
 
-      setCountdown(remaining);
-
-      // Training complete
-      if (remaining <= 0) {
-        setActiveSession(null);
-        setCountdown(null);
-      }
-    };
-
-    updateCountdown(); // Initial update
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [activeSession]);
-
-  // Poll rest status every 5 seconds (MAT-96)
-  useEffect(() => {
-    if (!boxer.is_resting || !boxer.rest_end_time) {
-      setIsResting(false);
-      setRestEndTime(null);
-      return;
+  // Training countdown (seconds remaining, null when not determinable)
+  const getTrainingRemaining = () => {
+    if (!trainingSession) return null;
+    let end = null;
+    if (trainingSession.scheduled_completion_time) {
+      end = new Date(trainingSession.scheduled_completion_time).getTime();
+    } else if (trainingSession.start_time) {
+      end = new Date(trainingSession.start_time).getTime() + (trainingSession.duration_hours || 0) * 3600000;
     }
+    if (!end) return null;
+    const now = worldTime?.current_game_time
+      ? new Date(worldTime.current_game_time).getTime()
+      : Date.now();
+    return Math.max(0, Math.floor((end - now) / 1000));
+  };
 
-    const updateRestStatus = async () => {
-      try {
-        const response = await fetch(`/api/boxers/${boxer.id}`);
-        if (response.ok) {
-          const updatedBoxer = await response.json();
-          setIsResting(updatedBoxer.is_resting);
-          setRestEndTime(updatedBoxer.rest_end_time);
-
-          // Stop polling if rest complete
-          if (!updatedBoxer.is_resting) {
-            setRestEndTime(null);
-          }
-        }
-      } catch (err) {
-        console.debug('[BoxerCard] Failed to refresh boxer data:', err.message);
-      }
-    };
-
-    const interval = setInterval(updateRestStatus, 5000);
-    return () => clearInterval(interval);
-  }, [boxer.is_resting, boxer.id]);
+  const trainingRemaining = getTrainingRemaining();
 
   // Health/Energy/Fatigue color thresholds
   const getHealthColorClass = (value) => {
@@ -171,11 +134,13 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
   const restBadgeStyles = `${restBadgeBase} bg-gradient-to-r from-teal-500 to-teal-700 text-white ${isResting && boxer.forced_rest ? 'ring-2 ring-danger' : ''}`;
 
   // Button disabled states based on combat readiness
-  const canFight = boxer.health >= 50 && boxer.energy >= 30 && boxer.fatigue <= 70;
-  const canTrain = boxer.energy >= 20 && !activeSession && !isResting;
+  // API field is `fatigue_score` (not `fatigue`) — treat missing as 0
+  const fatigueScore = boxer.fatigue_score ?? 0;
+  const canFight = boxer.health >= 50 && boxer.energy >= 30 && fatigueScore <= 70;
+  const canTrain = boxer.energy >= 20 && !inTraining && !isResting;
 
   const trainButtonDisabledReason = !canTrain
-    ? (activeSession ? 'Training in progress' : boxer.energy < 20 ? 'Not enough energy' : 'Currently resting')
+    ? (inTraining ? 'Training in progress' : isResting ? 'Currently resting' : 'Not enough energy')
     : null;
 
   return (
@@ -191,25 +156,30 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
       </div>
 
       {/* Training in Progress Badge */}
-      {activeSession && countdown !== null && (
+      {inTraining && (
         <div className={trainingBadgeStyles} role="status" aria-live="polite">
-          <span className="text-xs animate-pulse">⏳</span>
-          <span>Training - {formatTimeRemaining(countdown)}</span>
+          <span className="text-xs animate-pulse" aria-hidden="true">⏳</span>
+          <span className="training-status">
+            {trainingRemaining !== null
+              ? `Training - ${formatTimeRemaining(trainingRemaining)}`
+              : 'Training'}
+          </span>
         </div>
       )}
 
       {/* Resting Badge (MAT-96) */}
       {isResting && (
         <RestingBadge
-          isForced={boxer.forced_rest}
-          endTime={restEndTime}
-          className={restBadgeStyles.replace('bg-gradient-to-r from-indigo-500 to-indigo-700 text-white', '')}
+          hasActiveRest={isResting}
+          restEndsAt={boxer.next_available_training}
+          forcedRestUntil={boxer.forced_rest_until}
+          currentGameTime={worldTime?.current_game_time}
         />
       )}
 
       {/* Upcoming Fight Badge */}
-      {upcomingFight && !activeSession && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30">
+      {upcomingFight && upcomingFight.status === 'scheduled' && !inTraining && (
+        <div className="fight-badge absolute -top-3 left-1/2 -translate-x-1/2 z-30">
           <FightBadge fight={upcomingFight} />
         </div>
       )}
@@ -225,11 +195,17 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
 
           {/* Name + Nickname */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-white truncate">
-              {boxer.name}
+            <h3 className="text-lg font-bold m-0">
+              <Link
+                to={`/boxer/${boxer.id}`}
+                className="text-white truncate hover:text-primary-light hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded"
+                aria-label={`View profile of ${boxer.name}`}
+              >
+                {boxer.name}
+              </Link>
             </h3>
             {boxer.nickname && (
-              <p className="text-sm text-gray-400 italic truncate">
+              <p className="boxer-nickname text-sm text-gray-400 italic truncate">
                 "{boxer.nickname}"
               </p>
             )}
@@ -245,7 +221,7 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
               value={boxer.health || 0}
               max={100}
               variant="health"
-              animated={!activeSession}
+              animated={false}
               className="flex-1"
             />
             <span className="text-xs font-bold text-white w-12 text-right flex-shrink-0">
@@ -260,7 +236,7 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
               value={boxer.energy || 0}
               max={100}
               variant="energy"
-              animated={!activeSession}
+              animated={false}
               className="flex-1"
             />
             <span className="text-xs font-bold text-white w-12 text-right flex-shrink-0">
@@ -272,14 +248,14 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-gray-300 w-16 flex-shrink-0">Fatigue</span>
             <ProgressBar
-              value={boxer.fatigue || 0}
+              value={boxer.fatigue_score || 0}
               max={100}
               variant="fatigue"
-              animated={!activeSession}
+              animated={false}
               className="flex-1"
             />
             <span className="text-xs font-bold text-white w-12 text-right flex-shrink-0">
-              {Math.round(boxer.fatigue || 0)}%
+              {Math.round(boxer.fatigue_score || 0)}%
             </span>
           </div>
         </div>
@@ -288,21 +264,21 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
         <div className="grid grid-cols-3 gap-2 mb-4">
           <StatDisplay
             label="STR"
-            value={boxer.strength || 0}
+            value={Math.round(boxer.strength || 0)}
             icon="💪"
             color="strength"
             variant="compact"
           />
           <StatDisplay
             label="DEF"
-            value={boxer.defense || 0}
+            value={Math.round(boxer.defense || 0)}
             icon="🛡️"
             color="defense"
             variant="compact"
           />
           <StatDisplay
             label="AGI"
-            value={boxer.agility || 0}
+            value={Math.round(boxer.agility || 0)}
             icon="⚡"
             color="agility"
             variant="compact"
@@ -339,9 +315,15 @@ export function BoxerCard({ boxer, onTrainClick, onFightClick }) {
 
           {/* Fight Button */}
           <button
-            onClick={() => onFightClick && onFightClick(boxer.id)}
+            onClick={() => {
+              if (onOpenFightBooking) {
+                onOpenFightBooking();
+              } else if (onFightClick) {
+                onFightClick(boxer.id);
+              }
+            }}
             disabled={!canFight || !!upcomingFight}
-            title={!canFight ? `Not ready: ${canFight ? '' : 'Health/Energy/Fatigue requirements not met'}` : upcomingFight ? 'Fight already scheduled' : 'Book a Fight'}
+            title={!canFight ? 'Health/Energy/Fatigue requirements not met' : upcomingFight ? 'Fight already scheduled' : 'Book a Fight'}
             className={`
               px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer
               flex items-center justify-center gap-2 flex-shrink-0
